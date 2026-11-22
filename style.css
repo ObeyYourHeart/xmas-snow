@@ -362,3 +362,25 @@ html, body { overscroll-behavior: none; }
 
 /* the tool bar on a low window: five tools and the empty hand have to fit between the top bar and the bottom one */
 @media (max-height: 640px) { #toolbar { gap: 4px; padding: 6px 5px; } #toolbar button[data-tool] { width: 36px; height: 36px; border-radius: 8px; } }
+
+/* What lies over what. The tool bar, the gun's sight and the touch buttons are added to the page after the popups, so
+   without this they were drawn on top of the map, the album and the settings, close buttons and all. (Found in a
+   play-through of the published game in a narrow window.) */
+#clock, #emotes { z-index: 32; }
+#prompt { z-index: 25; }
+#toast { z-index: 26; }
+.overlay { z-index: 50; }
+/* Narrow windows. The action bar wraps onto a second row rather than running off both sides (its width is its
+   content's, capped by the window: left alone, a wrapping bar hung from the middle would wrap at half the window). */
+#actbar { flex-wrap: wrap; justify-content: center; width: max-content; max-width: calc(100vw - 24px); }
+@media (max-width: 960px) {
+  /* the tracking strip no longer fits between the journal and the top bar: it goes under the top bar, on the right */
+  #track { left: auto; right: 16px; top: 58px; transform: translateY(-6px); }
+  #track.show { transform: none; }
+  #toast { top: 96px; }
+}
+@media (max-width: 660px) {
+  /* (the action bar is two rows here: the prompt and the gesture panel stand clear of it) */
+  #prompt { bottom: 126px; }
+  #emotes { bottom: 124px; }
+}
