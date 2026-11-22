@@ -348,9 +348,10 @@ html, body { overscroll-behavior: none; }
 
 /* the snow gun's sight: a cross whose arms open with the spread of the shots, a tick when one lands, the tank's arc
    and count below it. (No transitions: gun.js sets every value itself.) */
-#gunsight { position: absolute; left: 50%; top: 50%; width: 0; height: 0; display: none; pointer-events: none; --c: #fff; }
+#gunsight { position: absolute; left: 50%; top: 50%; width: 0; height: 0; display: none; pointer-events: none; --c: #fff; --sight-hot: #ff8a3c; --sight-hit: #ff7a2a; --sight-pack: #ff8a3c; }
+#gunsight.gemini { --sight-hot: #ff6bd6; --sight-hit: #4ceeff; --sight-pack: #4ceeff; }
 #gunsight.on { display: block; }
-#gunsight.hot { --c: #ff8a3c; }
+#gunsight.hot { --c: var(--sight-hot); }
 #gunsight i { position: absolute; box-sizing: border-box; background: var(--c); border: 1px solid rgba(20, 40, 60, .6); border-radius: 2px; }
 #gunsight i:nth-of-type(1), #gunsight i:nth-of-type(2) { left: -2px; width: 4px; height: 11px; }
 #gunsight i:nth-of-type(3), #gunsight i:nth-of-type(4) { top: -2px; width: 11px; height: 4px; }
@@ -358,13 +359,13 @@ html, body { overscroll-behavior: none; }
 #gunsight svg { position: absolute; overflow: visible; fill: none; stroke-linecap: round; }
 #gunsight .hit { left: -14px; top: -14px; width: 28px; height: 28px; opacity: 0; }
 #gunsight .hit .o { stroke: rgba(20, 40, 60, .7); stroke-width: 5; }
-#gunsight .hit .c { stroke: #ff7a2a; stroke-width: 2.6; }
+#gunsight .hit .c { stroke: var(--sight-hit); stroke-width: 2.6; }
 #gunsight .tank { left: -44px; top: -44px; width: 88px; height: 88px; }
 #gunsight .tank circle { transform: rotate(45deg); stroke-dasharray: 59.7 400; }
 #gunsight .tank .o { stroke: rgba(20, 40, 60, .5); stroke-width: 5.5; }
 #gunsight .tank .bg { stroke: rgba(255, 255, 255, .32); stroke-width: 3.5; }
 #gunsight .tank .fg { stroke: #fff; stroke-width: 3.5; }
-#gunsight.packing .tank .fg { stroke: #ff8a3c; }
+#gunsight.packing .tank .fg { stroke: var(--sight-pack); }
 #gunsight em { position: absolute; left: -22px; top: 47px; width: 44px; box-sizing: border-box; text-align: center; font-style: normal; font-size: 12px; font-weight: 700; line-height: 17px; color: var(--ink); background: rgba(255, 255, 255, .8); border: 1px solid var(--line); border-radius: 9px; }
 .gunning #reticle { opacity: 0 !important; }
 .scoping #gunsight { display: none; }
