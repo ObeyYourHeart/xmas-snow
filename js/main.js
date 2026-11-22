@@ -4506,7 +4506,7 @@ vec4 gfEvalMouth(
   float amt = clamp(max(max(happy, wink * 0.85), max(max(battle, surprise), max(sad, talk))), 0.0, 1.0);
   if (amt < 0.02) return vec4(0.0);
 
-  vec2 ctr = vec2(-0.002, 1.270);
+  vec2 ctr = vec2(0.000, 1.272);
   vec2 d = p - ctr;
   if (abs(d.x) > 0.062 || abs(d.y) > 0.038) return vec4(0.0);
 
@@ -4570,15 +4570,15 @@ vec4 gfEvalMouth(
   if (vBindPos.z > 0.15 && vBindPos.y > 1.20 && vBindPos.y < 1.50 && abs(vBindPos.x) < 0.23
       && (dot(abs(uExpr0), vec4(1.0)) + dot(abs(uExpr1), vec4(1.0)) > 0.001)) {
     float notHair_ = 1.0 - smoothstep(0.02, 0.08, rawLin_.b - rawLin_.r);
-    vec3 skinCol_ = vec3(0.955, 0.715, 0.675);
+    vec3 skinCol_ = vec3(0.942, 0.715, 0.676);
     vec3 lashCol_ = vec3(0.080, 0.032, 0.034);
     float happy_ = uExpr0.z, battle_ = uExpr0.w, surp_ = uExpr1.x, sad_ = uExpr1.y, talk_ = uExpr1.z, blush_ = uExpr1.w;
     float wink_ = clamp(abs(uExpr0.x - uExpr0.y), 0.0, 1.0);
 
     // Rosy cheek blush
     if (blush_ > 0.01) {
-      vec2 cL_ = (vBindPos.xy - vec2(-0.125, 1.308)) / vec2(0.056, 0.026);
-      vec2 cR_ = (vBindPos.xy - vec2(0.125, 1.314)) / vec2(0.056, 0.026);
+      vec2 cL_ = (vBindPos.xy - vec2(-0.136, 1.312)) / vec2(0.056, 0.026);
+      vec2 cR_ = (vBindPos.xy - vec2(0.136, 1.312)) / vec2(0.056, 0.026);
       float gL_ = exp(-dot(cL_, cL_) * 1.9), gR_ = exp(-dot(cR_, cR_) * 1.9);
       float bCov_ = clamp(gL_ + gR_, 0.0, 1.0) * blush_ * 0.56 * notHair_;
       // Subtle anime blush slash accents when extra happy/blushing
@@ -4589,12 +4589,12 @@ vec4 gfEvalMouth(
     }
 
     // Viewer-left eye (rose-pink iris, x < 0)
-    vec4 eyeL_ = gfEvalEye(vBindPos.xy, vec2(-0.122, 1.374), vec2(-0.115, 1.375), -1.0,
+    vec4 eyeL_ = gfEvalEye(vBindPos.xy, vec2(-0.127, 1.372), vec2(-0.127, 1.372), -1.0,
                            uExpr0.x, max(happy_, wink_ * uExpr0.x), battle_, surp_, sad_, notHair_, skinCol_, lashCol_);
     rawLin_ = mix(rawLin_, eyeL_.rgb, eyeL_.a);
 
     // Viewer-right eye (golden-amber iris, x > 0)
-    vec4 eyeR_ = gfEvalEye(vBindPos.xy, vec2(0.126, 1.380), vec2(0.122, 1.385), 1.0,
+    vec4 eyeR_ = gfEvalEye(vBindPos.xy, vec2(0.127, 1.372), vec2(0.127, 1.372), 1.0,
                            uExpr0.y, max(happy_, wink_ * uExpr0.y), battle_, surp_, sad_, notHair_, skinCol_, lashCol_);
     rawLin_ = mix(rawLin_, eyeR_.rgb, eyeR_.a);
 
