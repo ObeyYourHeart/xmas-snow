@@ -5,12 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>圣诞雪境</title>
 <meta name="description" content="林间小屋的平安夜：一片可以走上很久的雪地。电脑和手机的浏览器都能玩。">
-<link rel="stylesheet" href="style.css?v=11231955">
+<link rel="stylesheet" href="style.css?v=11232155">
 <link rel="preload" href="assets/models/claude_q.glb" as="fetch" crossorigin>
 </head>
 <body>
 <canvas id="view"></canvas>
-<div id="hud"></div>
-<script type="module" src="js/main.js?v=11232002"></script>
+<div id="hud">
+  <div id="start" class="overlay">
+    <div class="card glass">
+      <h1>圣诞雪境</h1>
+      <p class="sub">林间小屋的平安夜。趁天还亮，把空地布置好，天黑后点亮圣诞树。</p>
+      <div id="loadWrap">
+        <div class="l-top"><span id="loadText">❄ 正在唤醒雪境引擎…</span><b id="loadPct">4%</b></div>
+        <div class="l-track"><div id="loadFill" style="width:4%"></div></div>
+      </div>
+      <button id="btnStart" class="primary" disabled>正在铺雪… 4%</button>
+    </div>
+  </div>
+</div>
+<script type="module" src="js/main.js?v=11232155"></script>
 </body>
 </html>
