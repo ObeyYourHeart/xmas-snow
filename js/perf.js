@@ -498,7 +498,8 @@ export class PerfOptimizer {
     // Hide massive outdoor terrain, forest & snow meshes completely when inside Claude's Castle!
     if (g.terrain) {
       if (g.terrain.ground) g.terrain.ground.visible = !inside;
-      if (g.terrain.ice) g.terrain.ice.visible = !inside;
+      // Only toggle legacy terrain.ice if CrystalPond hasn't retired it!
+      if (g.terrain.ice && !g.pondFx) g.terrain.ice.visible = !inside;
     }
     if (g.forest) {
       if (g.forest.cards) g.forest.cards.visible = !inside;
