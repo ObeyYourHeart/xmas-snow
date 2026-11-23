@@ -326,6 +326,7 @@ export class GameplayPlus {
       observatory: [0, 6.8],
       clocktower: [0, 7.2],
       icefall: [0, 5.4],
+      ballroom: [0, 9.6],
       lookout: [0, 0]
     };
     const [ox, oz] = offsets[site.id] || [0, 5.2];
