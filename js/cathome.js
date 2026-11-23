@@ -1553,7 +1553,7 @@ export class CatHome {
       id: "cathome_summon",
       pos: new T.Vector3(px + bx, py + 1.1, pz + bz),
       r: 2.6,
-      label: () => (this.game.avatar === "gemini" ? "召唤哈基米双子星猫猫飞艇" : "召唤 Claude 橙花直升机"),
+      label: () => (this.game.avatar === "gemini" ? "召唤幻翼星云飞猫" : "召唤 Claude 橙花直升机"),
       can: () => !this.game.player.skiing && !this.game.player.riding && !this.game.player.seat && !!this.game.heli,
       act: () => {
         const gm = this.game, h = gm.heli;
@@ -1565,7 +1565,7 @@ export class CatHome {
         this.spawnStarBurst(px, py + 0.8, pz, 22, 3.4);
         gm.character?.play("cheer");
         gm.ui.toast(gm.avatar === "gemini"
-          ? "叮咚！哈基米双子星猫猫飞艇已经闪现降落到星猫小窝停机坪啦，快上去飞一圈喵～"
+          ? "喵呜～幻翼星云飞猫已经振翅飞落到星猫小窝召唤台啦，快骑上去兜风喵～"
           : "Claude 的橙花小直升机已经召到停机坪啦！", 4.8);
       }
     });
