@@ -175,6 +175,7 @@ kbd { display: inline-block; min-width: 26px; padding: 2px 7px; margin: 0 2px; b
 .playing #actbar { opacity: 1; }
 #actbar button, #emotes .grid button { display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--line); background: rgba(255, 255, 255, .62); border-radius: 9px; padding: 5px 11px 5px 6px; font-size: 13px; white-space: nowrap; }
 #actbar button:hover, #emotes .grid button:hover { background: #fff; }
+#actbar button.on { border-color: var(--accent); background: #fff; color: var(--accent); box-shadow: inset 0 0 0 1px rgba(179, 38, 30, .2); }
 #actbar .tr, #actbar .fl, .ontrain #actbar .ft, .flying #actbar .ft { display: none; }
 .ontrain #actbar .tr, .flying #actbar .fl { display: flex; }
 #actbar .fl { cursor: default; }
