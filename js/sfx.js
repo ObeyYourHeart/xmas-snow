@@ -698,5 +698,279 @@ export function enhanceAudio(audio, game) {
     }
   };
 
+  // =========================================================================
+  // 6. WORLD, MOVEMENT, INTERACTION & SPATIAL AMBIENT AUDIO OVERHAUL
+  // =========================================================================
+
+  // Tactile layered footsteps across Snow, Crystal Ice, Glacial Water, and Timber Wood!
+  audio.step = function (surface, vol = 1) {
+    if (!this.ctx) return;
+    const p = 0.88 + Math.random() * 0.24;
+    if (surface === "wood") {
+      // Warm resonant hollow timber plank footstep
+      toneSweep({ type: "triangle", f0: 112 * p, f1: 64 * p, dur: 0.085, gain: 0.072 * vol });
+      noiseSweep({ f0: 760 * p, f1: 420 * p, dur: 0.045, gain: 0.016 * vol, q: 1.1 });
+    } else if (surface === "water") {
+      // Bubbling glacial splash + sparkling droplet plink!
+      noiseSweep({ f0: 1850 * p, f1: 620 * p, dur: 0.17, gain: 0.032 * vol, q: 0.75, rev: 0.22 });
+      toneSweep({ delay: 0.018, f0: 360 * p, f1: 720 * p, dur: 0.07, gain: 0.018 * vol, rev: 0.26 });
+      if (Math.random() < 0.6) {
+        toneSweep({ delay: 0.055, f0: 980 * p, f1: 1420 * p, dur: 0.055, gain: 0.010 * vol, rev: 0.28 });
+      }
+    } else if (surface === "ice") {
+      // Crisp skate-edge crystal scrape + faint hollow glacial lake-ice resonance!
+      noiseSweep({ f0: 2700 * p, f1: 1450 * p, dur: 0.048, gain: 0.022 * vol, q: 1.4, rev: 0.20 });
+      toneSweep({ f0: 165 * p, f1: 118 * p, dur: 0.085, gain: 0.022 * vol, rev: 0.26 });
+      toneSweep({ delay: 0.008, f0: 2450 * p, dur: 0.045, gain: 0.007 * vol, rev: 0.22 });
+    } else {
+      // Crisp packed-snow dual-layer crunch (ice-grain high crackle + warm snow compression!)
+      noiseSweep({ f0: 1350 * p, f1: 720 * p, dur: 0.095, gain: 0.034 * vol, q: 0.85 });
+      noiseSweep({ delay: 0.022, f0: 2800 * p, f1: 1200 * p, dur: 0.065, gain: 0.016 * vol, q: 1.1 });
+      noiseSweep({ delay: 0.03, brown: true, f0: 520 * p, f1: 240 * p, dur: 0.13, gain: 0.028 * vol, q: 0.7 });
+    }
+  };
+
+  // Nimble coat-flutter jump + crisp surface-aware landing
+  audio.hop = function (pitch = 1) {
+    if (!this.ctx) return;
+    noiseSweep({ f0: 620 * pitch, f1: 1680 * pitch, dur: 0.10, gain: 0.024, q: 0.85 });
+    toneSweep({ type: "sine", f0: 240 * pitch, f1: 420 * pitch, dur: 0.09, gain: 0.022, rev: 0.16 });
+    if (pitch > 1.05) {
+      starArp([1046.5 * Math.min(1.4, pitch * 0.75), 1318.5 * Math.min(1.4, pitch * 0.75)], 0.028, 0.55, 0.20);
+    }
+  };
+
+  audio.land = function (surface, vol = 1) {
+    if (!this.ctx) return;
+    const p = 0.92 + Math.random() * 0.16;
+    if (surface === "wood") {
+      toneSweep({ type: "triangle", f0: 95 * p, f1: 48, dur: 0.14, gain: 0.11 * vol });
+      noiseSweep({ f0: 680, f1: 320, dur: 0.06, gain: 0.022 * vol, q: 1.0 });
+    } else if (surface === "ice") {
+      toneSweep({ f0: 130 * p, f1: 74, dur: 0.13, gain: 0.062 * vol, rev: 0.30 });
+      noiseSweep({ f0: 2400 * p, f1: 1100, dur: 0.06, gain: 0.028 * vol, q: 1.3, rev: 0.24 });
+      toneSweep({ delay: 0.01, f0: 2150 * p, dur: 0.08, gain: 0.012 * vol, rev: 0.32 });
+    } else if (surface === "water") {
+      noiseSweep({ f0: 1600, f1: 450, dur: 0.22, gain: 0.052 * vol, q: 0.7, rev: 0.25 });
+      toneSweep({ f0: 210, f1: 80, dur: 0.14, gain: 0.065 * vol });
+    } else {
+      noiseSweep({ f0: 980 * p, f1: 420, dur: 0.14, gain: 0.050 * vol, q: 0.7 });
+      noiseSweep({ delay: 0.02, brown: true, f0: 460, f1: 190, dur: 0.20, gain: 0.045 * vol, q: 0.6 });
+      toneSweep({ type: "sine", f0: 82 * p, f1: 42, dur: 0.12, gain: 0.062 * vol });
+    }
+  };
+
+  // Lush festive Fireworks launch & stereo sparkling explosion!
+  audio.rocket = function () {
+    if (!this.ctx) return;
+    noiseSweep({ f0: 780, f1: 3900, dur: 0.88, gain: 0.026, q: 2.2, rev: 0.30 });
+    toneSweep({ type: "sine", f0: 620, f1: 1980, dur: 0.76, gain: 0.014, rev: 0.32 });
+  };
+
+  audio.boom = function (vol = 1, big = false) {
+    if (!this.ctx) return;
+    toneSweep({ type: "sine", f0: big ? 105 : 132, f1: 32, dur: big ? 0.58 : 0.42, gain: 0.19 * vol, rev: 0.45 });
+    noiseSweep({ brown: true, f0: 820, f1: 140, dur: big ? 0.45 : 0.32, gain: 0.085 * vol, q: 0.55, rev: 0.40 });
+    // Cascading stereo firework crackle sparkles!
+    const cnt = big ? 18 : 10;
+    for (let i = 0; i < cnt; i++) {
+      const d = 0.16 + Math.random() * (big ? 1.05 : 0.75);
+      noiseSweep({ delay: d, f0: 3600 + Math.random() * 3400, dur: 0.032, gain: 0.015 * vol, q: 1.0, rev: 0.25 });
+      if (i % 3 === 0) {
+        toneSweep({
+          delay: d,
+          f0: 2100 + Math.random() * 1900,
+          dur: 0.08,
+          gain: 0.008 * vol,
+          rev: 0.38,
+          pan: (Math.random() - 0.5) * 1.4
+        });
+      }
+    }
+  };
+
+  // Authentic SLR mechanical camera shutter + magical photo glint!
+  audio.shutter = function () {
+    if (!this.ctx) return;
+    noiseSweep({ f0: 2800, f1: 1400, dur: 0.020, gain: 0.060, q: 1.4 });
+    toneSweep({ type: "triangle", f0: 210, f1: 95, dur: 0.032, gain: 0.042 });
+    noiseSweep({ delay: 0.068, f0: 1900, f1: 900, dur: 0.028, gain: 0.048, q: 1.2 });
+    starArp([1568, 2093], 0.035, 0.42, 0.22);
+  };
+
+  // Rich bronze-gold Castle Doorbell cathedral harmonic decay!
+  audio.bell = function () {
+    if (!this.ctx) return;
+    for (const [delay, base] of [[0, 784], [0.40, 622.25]]) {
+      [[1, 0.058, 2.6], [2.0, 0.030, 1.8], [2.76, 0.022, 1.3], [4.07, 0.012, 0.8], [5.43, 0.008, 0.5]].forEach(([m, g, d]) => {
+        toneSweep({ delay, f0: base * m, dur: d, gain: g, rev: 0.55 });
+      });
+    }
+  };
+
+  // Joyful festive Task-Complete / Pet-Caught celesta fanfare!
+  audio.done = function () {
+    if (!this.ctx) return;
+    starArp([523.25, 659.25, 783.99, 1046.5, 1318.5], 0.085, 0.92, 0.45);
+    catBell(0.32, 0.65, 1.15);
+  };
+
+  // Spine-tingling deep glacial ice fracture crack + echoing ice shards!
+  audio.iceCrack = function (vol = 1) {
+    if (!this.ctx) return;
+    toneSweep({ type: "sine", f0: 155, f1: 36, dur: 0.36, gain: 0.23 * vol, rev: 0.46 });
+    noiseSweep({ f0: 3200, f1: 950, dur: 0.08, gain: 0.095 * vol, q: 0.8, rev: 0.35 });
+    noiseSweep({ delay: 0.03, f0: 1500, f1: 520, dur: 0.24, gain: 0.055 * vol, q: 1.0, rev: 0.35 });
+    for (let i = 0; i < 9; i++) {
+      const d = 0.09 + Math.random() * 0.95;
+      toneSweep({
+        delay: d,
+        type: "triangle",
+        f0: 1900 + Math.random() * 2900,
+        f1: 1100 + Math.random() * 1400,
+        dur: 0.09,
+        gain: 0.016 * vol,
+        rev: 0.42,
+        pan: (Math.random() - 0.5) * 1.4
+      });
+    }
+  };
+
+  // New Gameplay SFX: Snow-Glide Dash, Starlight Fast-Travel, Star Shard Pickup, Sky Ring Boost, Wish Bell & Clocktower!
+  audio.dashWhoosh = function (gem = isGem()) {
+    if (!this.ctx) return;
+    noiseSweep({ f0: 520, f1: 2600, dur: 0.24, gain: 0.042, q: 0.9, rev: 0.24 });
+    toneSweep({ type: "triangle", f0: 260, f1: 580, dur: 0.18, gain: 0.032, rev: 0.22 });
+    if (gem) {
+      starArp([1175, 1568, 2093], 0.025, 0.58, 0.22);
+      catBell(0.03, 0.55, 1.32);
+    } else {
+      starArp([880, 1175, 1568], 0.03, 0.52, 0.20);
+    }
+  };
+
+  audio.fastTravel = function () {
+    if (!this.ctx) return;
+    noiseSweep({ f0: 480, f1: 3400, dur: 0.52, gain: 0.034, q: 1.3, rev: 0.45 });
+    starArp([523.25, 659.25, 783.99, 1046.5, 1318.5, 1567.98, 2093], 0.045, 0.85, 0.42);
+    catBell(0.28, 0.72, 1.25);
+  };
+
+  audio.pickupStar = function (count = 1) {
+    if (!this.ctx) return;
+    const shift = Math.pow(2, ((count - 1) % 7) / 12);
+    starArp([784 * shift, 988 * shift, 1175 * shift, 1568 * shift], 0.042, 0.92, 0.36);
+    catBell(0.12, 0.8, 1.15 * shift);
+  };
+
+  audio.skyRing = function (combo = 1) {
+    if (!this.ctx) return;
+    const s = Math.pow(2, Math.min(8, combo - 1) / 12);
+    noiseSweep({ f0: 620, f1: 3200, dur: 0.32, gain: 0.046, q: 1.0, rev: 0.34 });
+    starArp([659.25 * s, 987.77 * s, 1318.51 * s, 1975.53 * s], 0.032, 0.95, 0.42);
+  };
+
+  audio.wishBell = function () {
+    if (!this.ctx) return;
+    // Deep celestial aurora observatory bell + cascading glass-harp meteor shower!
+    [[1, 0.068, 3.4], [2.0, 0.034, 2.5], [3.01, 0.020, 1.8], [4.18, 0.012, 1.1]].forEach(([m, g, d]) => {
+      toneSweep({ f0: 523.25 * m, dur: d, gain: g, rev: 0.65 });
+    });
+    starArp([1046.5, 1174.66, 1318.51, 1567.98, 1760, 2093, 2349.32, 2637.02], 0.075, 0.78, 0.55);
+  };
+
+  audio.clocktowerChime = function () {
+    if (!this.ctx) return;
+    // Warm Westminster-inspired festive winter clocktower carillon!
+    const notes = [[0, 659.25], [0.34, 587.33], [0.68, 523.25], [1.02, 392.0], [1.52, 523.25]];
+    for (const [d, f] of notes) {
+      toneSweep({ delay: d, f0: f, dur: 1.4, gain: 0.055, rev: 0.58 });
+      toneSweep({ delay: d + 0.006, f0: f * 2.0, dur: 0.95, gain: 0.026, rev: 0.52 });
+      toneSweep({ delay: d + 0.012, f0: f * 2.76, dur: 0.55, gain: 0.014, rev: 0.46 });
+    }
+  };
+
+  // Spatial Ambient Soundscape hooked cleanly onto audio.update():
+  // - Soft bubbling mineral spring near 林间温泉 / 星猫牛奶泉
+  // - Gentle icy shoreline wavelets near 冰湖 open water
+  // - Ethereal distant Aurora northern-lights harmonic shimmer on clear aurora nights!
+  const origUpdate = audio.update.bind(audio);
+  let ambBubbleCd = 0;
+
+  audio.update = function (dt, fireDist, fireK, time, speed = 0, slip = 0) {
+    origUpdate(dt, fireDist, fireK, time, speed, slip);
+    if (!this.ctx || !game || !game.player) return;
+
+    const ctx = this.ctx;
+    const now = ctx.currentTime;
+    const px = game.player.pos.x;
+    const pz = game.player.pos.z;
+    const inside = !!(game.cabin && game.cabin.inside);
+
+    // Lazily create continuous gentle spatial ambient nodes once AudioContext starts
+    if (!this._worldAmb) {
+      // 1) Water / Hot-Spring murmur (bandpass white/brown mix)
+      const wSrc = ctx.createBufferSource();
+      wSrc.buffer = this.brown;
+      wSrc.loop = true;
+      const wBp = ctx.createBiquadFilter();
+      wBp.type = "bandpass";
+      wBp.frequency.value = 620;
+      wBp.Q.value = 1.1;
+      const wGain = ctx.createGain();
+      wGain.gain.value = 0;
+      wSrc.connect(wBp).connect(wGain).connect(this.master);
+      wSrc.start();
+
+      // 2) Ethereal Aurora Night Shimmer Pad (two ultra-soft detuned sine harmonics)
+      const a1 = ctx.createOscillator(); a1.type = "sine"; a1.frequency.value = 329.63; // E4
+      const a2 = ctx.createOscillator(); a2.type = "sine"; a2.frequency.value = 493.88; // B4
+      const a3 = ctx.createOscillator(); a3.type = "sine"; a3.frequency.value = 659.25; // E5
+      const aGain = ctx.createGain();
+      aGain.gain.value = 0;
+      a1.connect(aGain); a2.connect(aGain); a3.connect(aGain);
+      aGain.connect(this.master);
+      if (this.rev) {
+        const aRev = ctx.createGain();
+        aRev.gain.value = 0.65;
+        aGain.connect(aRev).connect(this.rev);
+      }
+      a1.start(); a2.start(); a3.start();
+
+      this._worldAmb = { wBp, wGain, a1, a2, a3, aGain };
+    }
+
+    const amb = this._worldAmb;
+    // Proximity to Hot Spring (-34, 0), Ice Lake open water, Kitty Milk Pool (62, 70), Icefall (118, -124)
+    let waterProx = 0;
+    if (!inside) {
+      const dSpring = Math.hypot(px - (-34), pz - 0);
+      const dCatPool = Math.hypot(px - 62, pz - 70);
+      const dIcefall = Math.hypot(px - 118, pz - (-124));
+      let dLake = 999;
+      if (game.cold && game.cold.water) {
+        dLake = Math.hypot(px - game.cold.water.x, pz - game.cold.water.z);
+      }
+      const nearHot = Math.max(0, 1 - Math.min(dSpring, dCatPool) / 14);
+      const nearLake = Math.max(0, 1 - Math.min(dLake, dIcefall) / 18);
+      waterProx = Math.max(nearHot * nearHot, nearLake * nearLake * 0.72);
+
+      // Gentle occasional bubbling droplet near hot springs!
+      if (nearHot > 0.35 && now > ambBubbleCd) {
+        ambBubbleCd = now + 0.45 + Math.random() * 0.9;
+        const f = 420 + Math.random() * 380;
+        toneSweep({ f0: f, f1: f * 1.45, dur: 0.065, gain: 0.008 * nearHot, rev: 0.35, pan: (Math.random() - 0.5) * 0.8 });
+      }
+    }
+    amb.wGain.gain.setTargetAtTime(0.055 * waterProx, now, 0.35);
+    amb.wBp.frequency.setTargetAtTime(520 + 180 * Math.sin(time * 0.7), now, 0.4);
+
+    // Ethereal Northern-Lights Aurora shimmer pad outdoors at night!
+    const aurora = !inside && game.env && game.env.state ? (game.env.state.aurora || 0) : 0;
+    const aurBreath = 0.7 + 0.3 * Math.sin(time * 0.27);
+    amb.aGain.gain.setTargetAtTime(0.0085 * aurora * aurBreath, now, 0.8);
+    amb.a2.frequency.setTargetAtTime(493.88 + Math.sin(time * 0.19) * 3.5, now, 0.6);
+  };
+
   return audio;
 }

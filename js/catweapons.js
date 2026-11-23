@@ -1038,7 +1038,7 @@ export function buildGeminiWeapons(tools, helpers) {
         burstBanana(b, true);
         continue;
       }
-      if (game.explore && game.explore.strike(b.pos.x, b.pos.z, rHit)) {
+      if (game.explore && (game.explore.strike(b.pos.x, b.pos.z, rHit) || game.explore.ballHit(b.pos))) {
         burstBanana(b, true);
         continue;
       }
