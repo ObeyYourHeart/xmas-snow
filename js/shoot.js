@@ -496,6 +496,7 @@ export function installShootingSystem(gun, tools, game, helpers) {
 
     if (!this.isGemini) {
       if (bow.drawing) { bow.drawing = false; bow.drawT = 0; bow.full = false; }
+      if (tools.bowPose) { tools.bowPose.on = false; tools.bowPose.aim = 0; tools.bowPose.draw = 0; tools.bowPose.loose = 0; }
       return origUpdate(dt);
     }
 
@@ -544,6 +545,15 @@ export function installShootingSystem(gun, tools, game, helpers) {
     if (this.out < 0.002) this.out = 0;
     player.ads = this.ads;
     player.gunK = this.out;
+
+    // Expose live two-handed archery pose state for Zu.update() & Ed.place()!
+    const bowAim = active ? Math.max(this.ads, bow.drawing ? 1 : (tools.aimT > 0.05 ? Math.min(1, tools.aimT / 0.25) : 0)) : 0;
+    if (!tools.bowPose) tools.bowPose = { on: false, aim: 0, draw: 0, loose: 0 };
+    tools.bowPose.on = active;
+    tools.bowPose.aim += (bowAim - tools.bowPose.aim) * (1 - Math.exp(-16 * dt));
+    const drawTarget = bow.drawing ? bow.drawT : 0;
+    tools.bowPose.draw += (drawTarget - tools.bowPose.draw) * (1 - Math.exp(-(bow.drawing ? 18 : 26) * dt));
+    tools.bowPose.loose = Math.max(0, Math.min(1, bow.justLoosed / 0.16));
 
     // Crosshair tightens dynamically as bowstring draws taut!
     this.spread = Math.max(0.0015, 0.024 * (1 - bow.drawT * 0.88) * (1 - this.ads * 0.35));

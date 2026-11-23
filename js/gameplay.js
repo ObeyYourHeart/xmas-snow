@@ -171,7 +171,7 @@ export class GameplayPlus {
   }
 
   // =========================================================================
-  // 3. SNOW-GLIDE DASH / FIGURE-SKATING BOOST (Double-tap W / KeyU / Alt / Button!)
+  // 3. SNOW-GLIDE DASH / FIGURE-SKATING BOOST (Double-tap W / KeyU / Button!)
   // =========================================================================
   setupDashControls() {
     const g = this.game;
@@ -191,8 +191,14 @@ export class GameplayPlus {
 
     addEventListener("keydown", (ev) => {
       if (ev.target && /INPUT|SELECT|TEXTAREA/.test(ev.target.tagName)) return;
+      // Clear held keys on Alt so Windows/browser Alt-menu or Alt+Tab never leaves movement keys stuck!
+      if (ev.code === "AltLeft" || ev.code === "AltRight") {
+        if (g.player && g.player.keys) g.player.keys.clear();
+        return;
+      }
+      if (ev.altKey || ev.ctrlKey || ev.metaKey) return;
       if (!g.started || !g.player || !g.player.enabled) return;
-      if (!ev.repeat && (ev.code === "KeyU" || ev.code === "AltLeft")) {
+      if (!ev.repeat && ev.code === "KeyU") {
         this.triggerDash();
       } else if (!ev.repeat && ev.code === "KeyW") {
         const now = performance.now();
@@ -203,6 +209,10 @@ export class GameplayPlus {
           this.lastWT = now;
         }
       }
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden && g.player && g.player.keys) g.player.keys.clear();
     });
   }
 
@@ -320,13 +330,14 @@ export class GameplayPlus {
       xmas: [-4.5, 5.5],
       fire: [4.2, 3.2],
       market: [0, -10.5],
-      wheel: [-7.5, 6.0],
+      wheel: [-8.5, -4.5],
       tower: [4.5, 4.5],
       cathome: [-6.5, 8.5],
       observatory: [0, 6.8],
       clocktower: [0, 7.2],
       icefall: [0, 5.4],
       ballroom: [0, 9.6],
+      maze: [0, 15.2],
       lookout: [0, 0]
     };
     const [ox, oz] = offsets[site.id] || [0, 5.2];

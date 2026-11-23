@@ -951,8 +951,9 @@ export function buildGeminiWeapons(tools, helpers) {
         // Physically pull back the 2 glowing bowstring segments & nocked 3D star-arrow!
         if (bl.bowRig) {
           const r = bl.bowRig;
-          const pullZ = -0.055 - drawT * 0.22 - this.kick * 0.032 * Math.cos(time * 68);
+          const pullZ = -0.055 - drawT * 0.28 - this.kick * 0.036 * Math.cos(time * 68);
           r.nockStar.position.set(0, 0.125, pullZ);
+          r.nockStar.scale.setScalar(1.0 + drawT * 0.55 + (isFull ? 0.25 * Math.sin(time * 24) : 0));
           const nockP = r.nockStar.position;
           for (const [seg, tip] of [[r.strL, r.tipL], [r.strR, r.tipR]]) {
             const len = tip.distanceTo(nockP);
@@ -964,10 +965,10 @@ export function buildGeminiWeapons(tools, helpers) {
           const showArrow = !bow || bow.drawing || bow.cool <= 0.06;
           r.nockedArrow.visible = showArrow;
           r.nockedArrow.position.set(0, 0.125, pullZ + 0.195);
-          r.naGlow.visible = isFull;
-          if (isFull) {
-            r.naGlow.rotation.z = time * 8.0;
-            r.naGlow.scale.setScalar(1.0 + 0.18 * Math.sin(time * 24));
+          r.naGlow.visible = isFull || drawT > 0.35;
+          if (r.naGlow.visible) {
+            r.naGlow.rotation.z = time * (isFull ? 9.0 : 4.5);
+            r.naGlow.scale.setScalar(isFull ? 1.05 + 0.20 * Math.sin(time * 24) : 0.45 + drawT * 0.55);
           }
         }
         // Floating star-gems above bow act as live Draw Tension Crystals!
