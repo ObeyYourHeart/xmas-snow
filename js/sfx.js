@@ -156,21 +156,21 @@ export function enhanceAudio(audio, game) {
         catBell(0.01, 0.85, 1.05);
         catBell(0.085, 0.65, 1.24);
       } else if (toolId === "cane") {
-        // 星霜大鱼干: playful elastic flop + frost sparkle
-        toneSweep({ type: "triangle", f0: 210, f1: 390, dur: 0.09, gain: 0.045, rev: 0.12 });
-        starArp([1175, 1568], 0.04, 0.6, 0.16);
+        // 星喵香蕉魔法杖: sparkly magic wand swirl + playful banana chime
+        starArp([784, 1046, 1318, 1568], 0.028, 0.72, 0.20);
+        catBell(0.06, 0.65, 1.18);
       } else if (toolId === "blaster") {
-        // 星弦猫耳光弓: harp string wake-up arpeggio
+        // 星弦猫耳光弓: harp bowstring wake-up arpeggio
         starArp([784, 988, 1175, 1568], 0.032, 0.72, 0.22);
       } else if (toolId === "hammer") {
-        // 巨型星光大猫爪: plush poof + happy bell + mini chirp
-        noiseSweep({ f0: 620, f1: 1200, dur: 0.11, gain: 0.024, q: 0.8 });
-        catBell(0.02, 0.75, 0.92);
-        kittyChirp(0.04, 0.55, true);
+        // 猫爪星光锤: plush cat-paw starlight hammer hum + bell + mini chirp
+        toneSweep({ type: "triangle", f0: 260, f1: 165, dur: 0.09, gain: 0.044 });
+        catBell(0.02, 0.80, 0.96);
+        kittyChirp(0.045, 0.50, true);
       } else if (toolId === "sword") {
-        // 双子星月猫镰: crystalline moon-chime draw
-        noiseSweep({ f0: 1200, f1: 3800, dur: 0.16, gain: 0.022, q: 1.4, rev: 0.25 });
-        starArp([1046, 1318, 2093], 0.03, 0.8, 0.30);
+        // 双子星芒刃: radiant twin-star crystal sword unsheathe ring!
+        noiseSweep({ f0: 1400, f1: 4200, dur: 0.16, gain: 0.024, q: 1.5, rev: 0.28 });
+        starArp([1046, 1568, 2093, 2637], 0.025, 0.82, 0.32);
       }
     } else {
       if (toolId === "net") {
@@ -212,15 +212,14 @@ export function enhanceAudio(audio, game) {
         catBell(0.03, 0.9, 1.08 * p);
         catBell(0.11, 0.72, 1.32 * p);
       } else if (toolId === "cane") {
-        // 星霜大鱼干: hefty comedic wind-whip
-        noiseSweep({ f0: 320 * p, f1: 1450 * p, dur: 0.17, gain: 0.038, q: 0.85, rev: 0.12 });
-        toneSweep({ type: "triangle", f0: 260 * p, f1: 145 * p, dur: 0.14, gain: 0.045 });
-        toneSweep({ delay: 0.04, f0: 1320 * p, f1: 1760 * p, dur: 0.10, gain: 0.012, rev: 0.2 });
+        // 星喵香蕉魔法杖: whimsical wand flourish swirl
+        noiseSweep({ f0: 820 * p, f1: 2600 * p, dur: 0.16, gain: 0.024, q: 1.2, rev: 0.22 });
+        starArp([880 * p, 1175 * p, 1568 * p], 0.024, 0.68, 0.18);
       } else if (toolId === "hammer") {
-        // 巨型星光大猫爪: heavy plush arc + jingling wrist bell
-        noiseSweep({ f0: 260 * p, f1: 1120 * p, dur: 0.24, gain: 0.044, q: 0.75, rev: 0.16 });
+        // 猫爪星光锤: weighty starlight mallet wind-whistle + cat bell
+        noiseSweep({ f0: 260 * p, f1: 1180 * p, dur: 0.24, gain: 0.044, q: 0.78, rev: 0.18 });
         noiseSweep({ brown: true, f0: 420, f1: 180, dur: 0.22, gain: 0.04, q: 0.6 });
-        catBell(0.05, 0.82, 0.96 * p);
+        catBell(0.05, 0.85, 0.98 * p);
       }
     } else {
       if (toolId === "net") {
@@ -248,21 +247,20 @@ export function enhanceAudio(audio, game) {
         noiseSweep({ f0: 1600, f1: 680, dur: 0.12, gain: 0.020, q: 0.9 });
         starArp([1318 * p, 1568 * p, 2093 * p], 0.028, 0.75, 0.22);
       } else if (toolId === "cane") {
-        // 星霜大鱼干: iconic comic wet-crisp FISH SLAP ("PA-JI!") + icy scale chime!
-        noiseSweep({ f0: 2600 * p, f1: 520 * p, dur: 0.085, gain: 0.068, q: 0.85, rev: 0.16 });
-        noiseSweep({ delay: 0.012, f0: 1250 * p, f1: 360 * p, dur: 0.11, gain: 0.044, q: 1.1 });
-        toneSweep({ type: "triangle", f0: 340 * p, f1: 92 * p, dur: 0.11, gain: 0.095 });
-        toneSweep({ type: "sine", f0: 145 * p, f1: 58 * p, dur: 0.14, gain: 0.08 });
-        starArp([1568 * p, 2093 * p, 2637 * p], 0.022, heavy ? 0.85 : 0.6, 0.18);
+        // 星喵香蕉魔法杖 melee/magic bonk: playful magical boing + golden chime!
+        toneSweep({ type: "triangle", f0: 320 * p, f1: 680 * p, dur: 0.11, gain: 0.068, rev: 0.20 });
+        toneSweep({ delay: 0.05, type: "sine", f0: 660 * p, f1: 420 * p, dur: 0.10, gain: 0.046, rev: 0.20 });
+        starArp([1318 * p, 1760 * p, 2093 * p], 0.022, heavy ? 0.85 : 0.65, 0.22);
       } else if (toolId === "hammer") {
-        // 巨型星光大猫爪: pillowy booming cat-paw slam + cute meow-chirp + star-bell ring!
-        toneSweep({ type: "sine", f0: 155 * p, f1: 42, dur: 0.26, gain: 0.145, rev: 0.26 });
-        toneSweep({ type: "triangle", f0: 260 * p, f1: 78, dur: 0.16, gain: 0.075 });
-        noiseSweep({ brown: true, f0: 680, f1: 180, dur: 0.22, gain: 0.072, q: 0.6, rev: 0.22 });
-        noiseSweep({ delay: 0.02, f0: 1800, f1: 700, dur: 0.16, gain: 0.032, q: 0.9 });
-        kittyChirp(0.025, 0.92, true);
-        catBell(0.03, 0.95, 1.0 * p);
-        starArp([1046, 1318, 1568, 2093], 0.028, 0.72, 0.28);
+        // 猫爪星光锤: double star-ring shockwave boom + cute meow-chirp + twin crystal bells!
+        toneSweep({ type: "sine", f0: 162 * p, f1: 42, dur: 0.28, gain: 0.148, rev: 0.28 });
+        toneSweep({ type: "triangle", f0: 290 * p, f1: 82, dur: 0.16, gain: 0.075 });
+        noiseSweep({ brown: true, f0: 680, f1: 180, dur: 0.24, gain: 0.072, q: 0.6, rev: 0.24 });
+        noiseSweep({ delay: 0.02, f0: 1900, f1: 720, dur: 0.18, gain: 0.032, q: 0.9 });
+        kittyChirp(0.025, 0.88, true);
+        catBell(0.02, 0.95, 1.0 * p);
+        catBell(0.11, 0.72, 1.28 * p);
+        starArp([1046, 1318, 1568, 2093], 0.028, 0.78, 0.30);
       }
     } else {
       if (toolId === "net") {
@@ -386,6 +384,83 @@ export function enhanceAudio(audio, game) {
     } else {
       noiseSweep({ f0: 3000, f1: 1800, dur: 0.022, gain: 0.026, q: 1.8 });
     }
+  };
+
+  // =========================================================================
+  // 3B. TRUE BOW DRAW/RELEASE, BANANA MAGIC & CAT-LURE SFX!
+  // =========================================================================
+  audio.bowDrawStart = function () {
+    if (!this.ctx) return;
+    // Silky rising bowstring tension stretch + faint harmonic glow
+    toneSweep({ type: "triangle", f0: 220, f1: 460, dur: 0.45, gain: 0.024, lp: 1500, rev: 0.20 });
+    noiseSweep({ f0: 900, f1: 2200, dur: 0.36, gain: 0.014, q: 1.8, rev: 0.16 });
+  };
+
+  audio.bowFull = function () {
+    if (!this.ctx) return;
+    // Radiant golden-cyan full-draw lock chime!
+    starArp([1046.5, 1318.5, 1568, 2093], 0.026, 0.88, 0.32);
+    catBell(0.05, 0.78, 1.38);
+  };
+
+  audio.bowRelease = function (charge = 0.5) {
+    if (!this.ctx) return;
+    const p = 0.95 + Math.random() * 0.10;
+    const isFull = charge >= 0.85;
+    const note = bowScale[bowStep++ % bowScale.length] * (isFull ? 1.12 : 0.94 + charge * 0.18);
+    // Elastic taut bowstring twang (low-mid fundamental snap + resonant fifth)
+    toneSweep({ type: "triangle", f0: (190 + charge * 110) * p, f1: 92 * p, dur: 0.16, gain: 0.068 + charge * 0.045, lp: 2200, rev: 0.24 });
+    toneSweep({ type: "sine", f0: note, f1: note * 0.985, dur: 0.22 + charge * 0.12, gain: 0.038 + charge * 0.022, rev: 0.38 });
+    // Feathered arrow cutting sharply through winter air!
+    noiseSweep({ f0: (1400 + charge * 2200) * p, f1: 520 * p, dur: 0.12 + charge * 0.08, gain: 0.032 + charge * 0.026, q: 1.3, rev: 0.22 });
+    if (isFull) {
+      // Blazing twin-star piercing arrow overtone ring!
+      starArp([1568, 2093, 2637], 0.022, 0.82, 0.26);
+    }
+  };
+
+  audio.bowArrowStick = function (vol = 1, hard = false) {
+    if (!this.ctx) return;
+    const p = 0.93 + Math.random() * 0.14;
+    // Tactile arrow thwack + subtle shaft vibration + snow sparkle
+    toneSweep({ type: "triangle", f0: (hard ? 260 : 175) * p, f1: 68, dur: 0.085, gain: (hard ? 0.085 : 0.055) * vol });
+    noiseSweep({ f0: hard ? 2400 : 1400, f1: 420, dur: 0.07, gain: 0.036 * vol, q: 0.9 });
+    toneSweep({ delay: 0.015, f0: (hard ? 1980 : 1480) * p, dur: 0.10, gain: 0.022 * vol, rev: 0.26 });
+  };
+
+  audio.bowArrowBurst = function (vol = 1) {
+    if (!this.ctx) return;
+    // Full-draw constellation star-burst impact!
+    toneSweep({ type: "sine", f0: 190, f1: 48, dur: 0.22, gain: 0.115 * vol, rev: 0.26 });
+    noiseSweep({ f0: 3200, f1: 700, dur: 0.16, gain: 0.048 * vol, q: 0.85, rev: 0.30 });
+    starArp([1046.5, 1318.5, 1760, 2093, 2637], 0.024, 0.92 * vol, 0.34);
+    catBell(0.03, 0.85 * vol, 1.25);
+  };
+
+  audio.bananaCast = function () {
+    if (!this.ctx) return;
+    const p = 0.95 + Math.random() * 0.10;
+    // Whimsical sparkling banana-magic wand swirl + boomerang whoosh!
+    starArp([784 * p, 988 * p, 1318 * p, 1760 * p], 0.026, 0.78, 0.24);
+    toneSweep({ delay: 0.03, type: "triangle", f0: 380 * p, f1: 720 * p, dur: 0.14, gain: 0.044, lp: 2200, rev: 0.22 });
+    noiseSweep({ f0: 680 * p, f1: 1950 * p, dur: 0.18, gain: 0.024, q: 1.1, rev: 0.20 });
+  };
+
+  audio.bananaHit = function () {
+    if (!this.ctx) return;
+    const p = 0.94 + Math.random() * 0.12;
+    // Hilarious magical banana-slip boing + golden star burst!
+    toneSweep({ type: "triangle", f0: 260 * p, f1: 780 * p, dur: 0.11, gain: 0.075, rev: 0.22 });
+    toneSweep({ delay: 0.08, type: "sine", f0: 760 * p, f1: 310 * p, dur: 0.13, gain: 0.062, rev: 0.22 });
+    starArp([1175 * p, 1568 * p, 2093 * p], 0.024, 0.82, 0.26);
+    catBell(0.04, 0.72, 1.2);
+  };
+
+  audio.lureChime = function () {
+    if (!this.ctx) return;
+    catBell(0.0, 0.88, 1.18);
+    catBell(0.07, 0.78, 1.42);
+    starArp([1318, 1568, 2093], 0.032, 0.70, 0.24);
   };
 
   // =========================================================================

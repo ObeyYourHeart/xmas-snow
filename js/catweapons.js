@@ -1,109 +1,84 @@
-// Gemini 全新原创猫猫专属五件套武器 (100% 独立猫猫设计，零照抄 Claude)
-// Slot 1 (net)     -> 星月逗猫棒 (Starlight Feather-Teaser Wand with swinging luminous feather-bell lure)
-// Slot 2 (cane)    -> 星霜大鱼干 (Giant Sculpted Shimmering Dried-Fish with ribboned tail grip)
-// Slot 3 (blaster) -> 星弦猫耳光弓 (Celestial Crescent Cat-Ear Harp-Bow with glowing strings & floating star-gem ammo)
-// Slot 4 (hammer)  -> 巨型星光大猫爪 (Oversized Fluffy Glowing Plush Cat-Paw Gauntlet with sakura toe beans)
-// Slot 5 (sword)   -> 双子星月猫镰 (Twin-Star Crescent Kitty-Scythe with orbiting star shards & cat-bell tassel)
+// Gemini 全新专属五件套武器 + 独立魔法效果引擎 (彻底告别照搬 Claude！)
+// Slot 1 (net)     -> 星月逗猫棒 (升级版流光羽毛猫铃逗猫棒 + 3D 星光捕猫环 + 6.5m 野生 Clawd 诱捕吸引魔法)
+// Slot 2 (cane)    -> 星喵香蕉魔法杖 (猫耳黄金香蕉水晶法杖 + 发射飞旋黄金魔导香蕉波与滑稽香蕉星雨爆裂！)
+// Slot 3 (blaster) -> 星弦猫耳光弓 (真实拉弓弓弦形变 + 搭箭实体星矢 + 蓄力星晶刻度，配合 shoot.js 真实抛物线弓箭系统)
+// Slot 4 (hammer)  -> 猫爪星光锤 (经典回归精修发光猫肉球星光锤 + 双层3D星环冲击波 + 超大范围弹跳震波)
+// Slot 5 (sword)   -> 双子星芒刃 (经典星芒圣剑精修回归 + 三连双子交叉剑气 + 蓄力星璇光环 + 跳劈星陨光柱)
 
 export const GEMINI_WEAPON_DEFS = {
   net: {
     id: "net",
     name: "星月逗猫棒",
     verb: "逗一逗",
-    tip: "发光羽毛与金铃铛逗猫棒！轻轻一甩撒出星光捕猫环，把面前的 Clawd 逗进图鉴"
+    tip: "流光羽翼与双金铃逗猫棒！一甩展开星光捕猫环，还能把附近的野生 Clawd 逗得蹦蹦跳跳凑过来"
   },
   cane: {
     id: "cane",
-    name: "星霜大鱼干",
-    verb: "鱼甩",
-    tip: "闪着星霜的大咸鱼干！一记咸鱼拍甩出星鳞雪花，把面前的目标啪叽打飞"
+    name: "星喵香蕉魔法杖",
+    verb: "香蕉魔法",
+    tip: "猫耳黄金香蕉法杖！一挥放出飞旋的黄金魔导香蕉魔法，远近目标都能打中并炸出香蕉星雨",
+    how: "按 J、鼠标右键或单击画面施放飞旋香蕉魔法！"
   },
   blaster: {
     id: "blaster",
     name: "星弦猫耳光弓",
-    verb: "星弦",
-    tip: "双翼弯月星光竖琴弓，拨动光弦连发青粉星矢，猫耳星晶准星指哪打哪",
-    how: "单击画面或按 J 拨弦射出星矢（按住 J 连发）；按住鼠标右键或 F 举弓瞄准"
+    verb: "拉弓",
+    tip: "真正的拉弓蓄力星光弓！轻点速射弧线星矢，按住蓄力至满弦射出高速贯星穿云箭，还能把箭插在雪地树干上",
+    how: "按住 J 或左键拉弓蓄力、松手放箭（轻点可速射）；按住鼠标右键或 F 举弓瞄准"
   },
   hammer: {
     id: "hammer",
-    name: "巨型星光大猫爪",
-    verb: "大猫拍",
-    tip: "毛茸茸的超大发光猫肉球拳套！一记如来神猫掌拍出青粉星环雪浪，周围的都会跳起来"
+    name: "猫爪星光锤",
+    verb: "星震",
+    tip: "超萌发光猫肉球星光锤！一锤砸出青粉双层星环大震波，把周围雪人、朋友和树雪统统震跳起来"
   },
   sword: {
     id: "sword",
-    name: "双子星月猫镰",
-    verb: "月斩",
-    tip: "猫耳弯月星晶长镰！连按三连星月斩，第三斩挥出飞旋双子星轮；蓄力松开 360° 旋镰，跳斩星陨下劈",
-    how: "连按 J（或单击、鼠标右键）是三连星月斩；斩完接着按住 J 蓄力，蓄满松开是星镰回旋斩；跳起来按 J 是星陨下劈"
+    name: "双子星芒刃",
+    verb: "星斩",
+    tip: "双子星晶护手与猫耳金铃剑柄。三连斩第三剑劈出双子交叉星芒波；蓄力放星璇环，跳斩召星陨光柱",
+    how: "连按 J（或单击、鼠标右键）三连星斩；斩完按住 J 蓄力松开释放星璇斩；跳起按 J 释放星陨下劈"
   }
 };
 
-// Custom Gemini carry poses so every unique cat weapon frames cleanly without clipping
 export const GEMINI_CARRY_POSES = {
   net: [0.24, 0.22, 0.96, -0.14, 0, 0, 0.44],
-  cane: [0.22, 0.22, 0.88, 0.08, 0, 0, 0.44],
+  cane: [0.20, 0.20, 0.88, 0.06, 0, 0, 0.44],
   blaster: [0.20, 0.44, 0.85, 0, 0, 0, 0.45],
-  hammer: [0.24, 0.22, 0.96, -0.20, 0, 0, 0.48]
+  hammer: [0.26, 0.20, 1.00, -0.22, 0, 0, 0.46]
 };
 
-// Thumbnail framing for each Gemini weapon in toolbar 3D snapshot renderer
 export const GEMINI_PIC_CAM = {
-  net: [[0.95, 0.45, 1.85], [0, 0.44, 0.06]],
-  cane: [[0.92, 0.34, 1.12], [0, 0.30, 0.02]],
-  blaster: [[0.82, 0.36, 0.88], [0, 0.08, 0.06]],
-  hammer: [[0.85, 0.32, 1.15], [0, 0.24, 0.02]],
-  sword: [[1.08, 0.44, 1.38], [0.06, 0.34, 0.08]]
+  net: [[0.94, 0.46, 1.85], [0, 0.44, 0.06]],
+  cane: [[1.02, 0.38, 1.24], [0, 0.34, 0.02]],
+  blaster: [[0.84, 0.36, 0.90], [0, 0.10, 0.06]],
+  hammer: [[1.00, 0.44, 1.32], [0, 0.28, 0.0]],
+  sword: [[1.02, 0.42, 1.32], [0.06, 0.28, 0.02]]
 };
 
-function makeFishScaleTex(T) {
+function makeBananaTex(T) {
   const cv = document.createElement("canvas");
-  cv.width = 128;
-  cv.height = 128;
+  cv.width = 64;
+  cv.height = 64;
   const c = cv.getContext("2d");
-
-  // Gradient from starry twilight-blue dorsal back to glistening pearl-silver belly
-  const grd = c.createLinearGradient(0, 0, 128, 0);
-  grd.addColorStop(0.0, "#eef6ff");
-  grd.addColorStop(0.28, "#bfe4ff");
-  grd.addColorStop(0.50, "#5c7ae8");
-  grd.addColorStop(0.72, "#bfe4ff");
-  grd.addColorStop(1.0, "#eef6ff");
-  c.fillStyle = grd;
-  c.fillRect(0, 0, 128, 128);
-
-  // Shimmering overlapping diamond/arc crystal scales
-  c.lineWidth = 1.6;
-  for (let row = 0; row < 10; row++) {
-    const y = row * 14;
-    const ox = (row % 2) * 8;
-    for (let col = -1; col < 10; col++) {
-      const x = col * 16 + ox;
-      c.strokeStyle = row % 2 === 0 ? "rgba(255, 255, 255, 0.52)" : "rgba(255, 214, 145, 0.45)";
-      c.beginPath();
-      c.arc(x, y, 8, 0.12 * Math.PI, 0.88 * Math.PI);
-      c.stroke();
-    }
-  }
-
-  // Tiny twinkling frost-star flecks
-  for (let i = 0; i < 18; i++) {
-    const sx = ((i * 37) % 116) + 6;
-    const sy = ((i * 53) % 116) + 6;
-    c.fillStyle = i % 2 ? "rgba(255, 180, 238, 0.82)" : "rgba(130, 245, 255, 0.85)";
-    c.fillRect(sx - 1.5, sy - 1.5, 3, 3);
-  }
-
+  const g = c.createLinearGradient(0, 0, 0, 64);
+  g.addColorStop(0.0, "#7c5a18");
+  g.addColorStop(0.12, "#ffe855");
+  g.addColorStop(0.55, "#ffd428");
+  g.addColorStop(0.88, "#fff278");
+  g.addColorStop(1.0, "#8c651c");
+  c.fillStyle = g;
+  c.fillRect(0, 0, 64, 64);
+  c.fillStyle = "rgba(255,255,255,0.45)";
+  c.fillRect(10, 8, 8, 48);
   const tex = new T.CanvasTexture(cv);
   tex.colorSpace = T.SRGBColorSpace;
-  tex.wrapS = tex.wrapT = T.RepeatWrapping;
-  tex.anisotropy = 8;
   return tex;
 }
 
 export function buildGeminiWeapons(tools, helpers) {
-  const T = tools.game.THREE;
+  const game = tools.game;
+  const T = game.THREE;
   const wrap = (m) => helpers.mat(m, { key: "plain" });
   const std = (r, g, b, rough = 0.4, extra = {}) =>
     wrap(new T.MeshStandardMaterial({ color: new T.Color(r, g, b), roughness: rough, ...extra }));
@@ -118,8 +93,8 @@ export function buildGeminiWeapons(tools, helpers) {
   // Cohesive Gemini Starlight Cat Palette
   const gIndigo = std(0.09, 0.11, 0.27, 0.34, { metalness: 0.48 });
   const gPeri = std(0.35, 0.42, 0.94, 0.28, { metalness: 0.26, emissive: new T.Color(0.12, 0.15, 0.44), emissiveIntensity: 0.24 });
-  const gGold = wrap(new T.MeshStandardMaterial({ color: new T.Color(0.99, 0.84, 0.48), roughness: 0.18, metalness: 0.92 }));
-  const gPearl = std(0.90, 0.94, 1.0, 0.16, { metalness: 0.42, emissive: new T.Color(0.36, 0.62, 1.0), emissiveIntensity: 0.18 });
+  const gGold = wrap(new T.MeshStandardMaterial({ color: new T.Color(0.99, 0.84, 0.46), roughness: 0.18, metalness: 0.92 }));
+  const gPearl = std(0.89, 0.94, 1.0, 0.16, { metalness: 0.44, emissive: new T.Color(0.38, 0.66, 1.0), emissiveIntensity: 0.18 });
   const gFur = std(0.97, 0.97, 1.0, 0.48, { metalness: 0.04, emissive: new T.Color(0.20, 0.24, 0.40), emissiveIntensity: 0.08 });
   const gSakura = wrap(new T.MeshStandardMaterial({
     color: new T.Color(1.0, 0.62, 0.86),
@@ -142,10 +117,24 @@ export function buildGeminiWeapons(tools, helpers) {
     roughness: 0.10,
     metalness: 0.15
   }));
+  const gBanana = wrap(new T.MeshStandardMaterial({
+    map: makeBananaTex(T),
+    color: new T.Color(1.0, 0.92, 0.42),
+    emissive: new T.Color(0.88, 0.66, 0.08),
+    emissiveIntensity: 0.42,
+    roughness: 0.24,
+    metalness: 0.18
+  }));
+  const gBananaGlow = wrap(new T.MeshStandardMaterial({
+    color: new T.Color(1.0, 0.92, 0.38),
+    emissive: new T.Color(1.0, 0.78, 0.12),
+    emissiveIntensity: 1.45,
+    roughness: 0.14
+  }));
   const gCrystalCore = wrap(new T.MeshStandardMaterial({
     color: new T.Color(0.88, 0.97, 1.0),
-    emissive: new T.Color(0.30, 0.86, 1.0),
-    emissiveIntensity: 0.35,
+    emissive: new T.Color(0.32, 0.88, 1.0),
+    emissiveIntensity: 0.30,
     roughness: 0.12,
     metalness: 0.18
   }));
@@ -168,7 +157,6 @@ export function buildGeminiWeapons(tools, helpers) {
     side: T.DoubleSide
   }));
 
-  // Geometry builders: 4-point star, cat ear, golden cat bell
   const mkStar = (rx, ry, inner = 0.32, depth = 0.012) => {
     const s = new T.Shape();
     for (let i = 0; i < 8; i++) {
@@ -188,6 +176,32 @@ export function buildGeminiWeapons(tools, helpers) {
     g.translate(0, 0, -depth * 0.25);
     return g;
   };
+
+  // Sculpted plump curved 3D Golden Banana geometry!
+  function mkBananaGeo(scale = 1) {
+    const curve = new T.CatmullRomCurve3([
+      new T.Vector3(-0.085 * scale, -0.025 * scale, 0),
+      new T.Vector3(-0.040 * scale, 0.065 * scale, 0),
+      new T.Vector3(0.045 * scale, 0.095 * scale, 0),
+      new T.Vector3(0.115 * scale, 0.045 * scale, 0),
+      new T.Vector3(0.140 * scale, -0.015 * scale, 0)
+    ]);
+    const geo = new T.TubeGeometry(curve, 18, 0.032 * scale, 10, false);
+    // Taper both tips realistically into banana points!
+    const pos = geo.attributes.position;
+    const uv = geo.attributes.uv;
+    for (let i = 0; i < pos.count; i++) {
+      const u = uv.getX(i); // 0..1 along length
+      const pt = curve.getPointAt(Math.max(0, Math.min(1, u)));
+      const taper = Math.pow(Math.sin(Math.max(0.04, Math.min(0.96, u)) * Math.PI), 0.58);
+      const rx = pos.getX(i) - pt.x;
+      const ry = pos.getY(i) - pt.y;
+      const rz = pos.getZ(i) - pt.z;
+      pos.setXYZ(i, pt.x + rx * taper, pt.y + ry * taper, pt.z + rz * taper);
+    }
+    geo.computeVertexNormals();
+    return geo;
+  }
 
   const earOutShape = new T.Shape();
   earOutShape.moveTo(-0.032, 0);
@@ -238,240 +252,172 @@ export function buildGeminiWeapons(tools, helpers) {
   const gripRingGeo = new T.TorusGeometry(0.022, 0.004, 6, 18).rotateX(Math.PI / 2);
 
   // =========================================================================
-  // 1. SLOT "net": 「星月逗猫棒」 (Starlight Feather-Teaser Wand!)
+  // 1. SLOT "net": 「星月逗猫棒」 (Upgraded Luxurious Starlight Cat-Teaser Wand!)
   // =========================================================================
   {
     const grp = new T.Group();
-    // Sleek arched cat-teaser fishing wand curving gracefully forward along +Z
+    // Graceful arched translucent crystal-gold cat-teaser wand curving gently forward
     const rodCurve = new T.CatmullRomCurve3([
       new T.Vector3(0, -0.10, 0),
       new T.Vector3(0, 0.16, 0),
-      new T.Vector3(0, 0.48, 0.025),
-      new T.Vector3(0, 0.74, 0.09),
-      new T.Vector3(0, 0.92, 0.21)
+      new T.Vector3(0, 0.50, 0.028),
+      new T.Vector3(0, 0.78, 0.11),
+      new T.Vector3(0, 0.95, 0.25)
     ]);
     grp.add(
-      mkMesh(new T.TubeGeometry(rodCurve, 26, 0.0105, 10, false), gIndigo),
-      // Velvet sakura-periwinkle handle wrap + gold grip rings + pommel star
+      mkMesh(new T.TubeGeometry(rodCurve, 28, 0.0095, 10, false), gPearl),
+      // Gold spiral wrap grip + pommel crescent star
       mkMesh(new T.CylinderGeometry(0.019, 0.021, 0.18, 12), gPeri, 0, -0.02, 0),
       mkMesh(gripRingGeo, gGold, 0, -0.095, 0),
       mkMesh(gripRingGeo, gGold, 0, -0.02, 0),
       mkMesh(gripRingGeo, gGold, 0, 0.055, 0),
-      mkMesh(new T.TorusGeometry(0.025, 0.0045, 6, 20), gGold, 0, -0.132, 0),
-      mkMesh(mkStar(0.021, 0.027, 0.32, 0.011), gCyan, 0, -0.132, 0)
+      mkMesh(new T.TorusGeometry(0.026, 0.0045, 6, 20), gGold, 0, -0.135, 0),
+      mkMesh(mkStar(0.022, 0.028, 0.32, 0.011), gCyan, 0, -0.135, 0)
     );
 
-    // Cute golden cat-ear & crescent collar ornament midway up the teaser wand
-    const collarY = 0.56, collarZ = 0.042;
-    const eL = mkEar(0.75, gGold), eR = mkEar(0.75, gGold);
-    eL.position.set(-0.030, collarY + 0.025, collarZ);
-    eL.rotation.z = 0.42;
-    eR.position.set(0.030, collarY + 0.025, collarZ);
-    eR.rotation.z = -0.42;
-    const bowL = mkMesh(new T.SphereGeometry(0.026, 10, 8), gSakura, -0.028, collarY - 0.015, collarZ + 0.018);
-    const bowR = mkMesh(new T.SphereGeometry(0.026, 10, 8), gSakura, 0.028, collarY - 0.015, collarZ + 0.018);
-    bowL.scale.set(1.25, 0.62, 0.42);
-    bowL.rotation.z = 0.25;
-    bowR.scale.set(1.25, 0.62, 0.42);
-    bowR.rotation.z = -0.25;
+    // Golden crescent-moon & cat-ear topper at the tip of the teaser rod!
+    const tipX = 0, tipY = 0.95, tipZ = 0.255;
+    const tipMoon = mkMesh(new T.TorusGeometry(0.044, 0.008, 8, 22, Math.PI * 1.38), gGold, tipX, tipY + 0.015, tipZ);
+    tipMoon.rotation.z = Math.PI * 0.78;
+    const teL = mkEar(0.62, gGold), teR = mkEar(0.62, gGold);
+    teL.position.set(-0.028, tipY + 0.045, tipZ); teL.rotation.z = 0.42;
+    teR.position.set(0.028, tipY + 0.045, tipZ); teR.rotation.z = -0.42;
+    const midBowL = mkMesh(new T.SphereGeometry(0.026, 10, 8), gSakura, -0.028, 0.56, 0.055);
+    const midBowR = mkMesh(new T.SphereGeometry(0.026, 10, 8), gSakura, 0.028, 0.56, 0.055);
+    midBowL.scale.set(1.25, 0.62, 0.42); midBowL.rotation.z = 0.25;
+    midBowR.scale.set(1.25, 0.62, 0.42); midBowR.rotation.z = -0.25;
     grp.add(
-      mkMesh(new T.TorusGeometry(0.022, 0.0055, 6, 18).rotateX(Math.PI / 2), gGold, 0, collarY, collarZ),
-      eL, eR, bowL, bowR,
-      mkMesh(mkStar(0.022, 0.028, 0.32, 0.010), gPink, 0, collarY + 0.005, collarZ + 0.018),
-      // Wand tip golden eyelet + glowing tip crystal
-      mkMesh(new T.TorusGeometry(0.018, 0.004, 6, 16), gGold, 0, 0.92, 0.215),
-      mkMesh(new T.SphereGeometry(0.016, 10, 8), gCyan, 0, 0.92, 0.215)
+      tipMoon, teL, teR,
+      mkMesh(mkStar(0.024, 0.030, 0.32, 0.010), gPink, tipX, tipY + 0.012, tipZ + 0.008),
+      midBowL, midBowR,
+      mkMesh(new T.TorusGeometry(0.020, 0.005, 6, 18).rotateX(Math.PI / 2), gGold, 0, 0.56, 0.038)
     );
 
-    // Dynamically swinging Feather-Bell Lure (bag uses local -Z as the downward hanging axis!)
+    // Upgraded Swinging Feather-Bell Lure (local -Z hangs downward via Ed.hang physics!)
     const lure = new T.Group();
     lure.matrixAutoUpdate = false;
-    // Luminous silk string (z = 0 down to z = -0.17)
-    const cord = mkMesh(new T.CylinderGeometry(0.0038, 0.0038, 0.17, 6).rotateX(Math.PI / 2), gGold, 0, 0, -0.085);
-    // Golden cat-bell + plush fluffy pom-pom core at z = -0.18
-    const lureBell = mkBell(1.32);
-    lureBell.position.set(0, 0, -0.175);
-    const pom = mkMesh(new T.SphereGeometry(0.044, 14, 10), gFur, 0, 0, -0.22);
-    // Floating holographic starlight capture ring orbiting the feather tassel
-    const haloRing = mkMesh(new T.TorusGeometry(0.105, 0.006, 8, 30), gCyan, 0, 0, -0.27);
-    const haloRing2 = mkMesh(new T.TorusGeometry(0.086, 0.0045, 6, 26), gPink, 0, 0, -0.27);
-    haloRing2.rotation.x = 0.22;
+    const cord = mkMesh(new T.CylinderGeometry(0.0036, 0.0036, 0.19, 6).rotateX(Math.PI / 2), gGold, 0, 0, -0.095);
+    // Twin golden jingle bells + fluffy glowing pom core!
+    const bell1 = mkBell(1.25); bell1.position.set(-0.020, 0, -0.185);
+    const bell2 = mkBell(1.05); bell2.position.set(0.022, 0.008, -0.205);
+    const pom = mkMesh(new T.SphereGeometry(0.046, 14, 10), gFur, 0, 0, -0.235);
+    // Double holographic orbiting starlight rings around the feather plume
+    const hRing1 = mkMesh(new T.TorusGeometry(0.118, 0.0065, 8, 32), gCyan, 0, 0, -0.295);
+    const hRing2 = mkMesh(new T.TorusGeometry(0.094, 0.005, 6, 28), gPink, 0, 0, -0.295);
+    hRing2.rotation.x = 0.28;
+    hRing2.rotation.y = 0.22;
 
-    // 6 layered sculpted iridescent feather plumes fanning out from z = -0.21 to z = -0.43!
+    // 8 lush iridescent peacock-aurora feathers + 2 long flowing silk ribbon streamers!
     const fShape = new T.Shape();
     fShape.moveTo(0, 0);
-    fShape.quadraticCurveTo(-0.028, 0.08, -0.020, 0.17);
-    fShape.quadraticCurveTo(0, 0.23, 0.020, 0.17);
-    fShape.quadraticCurveTo(0.028, 0.08, 0, 0);
-    const featherGeo = new T.ExtrudeGeometry(fShape, {
-      depth: 0.003, bevelEnabled: false, curveSegments: 8
-    });
-    featherGeo.rotateX(-Math.PI / 2); // now extends along -Z!
-    lure.add(cord, lureBell, pom, haloRing, haloRing2);
+    fShape.quadraticCurveTo(-0.032, 0.09, -0.022, 0.20);
+    fShape.quadraticCurveTo(0, 0.27, 0.022, 0.20);
+    fShape.quadraticCurveTo(0.032, 0.09, 0, 0);
+    const featherGeo = new T.ExtrudeGeometry(fShape, { depth: 0.003, bevelEnabled: false, curveSegments: 8 });
+    featherGeo.rotateX(-Math.PI / 2); // extends along -Z!
+    lure.add(cord, bell1, bell2, pom, hRing1, hRing2);
 
-    for (let i = 0; i < 6; i++) {
-      const ang = (i / 6) * Math.PI * 2;
+    for (let i = 0; i < 8; i++) {
+      const ang = (i / 8) * Math.PI * 2;
       const fMat = i % 3 === 0 ? gTranslucentCyan : i % 3 === 1 ? gTranslucentPink : gPearl;
-      const f = mkMesh(featherGeo, fMat, Math.cos(ang) * 0.018, Math.sin(ang) * 0.018, -0.21);
+      const f = mkMesh(featherGeo, fMat, Math.cos(ang) * 0.020, Math.sin(ang) * 0.020, -0.225);
       f.rotation.z = ang;
-      f.rotation.x = 0.22 + (i % 2) * 0.08;
-      f.scale.set(0.95, 1, 0.92 + (i % 2) * 0.16);
+      f.rotation.x = 0.24 + (i % 2) * 0.10;
+      f.scale.set(0.95, 1, 0.90 + (i % 2) * 0.22);
       lure.add(f);
     }
-    // Twinkling central hanging star charm at very bottom of the tassel
-    const tipStar = mkMesh(mkStar(0.036, 0.044, 0.34, 0.010), gGold, 0, 0, -0.41);
-    lure.add(tipStar);
+    // Dual flowing translucent star-ribbons streaming below the feathers
+    const ribA = mkMesh(new T.BoxGeometry(0.016, 0.003, 0.34), gTranslucentCyan, -0.024, 0.012, -0.40);
+    const ribB = mkMesh(new T.BoxGeometry(0.016, 0.003, 0.38), gTranslucentPink, 0.024, -0.012, -0.42);
+    ribA.rotation.y = 0.14;
+    ribB.rotation.y = -0.14;
+    const tipStar = mkMesh(mkStar(0.040, 0.048, 0.34, 0.012), gGold, 0, 0, -0.46);
+    lure.add(ribA, ribB, tipStar);
     grp.add(lure);
     grp.visible = false;
 
     const item = tools.items.net;
-    item.claudeHoop = item.hoop.clone();
-    item.geminiHoop = new T.Vector3(0, 0.92, 0.215);
-    item.claudeBag = item.bag;
+    item.claudeHoop = item.claudeHoop || item.hoop.clone();
+    item.geminiHoop = new T.Vector3(tipX, tipY, tipZ);
+    item.claudeBag = item.claudeBag || item.bag;
     item.geminiBag = lure;
+    item.lureHalo = hRing1;
+    item.lureHalo2 = hRing2;
     item.geminiGroup = grp;
     item.geminiDef = GEMINI_WEAPON_DEFS.net;
     item.root.add(grp);
   }
 
   // =========================================================================
-  // 2. SLOT "cane": 「星霜大鱼干」 (Giant Shimmering Starlight Dried-Fish!)
+  // 2. SLOT "cane": 「星喵香蕉魔法杖」 (Starlight Banana Magic Wand!)
   // =========================================================================
+  const bananaGeoMed = mkBananaGeo(1.0);
+  const bananaGeoMini = mkBananaGeo(0.45);
   {
     const grp = new T.Group();
-    const scaleTex = makeFishScaleTex(T);
-    const fishMat = wrap(new T.MeshStandardMaterial({
-      map: scaleTex,
-      roughness: 0.26,
-      metalness: 0.34,
-      emissive: new T.Color(0.14, 0.24, 0.46),
-      emissiveIntensity: 0.20
-    }));
-    const finMat = wrap(new T.MeshStandardMaterial({
-      color: new T.Color(0.68, 0.92, 1.0),
-      emissive: new T.Color(0.24, 0.72, 1.0),
-      emissiveIntensity: 0.45,
-      roughness: 0.16,
-      metalness: 0.25,
-      transparent: true,
-      opacity: 0.88,
-      side: T.DoubleSide
-    }));
-
-    // Sculpted plump fish body via LatheGeometry (y = 0.04 to y = 0.72), slightly flattened along X!
-    const profile = [
-      [0.018, 0.00],
-      [0.022, 0.06],
-      [0.046, 0.14],
-      [0.088, 0.26],
-      [0.108, 0.39],
-      [0.104, 0.52],
-      [0.078, 0.63],
-      [0.036, 0.70],
-      [0.002, 0.73]
-    ].map(([r, y]) => new T.Vector2(r, y));
-    const bodyGeo = new T.LatheGeometry(profile, 22);
-    const body = mkMesh(bodyGeo, fishMat, 0, 0.02, 0);
-    body.scale.set(0.64, 1.0, 1.18); // plump wide silhouette along Z!
-    grp.add(body);
-
-    // Fanned forked caudal tail fin at bottom grip (y = -0.15 to +0.02)
-    const tailShape = new T.Shape();
-    tailShape.moveTo(0, 0.02);
-    tailShape.quadraticCurveTo(0.055, -0.05, 0.105, -0.145);
-    tailShape.quadraticCurveTo(0.035, -0.11, 0, -0.082);
-    tailShape.quadraticCurveTo(-0.035, -0.11, -0.105, -0.145);
-    tailShape.quadraticCurveTo(-0.055, -0.05, 0, 0.02);
-    tailShape.closePath();
-    const tailGeo = new T.ExtrudeGeometry(tailShape, {
-      depth: 0.014, bevelEnabled: true, bevelThickness: 0.004, bevelSize: 0.004, bevelSegments: 1, curveSegments: 8
-    });
-    tailGeo.translate(0, 0, -0.007);
-    tailGeo.rotateY(Math.PI / 2); // fans along ±Z!
-    grp.add(mkMesh(tailGeo, finMat, 0, 0.01, 0));
-
-    // Cute sakura-gold satin ribbon bow & bell tied around the tail handle (grip area y = -0.02..+0.07)
-    const ribL = mkMesh(new T.SphereGeometry(0.030, 10, 8), gSakura, 0, 0.055, 0.042);
-    const ribR = mkMesh(new T.SphereGeometry(0.030, 10, 8), gSakura, 0, 0.055, -0.042);
-    ribL.scale.set(0.45, 0.72, 1.35);
-    ribR.scale.set(0.45, 0.72, 1.35);
-    const tailBell = mkBell(0.95);
-    tailBell.position.set(0.032, 0.038, 0);
+    // Slender royal golden-indigo magical scepter shaft (y = -0.14..+0.58)
     grp.add(
-      mkMesh(new T.CylinderGeometry(0.026, 0.024, 0.095, 12), gSakura, 0, 0.025, 0),
-      mkMesh(new T.TorusGeometry(0.028, 0.0048, 6, 18).rotateX(Math.PI / 2), gGold, 0, 0.068, 0),
-      mkMesh(new T.TorusGeometry(0.026, 0.0045, 6, 18).rotateX(Math.PI / 2), gGold, 0, -0.018, 0),
-      ribL, ribR, tailBell
+      mkMesh(new T.CylinderGeometry(0.013, 0.016, 0.72, 12), gIndigo, 0, 0.22, 0),
+      mkMesh(new T.CylinderGeometry(0.020, 0.021, 0.16, 12), gPeri, 0, -0.03, 0),
+      mkMesh(gripRingGeo, gGold, 0, -0.095, 0),
+      mkMesh(gripRingGeo, gGold, 0, -0.03, 0),
+      mkMesh(gripRingGeo, gGold, 0, 0.035, 0),
+      mkMesh(new T.TorusGeometry(0.024, 0.0045, 6, 18), gGold, 0, -0.14, 0),
+      mkMesh(mkStar(0.022, 0.028, 0.34, 0.010), gBananaGlow, 0, -0.14, 0)
     );
-
-    // Gleaming crystal dorsal fin (+Z side) & ventral fin (-Z side)
-    const dorsalShape = new T.Shape();
-    dorsalShape.moveTo(0, 0.20);
-    dorsalShape.quadraticCurveTo(0.09, 0.30, 0.08, 0.44);
-    dorsalShape.quadraticCurveTo(0.05, 0.54, 0, 0.57);
-    dorsalShape.closePath();
-    const dorsalGeo = new T.ExtrudeGeometry(dorsalShape, { depth: 0.008, bevelEnabled: true, bevelThickness: 0.0025, bevelSize: 0.0025, bevelSegments: 1 });
-    dorsalGeo.translate(0, 0, -0.004);
-    dorsalGeo.rotateY(-Math.PI / 2); // extends along +Z!
-    grp.add(mkMesh(dorsalGeo, finMat, 0, 0.02, 0.095));
-
-    const ventralShape = new T.Shape();
-    ventralShape.moveTo(0, 0.16);
-    ventralShape.quadraticCurveTo(0.06, 0.24, 0.045, 0.34);
-    ventralShape.lineTo(0, 0.36);
-    ventralShape.closePath();
-    const ventralGeo = new T.ExtrudeGeometry(ventralShape, { depth: 0.007, bevelEnabled: false });
-    ventralGeo.translate(0, 0, -0.0035);
-    ventralGeo.rotateY(Math.PI / 2); // extends along -Z!
-    grp.add(mkMesh(ventralGeo, gTranslucentPink, 0, 0.02, -0.088));
-
-    // Pectoral side fins, adorable rosy gill curves & bright big cartoon fish eyes on ±X!
-    const pecGeo = new T.SphereGeometry(0.044, 10, 8);
-    const eyeWhiteMat = std(0.99, 0.99, 1.0, 0.14);
-    const eyePupilMat = std(0.06, 0.07, 0.15, 0.10);
-    for (const side of [-1, 1]) {
-      const pec = mkMesh(pecGeo, finMat, side * 0.068, 0.42, -0.01);
-      pec.scale.set(0.30, 1.15, 0.65);
-      pec.rotation.z = side * -0.45;
-      // Cute bulging anime fish eye + sparkling cyan glint
-      const ew = mkMesh(new T.SphereGeometry(0.022, 12, 10), eyeWhiteMat, side * 0.048, 0.60, 0.028);
-      ew.scale.set(0.55, 1.0, 1.0);
-      const ep = mkMesh(new T.SphereGeometry(0.013, 10, 8), eyePupilMat, side * 0.056, 0.602, 0.032);
-      ep.scale.set(0.45, 1.0, 1.0);
-      const eg = mkMesh(new T.SphereGeometry(0.005, 8, 6), gCyan, side * 0.060, 0.610, 0.037);
-      // Rosy cute fish cheek blush
-      const blush = mkMesh(new T.SphereGeometry(0.016, 10, 8), gSakura, side * 0.053, 0.56, -0.006);
-      blush.scale.set(0.35, 0.65, 1.1);
-      // Golden gill curve accent
-      const gill = mkMesh(new T.TorusGeometry(0.042, 0.004, 6, 14, Math.PI * 0.72), gGold, side * 0.060, 0.51, 0.005);
-      gill.rotation.y = side * (Math.PI / 2);
-      gill.rotation.z = -0.35;
-      grp.add(pec, ew, ep, eg, blush, gill);
+    // Golden spiral ribbon climbing up the magic wand shaft!
+    const spiralPts = [];
+    for (let i = 0; i <= 20; i++) {
+      const u = i / 20;
+      const a = u * Math.PI * 5;
+      spiralPts.push(new T.Vector3(Math.cos(a) * 0.019, 0.06 + u * 0.48, Math.sin(a) * 0.019));
     }
+    grp.add(mkMesh(new T.TubeGeometry(new T.CatmullRomCurve3(spiralPts), 28, 0.0042, 6, false), gGold));
 
-    // Little golden lip ring at snout & orbiting frost-star halo charm
-    const lips = mkMesh(new T.TorusGeometry(0.017, 0.006, 8, 16).rotateX(Math.PI / 2), gSakura, 0, 0.742, 0.004);
-    const fishCharm = new T.Group();
-    fishCharm.position.set(0, 0.76, 0);
-    const s1 = mkMesh(mkStar(0.024, 0.030, 0.34, 0.009), gCyan, 0.055, 0.02, 0);
-    const s2 = mkMesh(mkStar(0.020, 0.026, 0.34, 0.009), gPink, -0.055, -0.02, 0);
-    fishCharm.add(s1, s2);
-    grp.add(lips, fishCharm);
+    // Collar ribbon bow + dangling golden cat-bell below the magical banana crown (y = 0.56)
+    const bowL = mkMesh(new T.SphereGeometry(0.030, 10, 8), gSakura, -0.034, 0.555, 0.018);
+    const bowR = mkMesh(new T.SphereGeometry(0.030, 10, 8), gSakura, 0.034, 0.555, 0.018);
+    bowL.scale.set(1.25, 0.62, 0.44); bowL.rotation.z = 0.26;
+    bowR.scale.set(1.25, 0.62, 0.44); bowR.rotation.z = -0.26;
+    const wandBell = mkBell(1.05);
+    wandBell.position.set(0, 0.525, 0.036);
+    const crownCup = mkMesh(new T.CylinderGeometry(0.044, 0.018, 0.055, 14), gGold, 0, 0.59, 0);
+    // Cute golden cat-ear prongs framing the glowing crystal banana!
+    const cEarL = mkEar(0.92, gGold), cEarR = mkEar(0.92, gGold);
+    cEarL.position.set(-0.072, 0.65, 0); cEarL.rotation.z = 0.56;
+    cEarR.position.set(0.072, 0.65, 0); cEarR.rotation.z = -0.56;
+    // Translucent golden star-ring halo surrounding the banana crystal
+    const crownHalo = mkMesh(new T.TorusGeometry(0.118, 0.008, 8, 28), gGold, 0, 0.72, 0);
+    const crownHalo2 = mkMesh(new T.TorusGeometry(0.105, 0.005, 6, 26), gCyan, 0, 0.72, 0);
+    // Sculpted radiant Golden Magic Banana floating at the center of the wand crown!
+    const mainBanana = mkMesh(bananaGeoMed, gBanana, -0.025, 0.69, 0);
+    mainBanana.scale.setScalar(1.02);
+    mainBanana.rotation.z = -0.32;
+
+    // Orbiting mini star-bananas & twin stars charm!
+    const charm = new T.Group();
+    charm.position.set(0, 0.72, 0);
+    const mb1 = mkMesh(bananaGeoMini, gBananaGlow, 0.135, 0.02, 0.02);
+    mb1.rotation.z = 0.5;
+    const ms1 = mkMesh(mkStar(0.024, 0.030, 0.34, 0.009), gCyan, -0.13, 0.03, -0.02);
+    const ms2 = mkMesh(mkStar(0.022, 0.028, 0.34, 0.009), gPink, 0, 0.14, 0.02);
+    charm.add(mb1, ms1, ms2);
+
+    grp.add(bowL, bowR, wandBell, crownCup, cEarL, cEarR, crownHalo, crownHalo2, mainBanana, charm);
     grp.visible = false;
 
     const item = tools.items.cane;
-    item.charm = fishCharm;
+    item.charm = charm;
     item.geminiGroup = grp;
     item.geminiDef = GEMINI_WEAPON_DEFS.cane;
     item.root.add(grp);
   }
 
   // =========================================================================
-  // 3. SLOT "blaster": 「星弦猫耳光弓」 (Celestial Crescent Cat-Ear Harp-Bow!)
+  // 3. SLOT "blaster": 「星弦猫耳光弓」 (True Flexing Bowstring + Nocked 3D Arrow!)
   // =========================================================================
   {
     const grp = new T.Group();
-    // Vertical star-indigo ergonomic bow riser grip (y = -0.10..+0.09, z = 0)
     grp.add(
       mkMesh(new T.CylinderGeometry(0.020, 0.023, 0.19, 12), gIndigo, 0, -0.01, -0.01),
       mkMesh(new T.CylinderGeometry(0.024, 0.024, 0.09, 12), gPeri, 0, -0.02, -0.01),
@@ -481,19 +427,18 @@ export function buildGeminiWeapons(tools, helpers) {
       mkMesh(mkStar(0.019, 0.025, 0.32, 0.010), gPink, 0, -0.125, -0.01)
     );
 
-    // Central sculpted crescent bridge & glowing cat-ear crystal iron sight (perfect in FP ADS!)
     const bridge = mkMesh(new T.SphereGeometry(0.048, 14, 10), gGold, 0, 0.105, 0.055);
     bridge.scale.set(1.35, 0.68, 1.30);
-    const sightRing = mkMesh(new T.TorusGeometry(0.044, 0.0055, 8, 24), gGold, 0, 0.145, 0.075);
-    const sightGem = mkMesh(mkStar(0.015, 0.019, 0.36, 0.006), gCyan, 0, 0.145, 0.075);
+    const sightRing = mkMesh(new T.TorusGeometry(0.045, 0.0055, 8, 24), gGold, 0, 0.145, 0.078);
+    const sightGem = mkMesh(mkStar(0.015, 0.019, 0.36, 0.006), gCyan, 0, 0.145, 0.078);
     const sEarL = mkEar(0.76, gGold), sEarR = mkEar(0.76, gGold);
-    sEarL.position.set(-0.038, 0.175, 0.075);
-    sEarL.rotation.z = 0.44;
-    sEarR.position.set(0.038, 0.175, 0.075);
-    sEarR.rotation.z = -0.44;
+    sEarL.position.set(-0.038, 0.175, 0.078); sEarL.rotation.z = 0.44;
+    sEarR.position.set(0.038, 0.175, 0.078); sEarR.rotation.z = -0.44;
     grp.add(bridge, sightRing, sightGem, sEarL, sEarR);
 
-    // Twin graceful sweeping celestial crescent bow limbs extending left (-X) & right (+X)!
+    // Sweeping celestial crescent bow limbs (-X & +X)
+    const tipL = new T.Vector3(-0.36, 0.132, -0.05);
+    const tipR = new T.Vector3(0.36, 0.132, -0.05);
     for (const side of [-1, 1]) {
       const limbCurve = new T.CatmullRomCurve3([
         new T.Vector3(side * 0.04, 0.105, 0.07),
@@ -510,55 +455,59 @@ export function buildGeminiWeapons(tools, helpers) {
       grp.add(
         mkMesh(new T.TubeGeometry(limbCurve, 22, 0.016, 10, false), gPearl),
         mkMesh(new T.TubeGeometry(innerArcCurve, 18, 0.007, 8, false), side < 0 ? gCyan : gPink),
-        // Gilded limb collars & star-wing tips
         mkMesh(new T.SphereGeometry(0.025, 10, 8), gGold, side * 0.17, 0.116, 0.165),
         mkMesh(new T.SphereGeometry(0.022, 10, 8), gGold, side * 0.36, 0.132, -0.055),
         mkMesh(mkStar(0.032, 0.042, 0.34, 0.012), side < 0 ? gCyan : gPink, side * 0.375, 0.135, -0.07)
       );
-      // Translucent crystal feather fin on outer bow shoulder
       const wingFin = mkMesh(new T.ConeGeometry(0.026, 0.13, 6), side < 0 ? gTranslucentCyan : gTranslucentPink, side * 0.25, 0.125, 0.145);
       wingFin.rotation.z = side * -1.2;
       wingFin.rotation.x = -0.35;
       grp.add(wingFin);
     }
 
-    // Glowing harp bowstrings stretched taut across the bow limbs (vibrate/pull on shot!)
-    const stringG = new T.Group();
-    const sMat1 = gCyan, sMat2 = gPink;
-    const makeChord = (x0, y0, z0, x1, y1, z1, mat, r = 0.0036) => {
-      const a = new T.Vector3(x0, y0, z0);
-      const b = new T.Vector3(x1, y1, z1);
-      const len = a.distanceTo(b);
-      const m = mkMesh(new T.CylinderGeometry(r, r, len, 6), mat);
-      m.position.copy(a).add(b).multiplyScalar(0.5);
-      m.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), b.clone().sub(a).normalize());
-      return m;
-    };
-    // Main V-bowstring meeting at glowing nock point + 4 decorative celestial harp strings
-    stringG.add(
-      makeChord(-0.355, 0.132, -0.05, 0, 0.115, -0.085, sMat1, 0.0042),
-      makeChord(0.355, 0.132, -0.05, 0, 0.115, -0.085, sMat2, 0.0042),
-      makeChord(-0.27, 0.124, 0.10, 0.27, 0.124, 0.10, sMat1, 0.0024),
-      makeChord(-0.21, 0.118, 0.14, 0.21, 0.118, 0.14, sMat2, 0.0024),
-      mkMesh(mkStar(0.018, 0.022, 0.35, 0.008), gGold, 0, 0.115, -0.085)
-    );
-    grp.add(stringG);
+    // Dynamic 2-segment flexing glowing bowstrings (`strL`, `strR`) that physically pull back on draw!
+    const unitCyl = new T.CylinderGeometry(0.0040, 0.0040, 1, 6);
+    const strL = mkMesh(unitCyl, gCyan);
+    const strR = mkMesh(unitCyl, gPink);
+    const nockStar = mkMesh(mkStar(0.018, 0.022, 0.35, 0.008), gGold, 0, 0.125, -0.055);
+    {
+      const up_ = new T.Vector3(0, 1, 0), tmp_ = new T.Vector3();
+      for (const [seg, tip] of [[strL, tipL], [strR, tipR]]) {
+        const len = tip.distanceTo(nockStar.position);
+        seg.position.copy(tip).add(nockStar.position).multiplyScalar(0.5);
+        seg.scale.set(1, len, 1);
+        seg.quaternion.setFromUnitVectors(up_, tmp_.copy(nockStar.position).sub(tip).normalize());
+      }
+    }
+    grp.add(strL, strR, nockStar);
 
-    // Floating holographic starlight focus ring ahead of the bow (z = +0.26, spins dynamically!)
+    // Real sculpted 3D Nocked Starlight Arrow sitting on the bowstring (slides back & flares on draw!)
+    const nockedArrow = new T.Group();
+    nockedArrow.position.set(0, 0.125, 0.12);
+    const naShaft = mkMesh(new T.CylinderGeometry(0.0075, 0.0075, 0.44, 8).rotateX(Math.PI / 2), gPearl, 0, 0, 0);
+    const naHead = mkMesh(new T.ConeGeometry(0.026, 0.10, 4).rotateX(Math.PI / 2), gCyan, 0, 0, 0.25);
+    const naGlow = mkMesh(mkStar(0.048, 0.048, 0.38, 0.010), gBananaGlow, 0, 0, 0.25);
+    naGlow.visible = false;
+    const naFletch = mkMesh(new T.ConeGeometry(0.022, 0.08, 3).rotateX(-Math.PI / 2), gPink, 0, 0, -0.19);
+    nockedArrow.add(naShaft, naHead, naGlow, naFletch);
+    grp.add(nockedArrow);
+
+    // Floating holographic starlight focus ring ahead of bow
     const muzzleRing = new T.Group();
-    muzzleRing.position.set(0, 0.11, 0.245);
-    const mStar = mkMesh(mkStar(0.058, 0.058, 0.44, 0.006), gTranslucentCyan);
-    const mRim = mkMesh(new T.TorusGeometry(0.052, 0.0042, 6, 24), gPink);
-    muzzleRing.add(mStar, mRim);
+    muzzleRing.position.set(0, 0.125, 0.245);
+    muzzleRing.add(
+      mkMesh(mkStar(0.056, 0.056, 0.44, 0.006), gTranslucentCyan),
+      mkMesh(new T.TorusGeometry(0.050, 0.0042, 6, 24), gPink)
+    );
     grp.add(muzzleRing);
 
-    // 5 levitating glowing star-crystal arrow gems arranged in an arc above the bow (live ammo indicator!)
+    // 5 hovering draw-tension star-gems above bow limbs (light up sequentially as you draw!)
     const gBalls = [];
-    const gemGeo = new T.OctahedronGeometry(0.022, 0);
+    const gemGeo = new T.OctahedronGeometry(0.020, 0);
     for (let k = 0; k < 5; k++) {
-      const u = (k - 2) / 2; // -1 .. +1
-      const orb = mkMesh(gemGeo, k % 2 ? gPink : gCyan, u * 0.16, 0.215 - u * u * 0.032, 0.12 - Math.abs(u) * 0.04);
-      orb.scale.set(0.75, 0.75, 1.55); // sleek crystalline star-arrow bolt shape!
+      const u = (k - 2) / 2;
+      const orb = mkMesh(gemGeo, k % 2 ? gPink : gCyan, u * 0.16, 0.22 - u * u * 0.032, 0.12 - Math.abs(u) * 0.04);
+      orb.scale.set(0.75, 0.75, 1.45);
       grp.add(orb);
       gBalls.push(orb);
     }
@@ -569,77 +518,77 @@ export function buildGeminiWeapons(tools, helpers) {
     item.geminiGroup = grp;
     item.geminiBalls = gBalls;
     item.starMuzzle = muzzleRing;
-    item.bowString = stringG;
+    item.bowRig = { strL, strR, tipL, tipR, nockStar, nockedArrow, naGlow, _a: new T.Vector3(), _b: new T.Vector3(), _up: new T.Vector3(0, 1, 0) };
     item.geminiDef = GEMINI_WEAPON_DEFS.blaster;
     item.root.add(grp);
   }
 
   // =========================================================================
-  // 4. SLOT "hammer": 「巨型星光大猫爪」 (Giant Fluffy Plush Cat-Paw Gauntlet!)
+  // 4. SLOT "hammer": 「猫爪星光锤」 (Beloved Upgraded Starlight Cat-Paw Hammer!)
   // =========================================================================
   {
     const grp = new T.Group();
+    const headCore = new T.CylinderGeometry(0.108, 0.108, 0.205, 24).rotateX(Math.PI / 2);
+    const headCapF = new T.CylinderGeometry(0.095, 0.108, 0.048, 24).rotateX(Math.PI / 2);
+    const headCapB = headCapF.clone().rotateY(Math.PI);
+    const headRim = new T.TorusGeometry(0.110, 0.012, 8, 28);
+    const furCollar = new T.TorusGeometry(0.036, 0.015, 8, 20).rotateX(Math.PI / 2);
+    const hGripR = new T.TorusGeometry(0.026, 0.0045, 6, 18).rotateX(Math.PI / 2);
 
-    // Fluffy plush wrist cuff sitting right over Gemini's wrist/forearm (y = -0.08..+0.12)
-    const cuffRim = mkMesh(new T.TorusGeometry(0.072, 0.032, 10, 22).rotateX(Math.PI / 2), gFur, 0, 0.01, 0);
-    const cuffSleeve = mkMesh(new T.CylinderGeometry(0.082, 0.068, 0.14, 16), gFur, 0, 0.08, 0);
-    const collarBand = mkMesh(new T.TorusGeometry(0.076, 0.011, 8, 22).rotateX(Math.PI / 2), gPeri, 0, 0.035, 0);
-    const goldBand = mkMesh(new T.TorusGeometry(0.078, 0.0055, 6, 22).rotateX(Math.PI / 2), gGold, 0, 0.052, 0);
-    // Dangling giant golden cat-bell & sakura bow on the cuff!
-    const cuffBell = mkBell(1.45);
-    cuffBell.position.set(0, 0.015, 0.095);
-    const cBowL = mkMesh(new T.SphereGeometry(0.032, 10, 8), gSakura, -0.036, 0.045, 0.082);
-    const cBowR = mkMesh(new T.SphereGeometry(0.032, 10, 8), gSakura, 0.036, 0.045, 0.082);
-    cBowL.scale.set(1.25, 0.65, 0.45);
-    cBowL.rotation.z = 0.25;
-    cBowR.scale.set(1.25, 0.65, 0.45);
-    cBowR.rotation.z = -0.25;
-    grp.add(cuffRim, cuffSleeve, collarBand, goldBand, cuffBell, cBowL, cBowR);
+    const eL = mkEar(1.24, gPeri), eR = mkEar(1.24, gPeri);
+    eL.position.set(-0.068, 0.665, 0); eL.rotation.z = 0.42;
+    eR.position.set(0.068, 0.665, 0); eR.rotation.z = -0.42;
+    const bell = mkBell(1.12);
+    bell.position.set(0, 0.42, 0.044);
 
-    // Massive oversized ultra-fluffy plush Cat-Paw Mitt (y = +0.16..+0.54)!
-    const palm = mkMesh(new T.SphereGeometry(0.165, 22, 16), gFur, 0, 0.30, 0);
-    palm.scale.set(1.12, 1.06, 0.68);
-    grp.add(palm);
+    // Side glowing twin stars + golden rings on left & right of hammerhead
+    const sideRingGeo = new T.TorusGeometry(0.048, 0.005, 6, 20);
+    const sR = mkMesh(mkStar(0.042, 0.052, 0.32, 0.012), gCyan, 0.112, 0.56, 0); sR.rotation.y = Math.PI / 2;
+    const sL = mkMesh(mkStar(0.042, 0.052, 0.32, 0.012), gPink, -0.112, 0.56, 0); sL.rotation.y = -Math.PI / 2;
+    const sFR = mkMesh(sideRingGeo, gGold, 0.110, 0.56, 0); sFR.rotation.y = Math.PI / 2;
+    const sFL = mkMesh(sideRingGeo, gGold, -0.110, 0.56, 0); sFL.rotation.y = -Math.PI / 2;
 
-    // 4 chubby rounded plush cat-toe knuckles fanning across the top of the paw!
-    const toes = [
-      [-0.145, 0.43, 0.01, 0.056, 0.38],
-      [-0.052, 0.485, 0.015, 0.062, 0.12],
-      [0.052, 0.485, 0.015, 0.062, -0.12],
-      [0.145, 0.43, 0.01, 0.056, -0.38]
-    ];
-    for (let i = 0; i < toes.length; i++) {
-      const [tx, ty, tz, tr, rz] = toes[i];
-      const toe = mkMesh(new T.SphereGeometry(tr, 16, 12), gFur, tx, ty, tz);
-      toe.scale.set(0.95, 1.18, 0.88);
-      toe.rotation.z = rz;
-      // Glowing sakura/cyan plump toe bean on the palm (+Z side)!
-      const bean = mkMesh(new T.SphereGeometry(tr * 0.64, 12, 10), i % 2 === 0 ? gPink : gSakura, tx * 0.96, ty - 0.005, tz + tr * 0.62);
-      bean.scale.set(0.86, 1.12, 0.42);
-      bean.rotation.z = rz;
-      // Sleek semi-translucent glowing cyan crystal cat-claw peeking from each fingertip!
-      const claw = mkMesh(new T.ConeGeometry(0.014, 0.055, 8), i % 2 === 0 ? gCyan : gPink, tx * 1.04, ty + tr * 1.15, tz + 0.015);
-      claw.rotation.z = rz * 0.9;
-      claw.rotation.x = 0.28;
-      grp.add(toe, bean, claw);
-    }
+    // 3D Glowing Sakura Cat-Paw Toe Beans on BOTH Hammer Strike Faces!
+    const mkPawFace = (dir) => {
+      const pg = new T.Group();
+      const pz = dir * 0.148;
+      const mn = mkMesh(new T.SphereGeometry(0.038, 14, 10), gSakura, 0, 0.538, pz);
+      const l1 = mkMesh(new T.SphereGeometry(0.020, 10, 8), gSakura, -0.016, 0.556, pz);
+      const l2 = mkMesh(new T.SphereGeometry(0.020, 10, 8), gSakura, 0.016, 0.556, pz);
+      mn.scale.set(1.16, 0.86, 0.36);
+      l1.scale.set(1.0, 0.92, 0.38);
+      l2.scale.set(1.0, 0.92, 0.38);
+      pg.add(mn, l1, l2);
+      for (const [px, py, pr, rz] of [[-0.052, 0.573, 0.016, 0.42], [-0.020, 0.598, 0.0175, 0.14], [0.020, 0.598, 0.0175, -0.14], [0.052, 0.573, 0.016, -0.42]]) {
+        const tb = mkMesh(new T.SphereGeometry(pr, 10, 8), gPink, px, py, pz);
+        tb.scale.set(0.86, 1.16, 0.42);
+        tb.rotation.z = rz;
+        pg.add(tb);
+      }
+      return pg;
+    };
 
-    // Plump heart-shaped glowing sakura main paw pad on the palm (+Z side)!
-    const padCenter = mkMesh(new T.SphereGeometry(0.072, 16, 12), gSakura, 0, 0.275, 0.105);
-    padCenter.scale.set(1.22, 0.88, 0.36);
-    const padLobeL = mkMesh(new T.SphereGeometry(0.040, 12, 10), gSakura, -0.036, 0.31, 0.105);
-    const padLobeR = mkMesh(new T.SphereGeometry(0.040, 12, 10), gSakura, 0.036, 0.31, 0.105);
-    padLobeL.scale.set(1.0, 0.95, 0.38);
-    padLobeR.scale.set(1.0, 0.95, 0.38);
-    const padStar = mkMesh(mkStar(0.028, 0.034, 0.34, 0.008), gCyan, 0, 0.285, 0.128);
-    grp.add(padCenter, padLobeL, padLobeR, padStar);
-
-    // Back of the plush paw (-Z side): starry twilight constellation medallion + golden star emblem!
-    const backMedallion = mkMesh(new T.CylinderGeometry(0.082, 0.082, 0.016, 22).rotateX(Math.PI / 2), gIndigo, 0, 0.30, -0.106);
-    const backRim = mkMesh(new T.TorusGeometry(0.084, 0.007, 8, 24), gGold, 0, 0.30, -0.110);
-    const backStar = mkMesh(mkStar(0.056, 0.068, 0.32, 0.012), gCyan, 0, 0.30, -0.116);
-    const backSubStar = mkMesh(mkStar(0.030, 0.036, 0.34, 0.012), gPink, 0, 0.30, -0.122);
-    grp.add(backMedallion, backRim, backStar, backSubStar);
+    grp.add(
+      mkMesh(new T.CylinderGeometry(0.017, 0.020, 0.66, 12), gIndigo, 0, 0.20, 0),
+      mkMesh(new T.CylinderGeometry(0.0245, 0.0255, 0.16, 12), gPeri, 0, -0.04, 0),
+      mkMesh(hGripR, gGold, 0, -0.10, 0),
+      mkMesh(hGripR, gGold, 0, -0.04, 0),
+      mkMesh(hGripR, gGold, 0, 0.02, 0),
+      mkMesh(new T.TorusGeometry(0.028, 0.005, 6, 20), gGold, 0, -0.146, 0),
+      mkMesh(mkStar(0.024, 0.030, 0.32, 0.012), gPink, 0, -0.146, 0),
+      mkMesh(furCollar, gFur, 0, 0.438, 0),
+      bell,
+      mkMesh(headCore, gIndigo, 0, 0.56, 0),
+      mkMesh(headCapF, gFur, 0, 0.56, 0.122),
+      mkMesh(headCapB, gFur, 0, 0.56, -0.122),
+      mkMesh(headRim, gGold, 0, 0.56, 0.098),
+      mkMesh(headRim, gGold, 0, 0.56, -0.098),
+      mkMesh(new T.TorusGeometry(0.112, 0.006, 6, 28), gCyan, 0, 0.56, 0),
+      sR, sL, sFR, sFL, eL, eR,
+      mkMesh(mkStar(0.026, 0.034, 0.32, 0.012), gGold, 0, 0.688, 0),
+      mkPawFace(1),
+      mkPawFace(-1)
+    );
     grp.visible = false;
 
     const item = tools.items.hammer;
@@ -649,110 +598,91 @@ export function buildGeminiWeapons(tools, helpers) {
   }
 
   // =========================================================================
-  // 5. SLOT "sword": 「双子星月猫镰」 (Twin-Star Crescent Kitty-Scythe!)
+  // 5. SLOT "sword": 「双子星芒刃」 (Radiant Twin-Star Longsword — NO Scythe!)
   // =========================================================================
   {
     const grp = new T.Group();
     const rotY90 = new T.Matrix4().makeRotationY(Math.PI / 2);
+    const guardY = 0.035;
+    const pomY = -0.158;
 
-    // Star-indigo & gold sleek scythe staff (y = -0.16..+0.64)
-    const staffRing = new T.TorusGeometry(0.019, 0.0042, 6, 18).rotateX(Math.PI / 2);
-    grp.add(
-      mkMesh(new T.CylinderGeometry(0.014, 0.0165, 0.80, 12), gIndigo, 0, 0.24, 0),
-      mkMesh(new T.CylinderGeometry(0.019, 0.020, 0.16, 12), gPeri, 0, -0.04, 0),
-      mkMesh(staffRing, gGold, 0, -0.105, 0),
-      mkMesh(staffRing, gGold, 0, -0.04, 0),
-      mkMesh(staffRing, gGold, 0, 0.025, 0),
-      mkMesh(staffRing, gGold, 0, 0.32, 0),
-      mkMesh(staffRing, gGold, 0, 0.56, 0),
-      // Pommel twin-star ring
-      mkMesh(new T.TorusGeometry(0.027, 0.0045, 6, 20).rotateY(Math.PI / 2), gGold, 0, -0.175, 0),
-      mkMesh(mkStar(0.022, 0.028, 0.32, 0.010).rotateY(Math.PI / 2), gCyan, 0, -0.175, 0)
-    );
-
-    // Crown clasp at top of staff (y = 0.62) with golden cat ears + dangling cat bell & twin ribbons!
-    const crownHub = mkMesh(new T.SphereGeometry(0.036, 14, 10), gGold, 0, 0.62, 0);
-    const coreStarL = mkMesh(mkStar(0.038, 0.048, 0.32, 0.014), gCyan, 0.028, 0.62, 0.01);
-    const coreStarR = mkMesh(mkStar(0.038, 0.048, 0.32, 0.014), gPink, -0.028, 0.62, 0.01);
-    coreStarL.rotation.y = Math.PI / 2;
-    coreStarR.rotation.y = -Math.PI / 2;
-    const scEarL = mkEar(0.95, gGold), scEarR = mkEar(0.95, gGold);
-    scEarL.position.set(-0.026, 0.665, -0.025);
-    scEarL.rotation.set(0, Math.PI / 2, 0.35);
-    scEarR.position.set(0.026, 0.665, -0.025);
-    scEarR.rotation.set(0, Math.PI / 2, -0.35);
-
-    const scBell = mkBell(1.05);
-    scBell.position.set(0, 0.545, -0.042);
-    const ribA = mkMesh(new T.BoxGeometry(0.006, 0.13, 0.024), gTranslucentCyan, 0.014, 0.48, -0.058);
-    const ribB = mkMesh(new T.BoxGeometry(0.006, 0.15, 0.024), gTranslucentPink, -0.014, 0.47, -0.064);
-    ribA.rotation.x = 0.25;
-    ribB.rotation.x = 0.32;
-    grp.add(crownHub, coreStarL, coreStarR, scEarL, scEarR, scBell, ribA, ribB);
-
-    // Sweeping Luminous Crescent Moon Scythe Blade extending forward along +Z (cutting edge!)
-    // Drawn in 2D (x -> +Z after rotateY(-PI/2), y -> Y)
-    const bladeShape = new T.Shape();
-    bladeShape.moveTo(-0.12, 0.66);
-    bladeShape.quadraticCurveTo(0.04, 0.83, 0.24, 0.72);
-    bladeShape.quadraticCurveTo(0.36, 0.62, 0.38, 0.42); // razor crescent tip at z = +0.38, y = 0.42!
-    bladeShape.quadraticCurveTo(0.30, 0.56, 0.18, 0.63);
-    bladeShape.quadraticCurveTo(0.05, 0.69, -0.08, 0.61);
-    bladeShape.closePath();
-    const bladeGeo = new T.ExtrudeGeometry(bladeShape, {
-      depth: 0.006,
-      bevelEnabled: true,
-      bevelThickness: 0.0065,
-      bevelSize: 0.009,
-      bevelSegments: 2,
-      curveSegments: 14
+    // Sleek sculpted crystalline twin-star longsword blade (edge along ±Z!)
+    const bladePts = [
+      [-0.028, 0.055], [-0.048, 0.140], [-0.030, 0.25],
+      [-0.037, 0.52], [-0.022, 0.67], [0, 0.80],
+      [0.022, 0.67], [0.037, 0.52], [0.030, 0.25],
+      [0.048, 0.140], [0.028, 0.055]
+    ];
+    const bShape = new T.Shape();
+    bShape.moveTo(bladePts[0][0], bladePts[0][1]);
+    for (const [bx, by] of bladePts.slice(1)) bShape.lineTo(bx, by);
+    bShape.closePath();
+    const bladeGeo = new T.ExtrudeGeometry(bShape, {
+      depth: 0.0045, bevelEnabled: true, bevelThickness: 0.0065, bevelSize: 0.011, bevelSegments: 2
     });
-    bladeGeo.translate(0, 0, -0.003);
-    bladeGeo.applyMatrix4(new T.Matrix4().makeRotationY(-Math.PI / 2)); // +X becomes +Z!
+    bladeGeo.translate(0, 0, -0.00225);
+    bladeGeo.applyMatrix4(rotY90);
     bladeGeo.computeVertexNormals();
 
-    // Glowing inner crescent energy edge (reacts to sword charge glow via geminiCore!)
-    const edgeShape = new T.Shape();
-    edgeShape.moveTo(-0.07, 0.62);
-    edgeShape.quadraticCurveTo(0.06, 0.72, 0.20, 0.64);
-    edgeShape.quadraticCurveTo(0.31, 0.56, 0.37, 0.43);
-    edgeShape.quadraticCurveTo(0.28, 0.58, 0.16, 0.67);
-    edgeShape.quadraticCurveTo(0.04, 0.75, -0.07, 0.62);
-    const edgeGeo = new T.ExtrudeGeometry(edgeShape, {
-      depth: 0.011,
-      bevelEnabled: false,
-      curveSegments: 12
+    // Swept golden celestial wing crossguard!
+    const wShape = new T.Shape();
+    wShape.moveTo(0.018, -0.018);
+    wShape.quadraticCurveTo(0.090, -0.012, 0.142, 0.074);
+    wShape.quadraticCurveTo(0.100, 0.048, 0.055, 0.030);
+    wShape.quadraticCurveTo(0.034, 0.024, 0.018, 0.018);
+    wShape.closePath();
+    const wingGeo = new T.ExtrudeGeometry(wShape, {
+      depth: 0.012, bevelEnabled: true, bevelThickness: 0.004, bevelSize: 0.004, bevelSegments: 1
     });
-    edgeGeo.translate(0, 0, -0.0055);
-    edgeGeo.applyMatrix4(new T.Matrix4().makeRotationY(-Math.PI / 2));
+    wingGeo.translate(0, 0, -0.006);
+    wingGeo.applyMatrix4(rotY90);
+    const wingMirror = wingGeo.clone().applyMatrix4(new T.Matrix4().makeRotationY(Math.PI));
 
-    // Golden decorative filigree spine along the upper crescent back
-    const spineCurve = new T.CatmullRomCurve3([
-      new T.Vector3(0, 0.65, -0.10),
-      new T.Vector3(0, 0.75, 0.06),
-      new T.Vector3(0, 0.73, 0.21),
-      new T.Vector3(0, 0.60, 0.32)
-    ]);
+    // Twin-star glowing hilt crystals (Cyan front-angled + Sakura-Pink back-angled)
+    const starBig = mkStar(0.036, 0.050, 0.30, 0.016);
+    const starMed = mkStar(0.030, 0.044, 0.30, 0.016);
+    const starPom = mkStar(0.024, 0.030, 0.32, 0.012);
+    const starShard = mkStar(0.017, 0.028, 0.34, 0.010);
 
-    // Orbiting twin-star crystal shards hovering gracefully inside the crescent arc!
+    const hiltGems = new T.Group();
+    const h1 = mkMesh(starBig, gCyan, 0.008, guardY + 0.008, 0.020); h1.rotation.set(0.10, 0.25, -0.14);
+    const h2 = mkMesh(starBig, gCyan, -0.008, guardY + 0.008, 0.020); h2.rotation.set(0.10, -0.25, 0.14);
+    const h3 = mkMesh(starMed, gPink, 0.008, guardY + 0.002, -0.020); h3.rotation.set(-0.10, -0.25, 0.14);
+    const h4 = mkMesh(starMed, gPink, -0.008, guardY + 0.002, -0.020); h4.rotation.set(-0.10, 0.25, -0.14);
+    hiltGems.add(h1, h2, h3, h4);
+
+    // Orbiting twin-star crystal shards gliding along the blade!
     const shards = new T.Group();
-    shards.position.set(0, 0.56, 0.16);
-    const sh1 = mkMesh(mkStar(0.022, 0.032, 0.34, 0.010), gCyan, 0.04, 0.03, 0.04);
-    const sh2 = mkMesh(mkStar(0.020, 0.028, 0.34, 0.010), gPink, -0.04, -0.025, -0.035);
-    sh1.rotation.y = 0.5;
-    sh2.rotation.y = -0.5;
+    shards.position.set(0, 0.30, 0);
+    const sh1 = mkMesh(starShard, gCyan, 0.036, 0.04, 0.046); sh1.rotation.y = 0.5;
+    const sh2 = mkMesh(starShard, gPink, -0.036, -0.03, -0.046); sh2.rotation.y = -0.5;
     shards.add(sh1, sh2);
 
+    // Subtle cute cat-ear golden pommel ornament & tiny cat bell at base of hilt!
+    const swRing = new T.TorusGeometry(0.0175, 0.0038, 6, 18).rotateX(Math.PI / 2);
+    const pomHalo = mkMesh(new T.TorusGeometry(0.026, 0.0042, 6, 20).rotateY(Math.PI / 2), gGold, 0, pomY - 0.010, 0);
+    const pomStar = mkMesh(starPom, gCyan, 0, pomY - 0.010, 0); pomStar.rotation.y = Math.PI / 2;
+    const pomBell = mkBell(0.75); pomBell.position.set(0, pomY - 0.042, 0);
+
     grp.add(
+      mkMesh(wingGeo, gGold, 0, guardY, 0),
+      mkMesh(wingMirror, gGold, 0, guardY, 0),
+      mkMesh(new T.CylinderGeometry(0.022, 0.024, 0.044, 12), gIndigo, 0, guardY, 0),
+      mkMesh(new T.TorusGeometry(0.033, 0.005, 8, 22), gGold, 0, guardY + 0.006, 0),
+      hiltGems,
       mkMesh(bladeGeo, gPearl),
-      mkMesh(edgeGeo, gCrystalCore),
-      mkMesh(new T.TubeGeometry(spineCurve, 20, 0.011, 8, false), gGold),
-      shards
+      mkMesh(new T.BoxGeometry(0.020, 0.49, 0.007), gCrystalCore, 0, 0.38, 0),
+      mkMesh(new T.BoxGeometry(0.023, 0.19, 0.0055), gGold, 0, 0.23, 0),
+      shards,
+      mkMesh(new T.CylinderGeometry(0.015, 0.017, 0.14, 12), gIndigo, 0, -0.06, 0),
+      mkMesh(swRing, gGold, 0, -0.015, 0),
+      mkMesh(swRing, gGold, 0, -0.06, 0),
+      mkMesh(swRing, gGold, 0, -0.105, 0),
+      pomHalo, pomStar, pomBell
     );
     grp.visible = false;
 
     const item = tools.items.sword;
-    // Replace previous Gemini sword model cleanly if one was already mounted
     if (item.geminiGroup && item.geminiGroup.parent) {
       item.geminiGroup.parent.remove(item.geminiGroup);
     }
@@ -763,44 +693,404 @@ export function buildGeminiWeapons(tools, helpers) {
     item.root.add(grp);
   }
 
-  // Also replace previous Gemini meshes for net/cane/blaster/hammer cleanly if needed
-  for (const id of ["net", "cane", "blaster", "hammer"]) {
+  // Prune any superseded Gemini groups cleanly
+  for (const id of ["net", "cane", "blaster", "hammer", "sword"]) {
     const it = tools.items[id];
     if (!it) continue;
-    // Remove any older hidden gemini meshes except claudeGroup and our newly built geminiGroup
     const keep = new Set([it.claudeGroup, it.geminiGroup]);
     for (const ch of it.root.children.slice()) {
       if (!keep.has(ch)) it.root.remove(ch);
     }
+    it.geminiPic = null;
   }
 
-  // Reset cached gemini thumbnails so shotPics() captures the brand-new original weapons!
-  for (const id in tools.items) {
-    tools.items[id].geminiPic = null;
+  // =========================================================================
+  // 6. UNIQUE 3D MAGIC SPELL & VFX POOL FOR GEMINI'S WEAPONS!
+  //    - Spinning 3D Golden Banana Magic Boomerangs (星喵香蕉魔法杖)
+  //    - Expanding 3D Holographic Lure & Hammer Starlight Shockwave Rings
+  //    - Rising 3D Starfall Light Pillar (双子星芒刃 跳劈星陨)
+  // =========================================================================
+  const bananas = [];
+  const bananaProjGeo = mkBananaGeo(3.25);
+  for (let i = 0; i < 6; i++) {
+    const bg = new T.Group();
+    const bm = mkMesh(bananaProjGeo, gBanana);
+    const bRing = mkMesh(new T.TorusGeometry(0.42, 0.022, 6, 20).rotateX(Math.PI / 2), gBananaGlow);
+    const bStar = mkMesh(mkStar(0.14, 0.14, 0.36, 0.024), gCyan, 0, 0.12, 0);
+    bg.add(bm, bRing, bStar);
+    bg.visible = false;
+    game.scene.add(bg);
+    bananas.push({
+      g: bg,
+      pos: new T.Vector3(),
+      dir: new T.Vector3(),
+      t: 0,
+      dist: 0,
+      maxDist: 12.5,
+      on: false,
+      trail: 0,
+      seen: new Set()
+    });
   }
 
-  // Helper called every frame by Ed.update() for lively Gemini weapon animations
-  tools._updateCatWeapons = function (time) {
-    if (!this.isGemini) return;
-    if (this.held === "cane" && this.items.cane.charm) {
-      this.items.cane.charm.rotation.y = time * 2.5;
-    }
-    if (this.held === "blaster") {
-      const bl = this.items.blaster;
-      if (bl.starMuzzle) {
-        bl.starMuzzle.rotation.z = time * 2.6;
-        const sc = 1 + this.kick * 0.28;
-        bl.starMuzzle.scale.setScalar(sc);
-      }
-      if (bl.bowString) {
-        // Subtle glowing bowstring twang vibration after firing!
-        bl.bowString.position.z = -this.kick * 0.032 * Math.cos(time * 65);
-      }
-      if (bl.geminiBalls) {
-        for (let k = 0; k < bl.geminiBalls.length; k++) {
-          const b = bl.geminiBalls[k];
-          b.rotation.z = time * 2.4 + k * 0.9;
+  // Expanding 3D luminous rings (used by Cat-Teaser Lure, Hammer Double-Wave, Sword Spin Nova!)
+  const fxRings = [];
+  const fxRingGeo = new T.TorusGeometry(1.0, 0.055, 8, 36).rotateX(Math.PI / 2);
+  for (let i = 0; i < 10; i++) {
+    const mat = new T.MeshBasicMaterial({
+      color: 0x62f2ff,
+      transparent: true,
+      opacity: 0.9,
+      depthWrite: false,
+      fog: false
+    });
+    const m = new T.Mesh(fxRingGeo, mat);
+    m.visible = false;
+    m.renderOrder = 6;
+    m.frustumCulled = false;
+    game.scene.add(m);
+    fxRings.push({ m, on: false, t: 0, dur: 0.5, r0: 0.2, r1: 2.0 });
+  }
+
+  function spawnFxRing(x, y, z, r0, r1, dur, hexColor) {
+    const slot = fxRings.find((r) => !r.on) || fxRings[0];
+    slot.on = true;
+    slot.t = 0;
+    slot.dur = dur;
+    slot.r0 = r0;
+    slot.r1 = r1;
+    slot.m.position.set(x, y, z);
+    slot.m.scale.setScalar(r0);
+    slot.m.material.color.setHex(hexColor);
+    slot.m.material.opacity = 0.92;
+    slot.m.visible = true;
+  }
+
+  // Towering translucent Starfall Plunge Light Pillar for 双子星芒刃!
+  const pillarMat = new T.MeshBasicMaterial({
+    color: 0x76f4ff,
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+    fog: false,
+    side: T.DoubleSide
+  });
+  const pillarMesh = new T.Mesh(new T.CylinderGeometry(0.32, 0.72, 6.2, 18, 1, true), pillarMat);
+  pillarMesh.visible = false;
+  pillarMesh.renderOrder = 6;
+  pillarMesh.frustumCulled = false;
+  game.scene.add(pillarMesh);
+  const pillarState = { on: false, t: 0, dur: 0.55 };
+
+  // --- UNIQUE EFFECT 1: 星月逗猫棒 Lure & Holographic Capture Ring ---
+  tools._onGeminiNet = function (cx, cz, gy, ax, az) {
+    spawnFxRing(cx, gy + 0.08, cz, 0.25, 1.38, 0.46, 0x5ef2ff);
+    spawnFxRing(cx, gy + 0.14, cz, 0.18, 1.12, 0.52, 0xff80de);
+
+    // Generous capture sweep + Playful Cat-Lure Magic attracting nearby wild Clawds!
+    const caught = game.pets && game.pets.net(cx, cz, 1.15);
+    let lured = 0;
+    if (game.pets && game.pets.all) {
+      for (const a of game.pets.all) {
+        if (!a.root.visible || a.tame || !game.pets.catchable(a)) continue;
+        const dx = cx - a.x, dz = cz - a.z;
+        const d = Math.hypot(dx, dz);
+        if (d > 1.0 && d < 6.8) {
+          // Lure the curious Clawd playfully toward Gemini's sparkling feather-bell!
+          const pull = Math.min(1.35, d * 0.45);
+          const nx = a.x + (dx / d) * pull;
+          const nz = a.z + (dz / d) * pull;
+          if (!game.player.allowed || game.player.allowed(nx, nz)) {
+            a.x = nx;
+            a.z = nz;
+          }
+          a.hopV = Math.max(a.hopV || 0, 2.5);
+          a.yaw = Math.atan2(dx, dz);
+          game.puffs.spawn(a.x, game.world.groundAt(a.x, a.z) + 0.5, a.z, 0, 1.2, 0, 0.09, 0.85, 0.45, 1, 0.55, 0.92, 0.5, 1.2);
+          if (a.cool <= 0 && game.pets.say) {
+            game.pets.say(a, "（被发光逗猫棒吸引过来了！）", 2.4);
+            a.cool = 2.6;
+          }
+          lured++;
         }
+      }
+    }
+    if (lured > 0 && game.audio.lureChime) game.audio.lureChime();
+
+    // Tame pets & nearby friends hop playfully when teased!
+    if (!caught && game.friends && game.friends.list) {
+      for (const fr of game.friends.list) {
+        if (Math.hypot(fr.x - cx, fr.z - cz) < 2.2) {
+          game.friends.hopNow(fr, 0.24, 0.45);
+        }
+      }
+    }
+    return !!caught;
+  };
+
+  // --- UNIQUE EFFECT 2: 星喵香蕉魔法杖 Spinning Golden Banana Magic Spell! ---
+  tools._onGeminiBanana = function (px, py, pz, ax, az) {
+    const slot = bananas.find((b) => !b.on) || bananas[0];
+    slot.on = true;
+    slot.t = 0;
+    slot.dist = 0;
+    slot.trail = 0;
+    slot.seen.clear();
+    slot.pos.set(px + ax * 0.75, py + 0.92, pz + az * 0.75);
+    slot.dir.set(ax, 0, az).normalize();
+    slot.g.position.copy(slot.pos);
+    slot.g.scale.setScalar(0.95);
+    slot.g.visible = true;
+
+    // Casting golden-star sparkle burst right at the wand tip!
+    for (let k = 0; k < 10; k++) {
+      const a = (k / 10) * Math.PI * 2;
+      const sp = 1.6 + Math.random() * 2.2;
+      game.puffs.spawn(
+        slot.pos.x, slot.pos.y, slot.pos.z,
+        Math.cos(a) * sp, 0.7 + Math.random() * 1.4, Math.sin(a) * sp,
+        0.06 + Math.random() * 0.05, 0.88, 0.30 + Math.random() * 0.25,
+        1.0, k % 2 ? 0.88 : 0.65, k % 2 ? 0.16 : 0.95, 3.2, 1.3
+      );
+    }
+    game.sparks.spawn(slot.pos.x, slot.pos.y, slot.pos.z, 0, 0, 0, 0.48, 0.95, 0.11, 3.4, 2.8, 0.5, 0, 0);
+    if (game.audio.bananaCast) game.audio.bananaCast();
+  };
+
+  function burstBanana(b, hitSomething = false) {
+    const p = b.pos;
+    spawnFxRing(p.x, Math.max(game.world.groundAt(p.x, p.z) + 0.08, p.y - 0.3), p.z, 0.18, 1.55, 0.40, 0xffe24a);
+    for (let k = 0; k < 16; k++) {
+      const a = Math.random() * Math.PI * 2;
+      const sp = 1.6 + Math.random() * 3.2;
+      const isGold = k % 3 !== 0;
+      game.puffs.spawn(
+        p.x, p.y, p.z,
+        Math.cos(a) * sp, 1.0 + Math.random() * 2.6, Math.sin(a) * sp,
+        0.08 + Math.random() * 0.07, 0.88, 0.42 + Math.random() * 0.30,
+        isGold ? 1.0 : 0.32, isGold ? 0.86 : 0.92, isGold ? 0.14 : 1.0, 4.8, 1.6
+      );
+    }
+    game.sparks.spawn(p.x, p.y, p.z, 0, 0, 0, 0.62, 0.95, 0.14, 3.6, 2.9, 0.55, 0, 0);
+    if (hitSomething && game.audio.bananaHit) game.audio.bananaHit();
+    b.on = false;
+    b.g.visible = false;
+  }
+
+  // --- UNIQUE EFFECT 4: 猫爪星光锤 Double Starlight Shockwave Bounce! ---
+  tools._onGeminiHammer = function (cx, cz, gy) {
+    const wideR = 3.4;
+    spawnFxRing(cx, gy + 0.08, cz, 0.35, wideR, 0.54, 0x52f0ff);
+    spawnFxRing(cx, gy + 0.16, cz, 0.25, wideR * 0.72, 0.44, 0xff74dc);
+    // Also give nearby friends a joyful bounce!
+    if (game.friends && game.friends.list) {
+      for (const fr of game.friends.list) {
+        const d = Math.hypot(fr.x - cx, fr.z - cz);
+        if (d < wideR) {
+          game.friends.hopNow(fr, 0.42, 0.55);
+        }
+      }
+    }
+    if (game.pets) game.pets.shock(cx, cz, wideR);
+    if (game.folk) {
+      for (const f of game.folk.around(cx, cz, wideR - 0.3)) {
+        const m = f.clawd || f.snowman;
+        if (m) game.folk.hit(f, "punch", m.x - cx, m.z - cz);
+      }
+    }
+  };
+
+  // --- UNIQUE EFFECT 5: 双子星芒刃 Twin Cross-Waves, Spin Nova & Starfall Pillar! ---
+  tools._onGeminiSwordSpin = function (px, gy, pz) {
+    spawnFxRing(px, gy + 0.15, pz, 0.4, 2.6, 0.48, 0x52f0ff);
+    spawnFxRing(px, gy + 0.25, pz, 0.3, 2.1, 0.42, 0xff74dc);
+  };
+
+  tools._onGeminiSwordPlunge = function (px, gy, pz) {
+    spawnFxRing(px, gy + 0.08, pz, 0.45, 3.2, 0.56, 0x52f0ff);
+    spawnFxRing(px, gy + 0.14, pz, 0.35, 2.5, 0.48, 0xff74dc);
+    pillarState.on = true;
+    pillarState.t = 0;
+    pillarMesh.position.set(px, gy + 3.1, pz);
+    pillarMesh.scale.set(0.6, 1, 0.6);
+    pillarMat.opacity = 0.72;
+    pillarMesh.visible = true;
+  };
+
+  // =========================================================================
+  // 7. PER-FRAME ANIMATIONS & SPELL SIMULATION!
+  // =========================================================================
+  const _probeV = new T.Vector3();
+  const _velV = new T.Vector3();
+  const _prevT = { val: 0 };
+
+  tools._updateCatWeapons = function (time) {
+    const dt = _prevT.val ? Math.min(0.066, Math.max(0.001, time - _prevT.val)) : 0.016;
+    _prevT.val = time;
+
+    // 1) Animate held Gemini weapons
+    if (this.isGemini) {
+      if (this.held === "net" && this.items.net.lureHalo) {
+        this.items.net.lureHalo.rotation.z = time * 2.2;
+        this.items.net.lureHalo2.rotation.z = -time * 2.8;
+      }
+      if (this.held === "cane" && this.items.cane.charm) {
+        this.items.cane.charm.rotation.y = time * 2.6;
+        this.items.cane.charm.position.y = 0.72 + Math.sin(time * 4.0) * 0.014;
+      }
+      if (this.held === "blaster") {
+        const bl = this.items.blaster;
+        const bow = this.gun && this.gun.bow;
+        const drawT = bow && bow.drawing ? bow.drawT : 0;
+        const isFull = !!(bow && bow.full);
+
+        if (bl.starMuzzle) {
+          bl.starMuzzle.rotation.z = time * (2.4 + drawT * 7.0);
+          bl.starMuzzle.scale.setScalar(1 + drawT * 0.25 + this.kick * 0.24);
+        }
+        // Physically pull back the 2 glowing bowstring segments & nocked 3D star-arrow!
+        if (bl.bowRig) {
+          const r = bl.bowRig;
+          const pullZ = -0.055 - drawT * 0.22 - this.kick * 0.032 * Math.cos(time * 68);
+          r.nockStar.position.set(0, 0.125, pullZ);
+          const nockP = r.nockStar.position;
+          for (const [seg, tip] of [[r.strL, r.tipL], [r.strR, r.tipR]]) {
+            const len = tip.distanceTo(nockP);
+            seg.position.copy(tip).add(nockP).multiplyScalar(0.5);
+            seg.scale.set(1, len, 1);
+            seg.quaternion.setFromUnitVectors(r._up, r._a.copy(nockP).sub(tip).normalize());
+          }
+          // Show nocked arrow while ready or drawing (hide right after loosing during short cooldown!)
+          const showArrow = !bow || bow.drawing || bow.cool <= 0.06;
+          r.nockedArrow.visible = showArrow;
+          r.nockedArrow.position.set(0, 0.125, pullZ + 0.195);
+          r.naGlow.visible = isFull;
+          if (isFull) {
+            r.naGlow.rotation.z = time * 8.0;
+            r.naGlow.scale.setScalar(1.0 + 0.18 * Math.sin(time * 24));
+          }
+        }
+        // Floating star-gems above bow act as live Draw Tension Crystals!
+        if (bl.geminiBalls) {
+          for (let k = 0; k < bl.geminiBalls.length; k++) {
+            const b = bl.geminiBalls[k];
+            b.visible = !bow || !bow.drawing || drawT >= (k + 0.5) / 5.2;
+            b.rotation.z = time * (2.2 + drawT * 5.0) + k * 0.9;
+            const sc = isFull ? 1.25 : (bow && bow.drawing ? 0.95 + drawT * 0.25 : 0.85);
+            b.scale.set(0.75 * sc, 0.75 * sc, 1.45 * sc);
+          }
+        }
+      }
+    }
+
+    // 2) Update flying 3D Golden Banana Magic Boomerangs!
+    for (const b of bananas) {
+      if (!b.on) continue;
+      b.t += dt;
+      const step = 14.5 * dt;
+      b.dist += step;
+      // Graceful subtle magic banana boomerang curve + floating wave!
+      const curveAngle = 0.22 * dt;
+      const cx = b.dir.x * Math.cos(curveAngle) - b.dir.z * Math.sin(curveAngle);
+      const cz = b.dir.x * Math.sin(curveAngle) + b.dir.z * Math.cos(curveAngle);
+      b.dir.set(cx, 0, cz).normalize();
+
+      b.pos.x += b.dir.x * step;
+      b.pos.z += b.dir.z * step;
+      const gy = game.world.groundAt(b.pos.x, b.pos.z);
+      b.pos.y = gy + 0.86 + Math.sin(b.t * 9.0) * 0.14;
+      b.g.position.copy(b.pos);
+      b.g.rotation.set(0.25, b.t * 15.0, b.t * 8.0);
+
+      // Golden banana stardust trail!
+      if ((b.trail += step) > 0.36) {
+        b.trail = 0;
+        game.puffs.spawn(
+          b.pos.x, b.pos.y, b.pos.z,
+          (Math.random() - 0.5) * 0.6, 0.3 + Math.random() * 0.5, (Math.random() - 0.5) * 0.6,
+          0.075, 0.85, 0.36, 1.0, 0.88, 0.18, 1.2, 1.5
+        );
+      }
+
+      // Check collisions along banana magic flight (friends, folk, pets, trees, explore targets, walls)!
+      let hitEnd = false;
+      const rHit = 0.82;
+      if (game.pets && game.pets.strike(b.pos.x, b.pos.z, rHit, "cane", b.dir.x, b.dir.z)) {
+        burstBanana(b, true);
+        continue;
+      }
+      const fk = game.folk && game.folk.target(b.pos.x, b.pos.z, rHit);
+      if (fk && !b.seen.has(fk)) {
+        b.seen.add(fk);
+        game.folk.hit(fk, "kick", b.dir.x, b.dir.z);
+        burstBanana(b, true);
+        continue;
+      }
+      const fr = game.friends && game.friends.near(b.pos.x, b.pos.z, rHit);
+      if (fr && !b.seen.has(fr)) {
+        b.seen.add(fr);
+        game.friends.hit(fr, "punch", b.dir.x, b.dir.z);
+        game.friends.hopNow(fr, 0.52, 0.6);
+        if (fr.cool <= 0) {
+          game.friends.say(fr, "哇呀！踩到发光魔法香蕉啦！", 3.2);
+          fr.cool = 2.8;
+        }
+        burstBanana(b, true);
+        continue;
+      }
+      if (game.explore && game.explore.strike(b.pos.x, b.pos.z, rHit)) {
+        burstBanana(b, true);
+        continue;
+      }
+      for (const tr of game.forest.trees) {
+        if (!tr.near || b.seen.has(tr)) continue;
+        if (Math.hypot(b.pos.x - tr.x, b.pos.z - tr.z) < tr.r + 0.55) {
+          b.seen.add(tr);
+          game.player.dumpSnow(tr, b.pos.x, b.pos.y + 0.8, b.pos.z, 85);
+          hitEnd = true;
+          break;
+        }
+      }
+      if (hitEnd) {
+        burstBanana(b, true);
+        continue;
+      }
+      if (game.player.allowed && !game.player.allowed(b.pos.x, b.pos.z)) {
+        burstBanana(b, false);
+        continue;
+      }
+      if (b.dist >= b.maxDist) {
+        burstBanana(b, false);
+      }
+    }
+
+    // 3) Update expanding 3D magic rings (Teaser Lure, Hammer Wave, Sword Nova)
+    for (const r of fxRings) {
+      if (!r.on) continue;
+      r.t += dt;
+      const u = r.t / r.dur;
+      if (u >= 1) {
+        r.on = false;
+        r.m.visible = false;
+        continue;
+      }
+      const ease = 1 - (1 - u) * (1 - u);
+      r.m.scale.setScalar(r.r0 + (r.r1 - r.r0) * ease);
+      r.m.material.opacity = 0.92 * (1 - u);
+    }
+
+    // 4) Update Starfall Plunge Light Pillar
+    if (pillarState.on) {
+      pillarState.t += dt;
+      const u = pillarState.t / pillarState.dur;
+      if (u >= 1) {
+        pillarState.on = false;
+        pillarMesh.visible = false;
+      } else {
+        const sc = 0.55 + u * 1.45;
+        pillarMesh.scale.set(sc, 1.0 + u * 0.3, sc);
+        pillarMat.opacity = 0.72 * (1 - u) * (1 - u);
+        pillarMesh.rotation.y = time * 4.5;
       }
     }
   };

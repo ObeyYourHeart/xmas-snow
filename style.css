@@ -350,6 +350,12 @@ html, body { overscroll-behavior: none; }
    and count below it. (No transitions: gun.js sets every value itself.) */
 #gunsight { position: absolute; left: 50%; top: 50%; width: 0; height: 0; display: none; pointer-events: none; --c: #fff; --sight-hot: #ff8a3c; --sight-hit: #ff7a2a; --sight-pack: #ff8a3c; }
 #gunsight.gemini { --sight-hot: #ff6bd6; --sight-hit: #4ceeff; --sight-pack: #4ceeff; }
+#gunsight.bow i { border-radius: 99px; background: linear-gradient(135deg, #74f5ff, #ff8ae2); }
+#gunsight.bow u { width: 7px; height: 7px; left: -3.5px; top: -3.5px; transform: rotate(45deg); border-radius: 2px; background: #74f5ff; }
+#gunsight.bow.full { --c: #ffe46b; }
+#gunsight.bow.full u { background: #ffe46b; box-shadow: 0 0 10px #ff8ae2, 0 0 16px #4ceeff; }
+#gunsight.bow.full .tank .fg { stroke: #ffe46b; filter: drop-shadow(0 0 5px #ff7ce5); }
+#gunsight.bow.full em { background: linear-gradient(135deg, rgba(116, 245, 255, .95), rgba(255, 166, 232, .95)); color: #191c3a; border-color: #ffe46b; }
 #gunsight.on { display: block; }
 #gunsight.hot { --c: var(--sight-hot); }
 #gunsight i { position: absolute; box-sizing: border-box; background: var(--c); border: 1px solid rgba(20, 40, 60, .6); border-radius: 2px; }
