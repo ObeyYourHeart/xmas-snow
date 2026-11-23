@@ -39,30 +39,29 @@ export function buildPhysicalBankPCM(sr = 44100) {
     };
   }
 
-  // Studio mastering pass: DC blocker -> warm lowpass rolloff -> soft analog tanh saturation -> fade & peak normalize
-  function masterBuffer(buf, lpHz = 4600, drive = 1.25, targetPeak = 0.88) {
+  // Studio mastering pass: DC blocker -> velvety warm lowpass -> gentle saturation -> fade & peak normalize
+  function masterBuffer(buf, lpHz = 3400, drive = 1.08, targetPeak = 0.78) {
     const n = buf.length;
-    // 1) Gentle DC blocker + 1-pole studio warmth lowpass
     const rc = 1 / (2 * Math.PI * lpHz);
     const dt = 1 / sr;
     const alpha = dt / (rc + dt);
-    let prevIn = 0, dc = 0, lp = 0;
+    let prevIn = 0, dc = 0, lp1 = 0, lp2 = 0;
     let peak = 1e-6;
     for (let i = 0; i < n; i++) {
       const x = buf[i];
       dc = x - prevIn + 0.996 * dc;
       prevIn = x;
-      lp += alpha * (dc - lp);
-      // Soft analog tape/tube saturation
-      const sat = Math.tanh(lp * drive);
+      // 2-stage warm lowpass removes all harsh ear-fatiguing upper fizz
+      lp1 += alpha * (dc - lp1);
+      lp2 += alpha * (lp1 - lp2);
+      const sat = Math.tanh(lp2 * drive);
       buf[i] = sat;
       const a = Math.abs(sat);
       if (a > peak) peak = a;
     }
-    // 2) Normalize & apply micro click-free fade-in / fade-out
     const scale = targetPeak / peak;
-    const fadeIn = Math.min(n, Math.floor(sr * 0.0018));
-    const fadeOut = Math.min(n, Math.floor(sr * 0.018));
+    const fadeIn = Math.min(n, Math.floor(sr * 0.004));
+    const fadeOut = Math.min(n, Math.floor(sr * 0.028));
     for (let i = 0; i < n; i++) {
       let env = 1;
       if (i < fadeIn) env = i / fadeIn;
@@ -112,9 +111,9 @@ export function buildPhysicalBankPCM(sr = 44100) {
         sub = Math.sin(subPh) * Math.exp(-t * 9.5) * 0.52 * heavy;
       }
 
-      out[i] = (body * (1.25 + heavy * 0.55) + flat * 1.15 + edge * 0.58) * (0.2 + vel * 1.35) + sub;
+      out[i] = (body * (1.25 + heavy * 0.55) + flat * 1.15 + edge * 0.42) * (0.2 + vel * 1.25) + sub;
     }
-    return masterBuffer(out, heavy ? 4300 : 4800, 1.35, 0.88);
+    return masterBuffer(out, heavy ? 3100 : 3500, 1.08, 0.78);
   }
 
   // 2) Physical Forged-Steel 10-Mode Resonator Bar (for Unsheathe & Steel Impact / Clash)
@@ -188,9 +187,9 @@ export function buildPhysicalBankPCM(sr = 44100) {
         ring += y;
       }
 
-      out[i] = direct + ring * (modeType === "unsheathe" ? 1.55 : 0.88);
+      out[i] = direct + ring * (modeType === "unsheathe" ? 1.45 : 0.78);
     }
-    return masterBuffer(out, modeType === "unsheathe" ? 4900 : 4500, 1.38, 0.88);
+    return masterBuffer(out, modeType === "unsheathe" ? 3800 : 3500, 1.10, 0.78);
   }
 
   // 3) Physical Recurve Bow Draw (wood-limb micro-creaks + taut bowstring fiber tension rub)
@@ -279,9 +278,9 @@ export function buildPhysicalBankPCM(sr = 44100) {
       const fletch = fFletch(p, (isFull ? 2100 : 1650) * Math.exp(-t * 5) + 460, 1.9).band * fwEnv * (isFull ? 1.05 : 0.82);
       const airTail = fAir(p, 620, 1.0).band * fwEnv * 0.45;
 
-      out[i] = samp * (isFull ? 1.15 : 0.95) + thud + fletch + airTail;
+      out[i] = samp * (isFull ? 1.15 : 0.95) + thud + fletch * 0.78 + airTail * 0.75;
     }
-    return masterBuffer(out, isFull ? 4600 : 4100, 1.32, 0.88);
+    return masterBuffer(out, isFull ? 3600 : 3200, 1.08, 0.78);
   }
 
   // 5) Arrow Stick in Wood/Snow ("THWACK!" + damped 36 Hz arrow shaft wobble)
@@ -303,12 +302,12 @@ export function buildPhysicalBankPCM(sr = 44100) {
       const wobble = Math.sin(2 * Math.PI * 168 * t) * (0.55 + 0.45 * Math.sin(2 * Math.PI * 36 * t)) * Math.exp(-t * 15) * 0.34;
       out[i] = thwack + crack + wobble;
     }
-    return masterBuffer(out, 3900, 1.35, 0.86);
+    return masterBuffer(out, 3100, 1.06, 0.76);
   }
 
   // 6) Heavy Warhammer Air-Whoosh & Ground-Shaking Drum-Slam
   function synthHammerSwing() {
-    const dur = 0.32;
+    const dur = 0.30;
     const n = Math.floor(sr * dur);
     const out = new Float32Array(n);
     const pink = makePink();
@@ -317,18 +316,18 @@ export function buildPhysicalBankPCM(sr = 44100) {
     let brown = 0;
     for (let i = 0; i < n; i++) {
       const u = i / n;
-      const vel = Math.pow(Math.min(1, u / 0.32), 1.4) * Math.exp(-Math.max(0, u - 0.32) * 4.4);
+      const vel = Math.pow(Math.min(1, u / 0.32), 1.4) * Math.exp(-Math.max(0, u - 0.32) * 4.6);
       const p = pink();
       brown = brown * 0.97 + rand() * 0.03;
-      const lo = fLow(brown * 3.2, 90 + 230 * vel, 0.85).band;
-      const md = fMid(p, 260 + 820 * vel, 1.3).band;
-      out[i] = (lo * 1.4 + md * 0.85) * vel;
+      const lo = fLow(brown * 3.0, 90 + 210 * vel, 0.85).band;
+      const md = fMid(p, 240 + 720 * vel, 1.3).band;
+      out[i] = (lo * 1.3 + md * 0.78) * vel;
     }
-    return masterBuffer(out, 3200, 1.3, 0.86);
+    return masterBuffer(out, 2700, 1.06, 0.76);
   }
 
   function synthHammerSlam() {
-    const dur = 0.44;
+    const dur = 0.38;
     const n = Math.floor(sr * dur);
     const out = new Float32Array(n);
     const pink = makePink();
@@ -336,16 +335,16 @@ export function buildPhysicalBankPCM(sr = 44100) {
     let subPh = 0, bodyPh = 0;
     for (let i = 0; i < n; i++) {
       const t = i / sr;
-      const sf = 128 * Math.exp(-t * 16) + 32;
-      const bf = 240 * Math.exp(-t * 28) + 64;
+      const sf = 122 * Math.exp(-t * 17) + 34;
+      const bf = 225 * Math.exp(-t * 28) + 64;
       subPh += (2 * Math.PI * sf) / sr;
       bodyPh += (2 * Math.PI * bf) / sr;
-      const sub = Math.sin(subPh) * Math.exp(-t * 7.5) * 0.95;
-      const body = Math.sin(bodyPh) * Math.exp(-t * 20) * 0.50;
-      const crunch = fSnow(pink(), 920 * Math.exp(-t * 6) + 220, 0.95).band * Math.exp(-t * 10.5) * 0.92;
+      const sub = Math.sin(subPh) * Math.exp(-t * 8.5) * 0.88;
+      const body = Math.sin(bodyPh) * Math.exp(-t * 22) * 0.44;
+      const crunch = fSnow(pink(), 820 * Math.exp(-t * 7) + 210, 0.95).band * Math.exp(-t * 12) * 0.82;
       out[i] = sub + body + crunch;
     }
-    return masterBuffer(out, 3600, 1.45, 0.90);
+    return masterBuffer(out, 2800, 1.08, 0.76);
   }
 
   // 7) Pneumatic Snow-Cannon "PTHOOM!" & Hardwood Candy-Cane Bonk
@@ -366,11 +365,11 @@ export function buildPhysicalBankPCM(sr = 44100) {
       const valve = fValve(rand(), 2400, 2.5).band * Math.exp(-t * 260) * 0.55;
       out[i] = punch + puff + valve;
     }
-    return masterBuffer(out, 4200, 1.35, 0.88);
+    return masterBuffer(out, 3100, 1.08, 0.78);
   }
 
   function synthWoodBonk() {
-    const dur = 0.22;
+    const dur = 0.20;
     const n = Math.floor(sr * dur);
     const out = new Float32Array(n);
     const pink = makePink();
@@ -378,18 +377,18 @@ export function buildPhysicalBankPCM(sr = 44100) {
     for (let i = 0; i < n; i++) {
       const t = i / sr;
       // Hollow resonant glazed candy-wood modal cluster
-      const m1 = Math.sin(2 * Math.PI * 295 * t) * Math.exp(-t * 24) * 0.62;
-      const m2 = Math.sin(2 * Math.PI * 760 * t) * Math.exp(-t * 36) * 0.42;
-      const m3 = Math.sin(2 * Math.PI * 1420 * t) * Math.exp(-t * 54) * 0.22;
-      const tap = fTap(pink(), 1450, 1.5).band * Math.exp(-t * 68) * 0.72;
+      const m1 = Math.sin(2 * Math.PI * 295 * t) * Math.exp(-t * 26) * 0.62;
+      const m2 = Math.sin(2 * Math.PI * 760 * t) * Math.exp(-t * 38) * 0.42;
+      const m3 = Math.sin(2 * Math.PI * 1420 * t) * Math.exp(-t * 56) * 0.20;
+      const tap = fTap(pink(), 1250, 1.5).band * Math.exp(-t * 72) * 0.62;
       out[i] = m1 + m2 + m3 + tap;
     }
-    return masterBuffer(out, 4200, 1.3, 0.86);
+    return masterBuffer(out, 3200, 1.06, 0.76);
   }
 
-  // 8) Fighter-Jet Pylon Release & Solid-Fuel Homing Missile Ignition ("CLUNK-FSHWHOOOOOSH!")
+  // 8) Sleek, Airy Fighter-Jet Pylon Release & Rocket Ignition (compact 0.38s, warm & non-fatiguing!)
   function synthMissileLaunch() {
-    const dur = 0.68;
+    const dur = 0.38;
     const n = Math.floor(sr * dur);
     const out = new Float32Array(n);
     const pink = makePink();
@@ -402,39 +401,36 @@ export function buildPhysicalBankPCM(sr = 44100) {
     for (let i = 0; i < n; i++) {
       const t = i / sr;
       const p = pink();
-      brown = brown * 0.94 + rand() * 0.06;
+      brown = brown * 0.95 + rand() * 0.05;
 
-      // 0..24ms: Crisp mechanical wing-pylon latch release ("CLUNK-TCHK!")
-      const latchEnv = Math.exp(-t * 165);
-      const latch = (fLatch(rand(), 1750, 2.6).band * 0.75 + Math.sin(2 * Math.PI * 340 * t) * 0.45) * latchEnv;
+      // 0..20ms: Soft tactile pylon latch release ("tchk!")
+      const latchEnv = Math.exp(-t * 190);
+      const latch = (fLatch(p, 1400, 2.2).band * 0.55 + Math.sin(2 * Math.PI * 310 * t) * 0.35) * latchEnv;
 
-      // 18ms+: Explosive solid-rocket ignition thump + roaring supersonic plume Doppler sweep!
+      // 14ms+: Crisp, airy solid-rocket ignition whoosh (warm lowpassed, zero harsh buzz)
       let rocket = 0;
-      if (t >= 0.016) {
-        const rt = t - 0.016;
-        const igF = 168 * Math.exp(-rt * 18) + 42;
+      if (t >= 0.014) {
+        const rt = t - 0.014;
+        const igF = 148 * Math.exp(-rt * 22) + 46;
         ignPh += (2 * Math.PI * igF) / sr;
-        const ignThump = Math.sin(ignPh) * Math.exp(-rt * 13) * 0.85;
+        const ignThump = Math.sin(ignPh) * Math.exp(-rt * 18) * 0.68;
 
-        const plumeEnv = Math.pow(Math.min(1, rt / 0.032), 0.9) * Math.exp(-Math.max(0, rt - 0.05) * 3.9);
-        // Doppler-like falling rocket exhaust roar (2500 -> 460 Hz)
-        const jetFreq = 460 + 2150 * Math.exp(-rt * 4.8);
-        const jetPlume = fJet(p * 0.9 + rand() * 0.25, jetFreq, 1.05).band * plumeEnv * 1.15;
-        const jetCore = fCore(brown * 2.8 + p * 0.4, 240 + 380 * Math.exp(-rt * 5.2), 0.85).band * plumeEnv * 1.25;
-        // Subtle rocket combustion crackle
-        const crackle = (Math.abs(rand()) > 0.965 ? rand() * 0.55 : 0) * plumeEnv;
+        const plumeEnv = Math.pow(Math.min(1, rt / 0.028), 0.9) * Math.exp(-Math.max(0, rt - 0.04) * 7.2);
+        const jetFreq = 420 + 1450 * Math.exp(-rt * 7.0);
+        const jetPlume = fJet(p, jetFreq, 1.15).band * plumeEnv * 0.92;
+        const jetCore = fCore(brown * 2.4 + p * 0.35, 220 + 280 * Math.exp(-rt * 7.5), 0.9).band * plumeEnv * 0.95;
 
-        rocket = ignThump + jetPlume + jetCore + crackle;
+        rocket = ignThump + jetPlume + jetCore;
       }
 
-      out[i] = latch * 0.75 + rocket;
+      out[i] = latch * 0.65 + rocket;
     }
-    return masterBuffer(out, 4700, 1.42, 0.90);
+    return masterBuffer(out, 2900, 1.06, 0.76);
   }
 
-  // 9) Fighter-Jet Missile Airburst & Winter Firework Detonation ("KRA-BOOOOM + festive crackle!")
+  // 9) Cozy Festive Missile Airburst & Winter Firework Detonation (warm 0.48s pop-boom, zero harsh blast!)
   function synthMissileBoom() {
-    const dur = 0.84;
+    const dur = 0.48;
     const n = Math.floor(sr * dur);
     const out = new Float32Array(n);
     const pink = makePink();
@@ -446,29 +442,23 @@ export function buildPhysicalBankPCM(sr = 44100) {
     for (let i = 0; i < n; i++) {
       const t = i / sr;
       const p = pink();
-      brown = brown * 0.965 + rand() * 0.035;
+      brown = brown * 0.968 + rand() * 0.032;
 
-      // Shockwave snap transient (0..18ms)
-      const snap = fCrack(rand(), 1900, 0.95).band * Math.exp(-t * 95) * 1.1;
+      // Soft airy burst transient
+      const snap = fCrack(p, 1350, 1.0).band * Math.exp(-t * 90) * 0.72;
 
-      // Deep saturated sub-bass detonation (115 -> 28 Hz)
-      const sf = 114 * Math.exp(-t * 11) + 28;
+      // Warm sub-bass firework thump (105 -> 34 Hz)
+      const sf = 104 * Math.exp(-t * 14) + 34;
       subPh += (2 * Math.PI * sf) / sr;
-      const sub = Math.sin(subPh) * Math.exp(-t * 5.2) * 1.15;
+      const sub = Math.sin(subPh) * Math.exp(-t * 8.2) * 0.95;
 
-      // Rolling alpine explosion rumble
-      const rEnv = Math.pow(Math.min(1, t / 0.015), 0.8) * Math.exp(-t * 3.6);
-      const rumble = fRumble(brown * 3.4 + p * 0.8, 120 + 520 * Math.exp(-t * 5.5), 0.8).band * rEnv * 1.3;
+      // Gentle fading alpine snow-boom tail
+      const rEnv = Math.pow(Math.min(1, t / 0.016), 0.85) * Math.exp(-t * 6.2);
+      const rumble = fRumble(brown * 3.0 + p * 0.55, 110 + 380 * Math.exp(-t * 7.0), 0.85).band * rEnv * 1.05;
 
-      // Festive winter-firework crackle sparkles in tail
-      let spark = 0;
-      if (t > 0.055 && Math.abs(rand()) > 0.986) {
-        spark = rand() * Math.exp(-(t - 0.055) * 2.8) * 0.65;
-      }
-
-      out[i] = snap + sub + rumble + spark;
+      out[i] = snap + sub + rumble;
     }
-    return masterBuffer(out, 4400, 1.55, 0.91);
+    return masterBuffer(out, 2700, 1.08, 0.78);
   }
 
   return {
@@ -515,13 +505,22 @@ export function enhanceAudio(audio, game) {
     return dspBank;
   }
 
-  // Play a pre-synthesized physical-modeling AudioBuffer with pitch jitter, optional LP, stereo pan & hall reverb
+  // Cozy-world calibrated playback with automatic polyphony ducking so rapid slashes / 4-missile salvos NEVER stack loudly!
+  const COZY_GAIN = 0.21;
+  const recentStarts = [];
   function playBuf(key, opts = {}) {
     const ctx = audio.ctx;
     if (!ctx) return;
     const bank = ensureBank();
     if (!bank || !bank[key]) return;
     const t0 = ctx.currentTime + (opts.delay || 0);
+
+    // Track recent voices within 0.24s and smoothly duck overlapping triggers
+    while (recentStarts.length && t0 - recentStarts[0] > 0.24) recentStarts.shift();
+    const overlap = recentStarts.length;
+    recentStarts.push(t0);
+    const duck = 1 / (1 + overlap * 0.52);
+
     const src = ctx.createBufferSource();
     src.buffer = bank[key];
     src.playbackRate.value = Math.max(0.5, Math.min(2.2, opts.rate ?? 1.0));
@@ -536,7 +535,7 @@ export function enhanceAudio(audio, game) {
     }
 
     const g = ctx.createGain();
-    g.gain.setValueAtTime(opts.gain ?? 0.35, t0);
+    g.gain.setValueAtTime((opts.gain ?? 0.35) * COZY_GAIN * duck, t0);
     node.connect(g);
     let out = g;
 
@@ -550,18 +549,18 @@ export function enhanceAudio(audio, game) {
     out.connect(audio.master);
     if (opts.rev && audio.rev) {
       const rg = ctx.createGain();
-      rg.gain.value = opts.rev;
+      rg.gain.value = opts.rev * 0.75;
       out.connect(rg).connect(audio.rev);
     }
     src.start(t0);
   }
 
-  // Play real studio-recorded .mp3 bell sample from assets/audio/ if loaded (fallback to soft harmonic)
+  // Play real studio-recorded .mp3 bell sample gently calibrated to cozy winter levels
   const BELL_NAMES = ["bell_w1", "bell_w2", "bell_w3", "bell_w4", "bell_w5", "bell_w6"];
-  function realBell(idx = 2, gain = 0.22, rate = 1.0, delay = 0, pan = 0) {
+  function realBell(idx = 2, gain = 0.14, rate = 1.0, delay = 0, pan = 0) {
     const name = BELL_NAMES[((idx % BELL_NAMES.length) + BELL_NAMES.length) % BELL_NAMES.length];
     if (audio.smp && audio.smp[name] && audio.play) {
-      audio.play(name, gain, rate, 0.28, delay, pan);
+      audio.play(name, gain * 0.45, rate, 0.22, delay, pan);
       return true;
     }
     return false;
@@ -990,49 +989,53 @@ export function enhanceAudio(audio, game) {
   // 4B. FIGHTER-JET HOMING MISSILE LOCK, LAUNCH & AIRBURST DETONATION SFX!
   // =========================================================================
   let lastLockSfx = 0;
+  let lastBoomSfx = 0;
   audio.missileLock = function (fresh = true) {
     if (!this.ctx) return;
     const now = this.ctx.currentTime;
-    if (now - lastLockSfx < 0.24) return;
+    // Gentle 0.95s cooldown so scanning targets while flying NEVER spams beeps!
+    if (now - lastLockSfx < 0.95) return;
     lastLockSfx = now;
-    // Crisp, pleasant fighter-jet HUD target-acquisition chirp (warm lowpassed, never piercing)
-    toneSweep({ type: "sine", f0: 1175, f1: 1175, atk: 0.004, dur: 0.045, gain: 0.048, lp: 2800, rev: 0.14 });
+    toneSweep({ type: "sine", f0: 1046.5, f1: 1046.5, atk: 0.005, dur: 0.042, gain: 0.015, lp: 2200, rev: 0.12 });
     if (fresh) {
-      toneSweep({ delay: 0.055, type: "sine", f0: 1568, f1: 1568, atk: 0.004, dur: 0.065, gain: 0.056, lp: 3200, rev: 0.18 });
+      toneSweep({ delay: 0.052, type: "sine", f0: 1318.5, f1: 1318.5, atk: 0.005, dur: 0.055, gain: 0.018, lp: 2400, rev: 0.15 });
     }
   };
 
   audio.missileLaunch = function (side = 0, isSalvo = false) {
     if (!this.ctx) return;
-    const p = 0.94 + Math.random() * 0.12;
+    const p = 0.95 + Math.random() * 0.10;
     const gem = isGem();
-    // Authentic pylon latch CLUNK + solid-rocket motor Doppler roar!
+    // Sleek, light rocket release (salvos duck naturally via playBuf polyphony ducking!)
     playBuf("missileLaunch", {
-      gain: isSalvo ? 0.56 : 0.66,
-      rate: (gem ? 1.08 : 0.98) * p,
-      pan: side * 0.36,
-      rev: 0.28
+      gain: isSalvo ? 0.36 : 0.48,
+      rate: (gem ? 1.06 : 0.98) * p,
+      pan: side * 0.34,
+      rev: 0.20
     });
-    if (gem) {
-      // Subtle starlight booster glint for Gemini's Sky-Cat Star Missiles
-      realBell(5, 0.10, 1.38 * p, 0.02, side * 0.3);
+    if (gem && !isSalvo) {
+      realBell(5, 0.10, 1.32 * p, 0.02, side * 0.28);
     }
   };
 
   audio.missileBoom = function (isBalloon = false, distScale = 1.0) {
     if (!this.ctx) return;
-    const p = 0.92 + Math.random() * 0.16;
-    const vol = Math.max(0.28, Math.min(1.0, distScale));
+    const now = this.ctx.currentTime;
+    // Deduplicate simultaneous salvo explosions so 4 hits NEVER blast the speakers at once!
+    const tooClose = now - lastBoomSfx < 0.16;
+    if (tooClose && !isBalloon) return;
+    lastBoomSfx = now;
+    const p = 0.94 + Math.random() * 0.12;
+    const vol = Math.max(0.24, Math.min(0.85, distScale)) * (tooClose ? 0.45 : 1.0);
     playBuf("missileBoom", {
-      gain: (isBalloon ? 0.74 : 0.64) * vol,
+      gain: (isBalloon ? 0.56 : 0.46) * vol,
       rate: (isBalloon ? 1.04 : 0.96) * p,
-      rev: 0.36
+      rev: 0.26
     });
     if (isBalloon) {
-      // Joyful winter gift-balloon air-kill triumph chime!
-      realBell(3, 0.26 * vol, 1.0, 0.04);
-      realBell(5, 0.24 * vol, 1.25, 0.11);
-      starArp([1046.5, 1318.5, 1568, 2093], 0.038, 0.85 * vol, 0.34);
+      realBell(3, 0.22 * vol, 1.0, 0.04);
+      realBell(5, 0.20 * vol, 1.25, 0.11);
+      starArp([1046.5, 1318.5, 1568], 0.036, 0.55 * vol, 0.28);
     }
   };
 
