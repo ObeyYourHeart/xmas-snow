@@ -167,8 +167,13 @@ export function installShootingSystem(gun, tools, game, helpers) {
     const muzzle = gun.muzzle(_m);
     const camDir = player.cam.getWorldDirection(_dir);
     const toAim = _p.copy(gun.aim).sub(muzzle);
-    const dist = toAim.length();
-    if (dist < 1.6 || toAim.dot(camDir) < dist * 0.25) {
+    let dist = toAim.length();
+    // In Front Showcase Mode (KeyC), fire cleanly along Gemini's facing direction instead of back at the camera!
+    if (player.frontLock && game.character) {
+      const cy = game.character.yaw;
+      toAim.set(-Math.sin(cy), 0.05, -Math.cos(cy)).normalize();
+      dist = 24;
+    } else if (dist < 1.6 || toAim.dot(camDir) < dist * 0.25) {
       toAim.copy(camDir);
     } else {
       toAim.multiplyScalar(1 / dist);
@@ -536,9 +541,10 @@ export function installShootingSystem(gun, tools, game, helpers) {
       }
     }
 
-    // Smooth ADS zoom (also subtly zooms in while drawing the bowstring!)
-    const wantAds = active && (player.aiming || player.aimLock || this.btnR || (bow.drawing && bow.drawT > 0.18));
-    const adsTarget = (player.aiming || player.aimLock || this.btnR) ? 1 : (bow.drawing ? Math.min(0.65, bow.drawT * 0.72) : 0);
+    // Smooth ADS zoom (skip tight zoom when in C-key Front Showcase Mode so you get a steady full-body front view!)
+    const manualAds = !!(player.aiming || player.aimLock || this.btnR);
+    const wantAds = active && !player.frontLock && (manualAds || (bow.drawing && bow.drawT > 0.18));
+    const adsTarget = manualAds ? 1 : (bow.drawing ? Math.min(0.45, bow.drawT * 0.50) : 0);
     this.ads += ((wantAds ? adsTarget : 0) - this.ads) * (1 - Math.exp(-12 * dt));
     this.out += ((active ? 1 : 0) - this.out) * (1 - Math.exp(-9 * dt));
     if (this.ads < 0.002) this.ads = 0;
