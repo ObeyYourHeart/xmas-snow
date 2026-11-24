@@ -4,6 +4,15 @@
 // 2. 山脚滑雪大本营全面升级：北欧积雪滑雪服务木屋、篝火暖炉休息长椅、高山速降最佳纪录计分牌、沿雪道发光荧光标旗
 // 3. 额外加赠猫猫惊喜玩法：「彩虹水晶冰滑梯」—— 18 米优雅 S 弯水晶发光冰道，按 E 坐上滑梯高速冲刺滑降！
 
+import {
+  makeTimberWallTex,
+  makeShingleRoofTex,
+  makeStoneMasonryTex,
+  makeCrispWindowTex,
+  buildCrispWindow,
+  buildCrispDoor
+} from "./archcraft.js?v=11242125";
+
 export class AlpineSkiUpgrade {
   constructor(game, helpers) {
     this.game = game;
@@ -57,23 +66,41 @@ export class AlpineSkiUpgrade {
     c.fillText(sub, 256, 106);
     const tex = new T.CanvasTexture(cv);
     tex.colorSpace = T.SRGBColorSpace;
+    tex.anisotropy = 8;
     return tex;
   }
 
   build() {
     const T = this.THREE;
+    const rend = this.game.renderer;
     const plain = (m) => this.wrapMat(m, { key: "plain" });
     const std = (hex, rough = 0.48, extra = {}) =>
       plain(new T.MeshStandardMaterial({ color: hex, roughness: rough, ...extra }));
 
+    const cedarTex = makeTimberWallTex(T, rend, 3, 2);
+    const stoneTex = makeStoneMasonryTex(T, rend, 3, 1);
+    const shingleRedTex = makeShingleRoofTex(T, rend, "red", 3, 2);
+    const winCozyTex = makeCrispWindowTex(T, rend, "cozy");
+
     this.m = {
       cedar: std(0x7c4a2b, 0.72),
+      cedarWall: plain(new T.MeshStandardMaterial({ map: cedarTex, roughness: 0.72, metalness: 0.04 })),
       darkWood: std(0x4b2a18, 0.78),
       stone: std(0x5a647a, 0.68),
+      stoneWall: plain(new T.MeshStandardMaterial({ map: stoneTex, roughness: 0.78, metalness: 0.04 })),
       snow: std(0xf4f8ff, 0.76),
       gold: std(0xffd252, 0.20, { metalness: 0.86 }),
-      roofRed: std(0xa82832, 0.52),
+      roofRed: plain(new T.MeshStandardMaterial({ map: shingleRedTex, roughness: 0.52, metalness: 0.08, side: T.DoubleSide })),
+      shutter: std(0x1f563a, 0.56),
       pine: std(0x1f663c, 0.72),
+      winCozy: plain(new T.MeshStandardMaterial({
+        map: winCozyTex,
+        emissiveMap: winCozyTex,
+        emissive: new T.Color(1.0, 0.88, 0.66),
+        emissiveIntensity: 0.82,
+        roughness: 0.16,
+        metalness: 0.08
+      })),
       warmGlow: plain(new T.MeshStandardMaterial({
         color: 0xffe49c, emissive: new T.Color(1.0, 0.72, 0.22), emissiveIntensity: 1.5, roughness: 0.2
       })),
@@ -181,26 +208,64 @@ export class AlpineSkiUpgrade {
     chG.position.set(cx, cy, cz);
     chG.rotation.y = this.yawLift + Math.PI;
 
+    const chaletWinMats = { frame: this.m.darkWood, brass: this.m.gold, snow: this.m.snow, pane: this.m.winCozy, shutter: this.m.shutter };
     chG.add(
-      // Timber shelter deck & open-front alpine cabin
-      this.mesh(new T.BoxGeometry(4.2, 0.28, 3.2), this.m.stone, 0, 0.14, 0),
-      this.mesh(new T.BoxGeometry(4.0, 2.4, 0.22), this.m.cedar, 0, 1.45, -1.45),
-      this.mesh(new T.BoxGeometry(0.22, 2.4, 3.0), this.m.cedar, -1.9, 1.45, 0),
-      this.mesh(new T.BoxGeometry(0.22, 2.4, 3.0), this.m.cedar, 1.9, 1.45, 0),
-      // Pitched snow-covered roof
-      this.mesh(new T.ConeGeometry(3.25, 1.55, 4).rotateY(Math.PI / 4), this.m.roofRed, 0, 3.38, 0),
-      this.mesh(new T.ConeGeometry(3.32, 0.55, 4).rotateY(Math.PI / 4), this.m.snow, 0, 3.92, 0),
+      // Carved ashlar stone plinth & textured cedar open-front alpine shelter
+      this.mesh(new T.BoxGeometry(4.4, 0.30, 3.4), this.m.stoneWall, 0, 0.15, 0),
+      this.mesh(new T.BoxGeometry(4.0, 2.45, 0.24), this.m.cedarWall, 0, 1.50, -1.45),
+      this.mesh(new T.BoxGeometry(0.24, 2.45, 3.0), this.m.cedarWall, -1.9, 1.50, 0),
+      this.mesh(new T.BoxGeometry(0.24, 2.45, 3.0), this.m.cedarWall, 1.9, 1.50, 0),
+      // Heavy alpine timber corner posts & front lintel beam
+      this.mesh(new T.BoxGeometry(0.22, 2.52, 0.22), this.m.darkWood, -1.96, 1.54, 1.44),
+      this.mesh(new T.BoxGeometry(0.22, 2.52, 0.22), this.m.darkWood, 1.96, 1.54, 1.44),
+      this.mesh(new T.BoxGeometry(0.22, 2.52, 0.22), this.m.darkWood, -1.96, 1.54, -1.48),
+      this.mesh(new T.BoxGeometry(0.22, 2.52, 0.22), this.m.darkWood, 1.96, 1.54, -1.48),
+      this.mesh(new T.BoxGeometry(4.24, 0.18, 0.24), this.m.darkWood, 0, 2.72, 1.44),
+      // Stone alpine fireplace chimney stack on the East side
+      this.mesh(new T.BoxGeometry(0.68, 3.9, 0.68), this.m.stoneWall, 2.15, 2.25, -0.75),
+      this.mesh(new T.BoxGeometry(0.84, 0.18, 0.84), this.m.stone, 2.15, 4.24, -0.75),
+      this.mesh(new T.BoxGeometry(0.76, 0.08, 0.76), this.m.snow, 2.15, 4.35, -0.75),
       // Hot Ginger-Tea Thermos Counter inside
-      this.mesh(new T.BoxGeometry(2.6, 0.92, 0.72), this.m.darkWood, 0, 0.72, -0.75),
-      this.mesh(new T.CylinderGeometry(0.16, 0.18, 0.42, 12), this.m.gold, -0.55, 1.38, -0.75),
-      this.mesh(new T.CylinderGeometry(0.11, 0.10, 0.20, 10), this.m.skiRed, 0.15, 1.28, -0.70),
-      this.mesh(new T.CylinderGeometry(0.11, 0.10, 0.20, 10), this.m.skiBlue, 0.50, 1.28, -0.70),
+      this.mesh(new T.BoxGeometry(2.6, 0.92, 0.72), this.m.darkWood, 0, 0.76, -0.75),
+      this.mesh(new T.BoxGeometry(2.74, 0.08, 0.84), this.m.cedar, 0, 1.24, -0.72),
+      this.mesh(new T.CylinderGeometry(0.16, 0.18, 0.42, 12), this.m.gold, -0.55, 1.48, -0.75),
+      this.mesh(new T.CylinderGeometry(0.11, 0.10, 0.20, 10), this.m.skiRed, 0.15, 1.38, -0.70),
+      this.mesh(new T.CylinderGeometry(0.11, 0.10, 0.20, 10), this.m.skiBlue, 0.50, 1.38, -0.70),
       // Crackling Outdoor Warming Brazier beside the chalet!
       this.mesh(new T.CylinderGeometry(0.42, 0.30, 0.55, 10), this.m.stone, 2.65, 0.28, 0.6),
       this.mesh(new T.SphereGeometry(0.28, 10, 8), this.m.ember, 2.65, 0.62, 0.6),
-      // Hanging warm ceiling lamp
-      this.mesh(new T.SphereGeometry(0.18, 10, 8), this.m.warmGlow, 0, 2.52, 0.2)
+      // Hanging brass & glowing warm ceiling lamp
+      this.mesh(new T.CylinderGeometry(0.02, 0.02, 0.34, 6), this.m.gold, 0, 2.68, 0.2),
+      this.mesh(new T.SphereGeometry(0.16, 10, 8), this.m.warmGlow, 0, 2.46, 0.2)
     );
+    // Real pitched scalloped red-shingle chalet gable roof + thick snow eaves + gable triangles!
+    const chPitch = 0.54, chSlope = 2.65, chLen = 4.05, chRidgeY = 3.92;
+    const chDrop = Math.sin(chPitch) * (chSlope * 0.5);
+    const chOffX = Math.cos(chPitch) * (chSlope * 0.5);
+    for (const side of [-1, 1]) {
+      const rp = this.mesh(new T.BoxGeometry(chSlope, 0.12, chLen), this.m.roofRed, side * chOffX, chRidgeY - chDrop, 0);
+      rp.rotation.z = -side * chPitch;
+      const sn = this.mesh(new T.BoxGeometry(chSlope + 0.08, 0.09, chLen + 0.06), this.m.snow, side * chOffX, chRidgeY - chDrop + 0.085, 0);
+      sn.rotation.z = -side * chPitch;
+      chG.add(rp, sn);
+    }
+    const chGable = new T.Shape();
+    chGable.moveTo(-2.05, 0); chGable.lineTo(2.05, 0); chGable.lineTo(0, 1.18); chGable.closePath();
+    const chGGeo = new T.ExtrudeGeometry(chGable, { depth: 0.16, bevelEnabled: false });
+    chGGeo.translate(0, 0, -0.08);
+    chG.add(
+      this.mesh(chGGeo, this.m.cedarWall, 0, 2.74, -1.45),
+      this.mesh(chGGeo, this.m.cedarWall, 0, 2.74, 1.44),
+      this.mesh(new T.CylinderGeometry(0.07, 0.07, chLen + 0.2, 8).rotateX(Math.PI / 2), this.m.gold, 0, chRidgeY + 0.06, 0)
+    );
+    // Crisp 3D Recessed Shuttered Alpine Windows on left, right, and rear chalet walls!
+    const cwL = buildCrispWindow(T, chaletWinMats, { w: 1.05, h: 1.12, shutters: true, flowerBox: true, boxFillMats: [this.m.pine, this.m.skiRed, this.m.pine] });
+    cwL.position.set(-2.03, 1.62, 0.05); cwL.rotation.y = -Math.PI / 2;
+    const cwR = buildCrispWindow(T, chaletWinMats, { w: 1.05, h: 1.12, shutters: true, flowerBox: true, boxFillMats: [this.m.pine, this.m.skiRed, this.m.pine] });
+    cwR.position.set(2.03, 1.62, 0.45); cwR.rotation.y = Math.PI / 2;
+    const cwB = buildCrispWindow(T, chaletWinMats, { w: 1.24, h: 1.16, arch: true, shutters: true });
+    cwB.position.set(0, 1.66, -1.58); cwB.rotation.y = Math.PI;
+    chG.add(cwL, cwR, cwB);
     // Fluttering Alpine Summit Wind-Sock Pole!
     const poleX = -2.6, poleZ = 1.0;
     chG.add(this.mesh(new T.CylinderGeometry(0.045, 0.06, 3.6, 8), this.m.gold, poleX, 1.8, poleZ));
@@ -304,31 +369,104 @@ export class AlpineSkiUpgrade {
     lg.position.set(lx, ly, lz);
     lg.rotation.y = this.yawLift - Math.PI * 0.5;
 
+    const lodgeWinMats = {
+      frame: this.m.darkWood,
+      door: this.m.cedar,
+      brass: this.m.gold,
+      snow: this.m.snow,
+      pane: this.m.winCozy,
+      shutter: this.m.shutter
+    };
     lg.add(
-      // Cozy Snow-Roofed Alpine Ski Lodge Pavilion
-      this.mesh(new T.BoxGeometry(4.8, 0.30, 3.6), this.m.stone, 0, 0.15, 0),
-      this.mesh(new T.BoxGeometry(4.5, 2.55, 3.3), this.m.cedar, 0, 1.52, 0),
-      this.mesh(new T.ConeGeometry(3.85, 1.75, 4).rotateY(Math.PI / 4), this.m.roofRed, 0, 3.62, 0),
-      this.mesh(new T.ConeGeometry(3.92, 0.58, 4).rotateY(Math.PI / 4), this.m.snow, 0, 4.22, 0),
-      // Warm Glowing Alpine Windows
-      this.mesh(new T.BoxGeometry(1.15, 0.95, 0.08), this.m.warmGlow, -1.1, 1.65, 1.67),
-      this.mesh(new T.BoxGeometry(1.15, 0.95, 0.08), this.m.warmGlow, 1.1, 1.65, 1.67),
+      // Carved Ashlar Stone Plinth + Textured Beveled Cedar Alpine Ski Lodge!
+      this.mesh(new T.BoxGeometry(5.3, 0.34, 4.0), this.m.stoneWall, 0, 0.17, 0),
+      this.mesh(new T.BoxGeometry(4.9, 2.72, 3.55), this.m.cedarWall, 0, 1.70, 0),
+      // Heavy corner timber posts & belt molding
+      this.mesh(new T.BoxGeometry(0.24, 2.78, 0.24), this.m.darkWood, -2.44, 1.72, 1.76),
+      this.mesh(new T.BoxGeometry(0.24, 2.78, 0.24), this.m.darkWood, 2.44, 1.72, 1.76),
+      this.mesh(new T.BoxGeometry(0.24, 2.78, 0.24), this.m.darkWood, -2.44, 1.72, -1.76),
+      this.mesh(new T.BoxGeometry(0.24, 2.78, 0.24), this.m.darkWood, 2.44, 1.72, -1.76),
+      this.mesh(new T.BoxGeometry(5.12, 0.16, 3.80), this.m.darkWood, 0, 3.06, 0),
+      // Stone Hearth Chimney Stack rising through the alpine roof!
+      this.mesh(new T.BoxGeometry(0.76, 4.65, 0.76), this.m.stoneWall, 1.85, 2.60, -1.55),
+      this.mesh(new T.BoxGeometry(0.92, 0.18, 0.92), this.m.stone, 1.85, 4.98, -1.55),
+      this.mesh(new T.BoxGeometry(0.84, 0.08, 0.84), this.m.snow, 1.85, 5.10, -1.55),
       // Outdoor Warming Brazier & Sturdy Grounded Cedar Benches (with real support legs!)
-      this.mesh(new T.CylinderGeometry(0.45, 0.34, 0.52, 10), this.m.stone, 0, 0.26, 2.75),
-      this.mesh(new T.SphereGeometry(0.30, 10, 8), this.m.ember, 0, 0.60, 2.75),
-      this.mesh(new T.BoxGeometry(1.75, 0.12, 0.46), this.m.darkWood, -2.0, 0.46, 2.65),
-      this.mesh(new T.BoxGeometry(0.14, 0.44, 0.38), this.m.cedar, -2.65, 0.22, 2.65),
-      this.mesh(new T.BoxGeometry(0.14, 0.44, 0.38), this.m.cedar, -1.35, 0.22, 2.65),
-      this.mesh(new T.BoxGeometry(1.75, 0.12, 0.46), this.m.darkWood, 2.0, 0.46, 2.65),
-      this.mesh(new T.BoxGeometry(0.14, 0.44, 0.38), this.m.cedar, 1.35, 0.22, 2.65),
-      this.mesh(new T.BoxGeometry(0.14, 0.44, 0.38), this.m.cedar, 2.65, 0.22, 2.65)
+      this.mesh(new T.CylinderGeometry(0.45, 0.34, 0.52, 10), this.m.stone, 0, 0.26, 3.15),
+      this.mesh(new T.SphereGeometry(0.30, 10, 8), this.m.ember, 0, 0.60, 3.15),
+      this.mesh(new T.BoxGeometry(1.75, 0.12, 0.46), this.m.darkWood, -2.1, 0.46, 3.05),
+      this.mesh(new T.BoxGeometry(0.14, 0.44, 0.38), this.m.cedar, -2.75, 0.22, 3.05),
+      this.mesh(new T.BoxGeometry(0.14, 0.44, 0.38), this.m.cedar, -1.45, 0.22, 3.05),
+      this.mesh(new T.BoxGeometry(1.75, 0.12, 0.46), this.m.darkWood, 2.1, 0.46, 3.05),
+      this.mesh(new T.BoxGeometry(0.14, 0.44, 0.38), this.m.cedar, 1.45, 0.22, 3.05),
+      this.mesh(new T.BoxGeometry(0.14, 0.44, 0.38), this.m.cedar, 2.75, 0.22, 3.05)
     );
+    // Pitched Scalloped Red-Shingle Alpine Chalet Roof + Heavy Snow Eaves + Gable End Walls!
+    const lgPitch = 0.54, lgSlope = 3.15, lgLen = 5.95, lgRidgeY = 4.65;
+    const lgDrop = Math.sin(lgPitch) * (lgSlope * 0.5);
+    const lgOffZ = Math.cos(lgPitch) * (lgSlope * 0.5);
+    for (const side of [-1, 1]) {
+      const rp = this.mesh(new T.BoxGeometry(lgLen, 0.13, lgSlope), this.m.roofRed, 0, lgRidgeY - lgDrop, side * lgOffZ);
+      rp.rotation.x = side * lgPitch;
+      const sn = this.mesh(new T.BoxGeometry(lgLen + 0.08, 0.095, lgSlope + 0.08), this.m.snow, 0, lgRidgeY - lgDrop + 0.09, side * lgOffZ);
+      sn.rotation.x = side * lgPitch;
+      lg.add(rp, sn);
+    }
+    const lgGable = new T.Shape();
+    lgGable.moveTo(-1.82, 0); lgGable.lineTo(1.82, 0); lgGable.lineTo(0, 1.54); lgGable.closePath();
+    const lgGGeo = new T.ExtrudeGeometry(lgGable, { depth: 0.18, bevelEnabled: false });
+    lgGGeo.translate(0, 0, -0.09);
+    for (const sx of [-2.42, 2.42]) {
+      const gw = this.mesh(lgGGeo, this.m.cedarWall, sx, 3.08, 0);
+      gw.rotation.y = Math.PI / 2;
+      lg.add(gw);
+    }
+    lg.add(
+      this.mesh(new T.CylinderGeometry(0.08, 0.08, lgLen + 0.24, 10).rotateZ(Math.PI / 2), this.m.gold, 0, lgRidgeY + 0.07, 0)
+    );
+
+    // Sculpted Recessed Chalet Front Door + Twin Porch Brass Sconces!
+    const frontDoor = buildCrispDoor(T, lodgeWinMats, { w: 1.18, h: 2.08, double: false, arch: true });
+    frontDoor.position.set(0, 0.34, 1.78);
+    lg.add(frontDoor);
+    for (const sx of [-0.82, 0.82]) {
+      lg.add(
+        this.mesh(new T.BoxGeometry(0.08, 0.18, 0.16), this.m.darkWood, sx, 2.15, 1.84),
+        this.mesh(new T.SphereGeometry(0.10, 10, 8), this.m.warmGlow, sx, 2.02, 1.90)
+      );
+    }
+
+    // 6 ULTRA-CRISP 3D RECESSED SHUTTERED ALPINE WINDOWS (Front, Sides & Rear — ZERO flat yellow blobs!)
+    for (const wx of [-1.58, 1.58]) {
+      const fw = buildCrispWindow(T, lodgeWinMats, {
+        w: 0.96, h: 1.18, arch: true, shutters: true, flowerBox: true,
+        boxFillMats: [this.m.pine, this.m.skiRed, this.m.pine]
+      });
+      fw.position.set(wx, 1.74, 1.78);
+      lg.add(fw);
+    }
+    for (const side of [-1, 1]) {
+      const sw = buildCrispWindow(T, lodgeWinMats, {
+        w: 1.15, h: 1.24, arch: true, shutters: true, flowerBox: true,
+        boxFillMats: [this.m.pine, this.m.skiRed, this.m.pine]
+      });
+      sw.position.set(side * 2.46, 1.76, 0);
+      sw.rotation.y = side * (Math.PI / 2);
+      lg.add(sw);
+    }
+    for (const wx of [-1.15, 1.15]) {
+      const bw = buildCrispWindow(T, lodgeWinMats, { w: 1.05, h: 1.18, arch: true, shutters: true });
+      bw.position.set(wx, 1.74, -1.78);
+      bw.rotation.y = Math.PI;
+      lg.add(bw);
+    }
+
     const sTex = this.makeSignTex("⛷ 雪境滑雪俱乐部", "山脚与山顶均可领雪板 · 按 Q 穿脱");
-    lg.add(this.mesh(new T.BoxGeometry(3.2, 0.85, 0.12), [
+    lg.add(this.mesh(new T.BoxGeometry(3.2, 0.82, 0.12), [
       this.m.gold, this.m.gold, this.m.snow, this.m.gold,
       this.wrapMat(new T.MeshStandardMaterial({ map: sTex, roughness: 0.3 }), { key: "plain" }),
       this.wrapMat(new T.MeshStandardMaterial({ map: sTex, roughness: 0.3 }), { key: "plain" })
-    ], 0, 2.78, 1.74));
+    ], 0, 3.12, 1.98));
 
     scene.add(lg);
     world.circles.push({ x: lx, z: lz, r: 2.6 });

@@ -1,4 +1,4 @@
-// 哈基米化学家穿戴装备 (LabGear) + 隐藏神秘武器「118 Og · 周期表元素炮」 (ChemGun)
+// 极其猫化学装备 (LabGear) + 隐藏神秘武器「118 Og · 周期表元素炮」 (ChemGun)
 // - LabGear: Bone-tracked 3D Forehead Neon/Argon Safety Goggles, Starlight White Alchemist Lab Mantle & Pin,
 //   Twin Floating Magnetic 10 Ne / 18 Ar Plasma Canister Pods (0% hair clipping!), and Tier-2 Orbiting Element Halo!
 // - ChemGun: Unlocked inside the Indoor Chemistry Lab after charging 1 H / 6 C / 10 Ne / 18 Ar & opening the 118 Og Vault!
@@ -359,7 +359,7 @@ export class LabGear {
     this.setTier(next, false);
     const msgs = [
       "👗 已换回日常星光服装，化学装备已经整齐收进储物柜啦喵～",
-      "🥼 已穿戴「哈基米化学家全套装备」！霓虹/氩气双色护目镜 + 星光白大褂披肩 + 悬浮双子气体反应罐，安全协议通过喵！",
+      "🥼 已穿戴「极其猫化学装备」！霓虹/氩气双色护目镜 + 星光白大褂披肩 + 悬浮双子气体反应罐，安全协议通过喵！",
       "✨ 升级「118 号炼金大师超频模式」！头顶悬浮 1 H · 6 C · 10 Ne · 18 Ar 四元素电子轨道光环，整片雪境最酷的化学家喵！"
     ];
     this.game.ui && this.game.ui.toast(msgs[next], 6.0);

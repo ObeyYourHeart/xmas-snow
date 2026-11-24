@@ -3,6 +3,8 @@
 // colliders, platforms, chimney smoke, swinging doorbell, decor crate, roof Clawd perch,
 // window lights, and all interior interactions.
 
+import { makeCrispWindowTex } from "./archcraft.js?v=11242125";
+
 export class ClaudeCastle {
   constructor(game, helpers) {
     this.game = game;
@@ -255,6 +257,26 @@ export class ClaudeCastle {
     const roseTex = this.makeRoseWindowTex();
     const bannerTex = this.makeBannerTex();
 
+    // Upgrade global M_window from blurry window_c.jpg to razor-sharp 512x768 leaded-glass cozy window!
+    const crispCozyTex = makeCrispWindowTex(T, this.game.renderer, "cozy");
+    const crispNightTex = makeCrispWindowTex(T, this.game.renderer, "nightsky");
+    if (gm && gm.M_window) {
+      gm.M_window.map = crispCozyTex;
+      gm.M_window.emissiveMap = crispCozyTex;
+      gm.M_window.color && gm.M_window.color.setHex(0xffffff);
+      gm.M_window.emissive && gm.M_window.emissive.setRGB(0.58, 0.50, 0.38);
+      gm.M_window.roughness = 0.16;
+      gm.M_window.needsUpdate = true;
+    }
+    const nightPaneMat = plain(new T.MeshStandardMaterial({
+      map: crispNightTex,
+      emissiveMap: crispNightTex,
+      emissive: new T.Color(0.85, 0.94, 1.0),
+      emissiveIntensity: 0.78,
+      roughness: 0.14,
+      metalness: 0.06
+    }));
+
     this.roseMat = plain(new T.MeshStandardMaterial({
       map: roseTex,
       emissive: new T.Color(1.0, 0.62, 0.20),
@@ -297,6 +319,7 @@ export class ClaudeCastle {
       pine: std(0.08, 0.34, 0.15, 0.74, { metalness: 0.0 }),
       hollyRed: std(0.78, 0.08, 0.09, 0.35, { metalness: 0.06 }),
       window: gm && gm.M_window ? gm.M_window : warmLantern,
+      nightPane: nightPaneMat,
       lantern: warmLantern,
       embers: hearthEmbers,
       rose: this.roseMat,
@@ -336,26 +359,47 @@ export class ClaudeCastle {
     return g;
   }
 
-  // Ornate Gothic Arched Castle Window (uses game.mats.M_window for auto day/night glow!)
+  // Ornate Gothic Arched Castle Window (crisp 512x768 leaded-glass pane + deep recessed stone/brass trim!)
   mkGothicWindow(w = 1.05, h = 1.38) {
     const T = this.THREE;
     const g = new T.Group();
-    // Pointed gothic frame + glowing pane
+    // Single planar arched glass Shape with clean 0..1 UVs (eliminates curved-cylinder UV blur!)
+    const rectH = h * 0.72;
+    const r = w * 0.5;
+    const sh = new T.Shape();
+    sh.moveTo(-r, -h * 0.5);
+    sh.lineTo(r, -h * 0.5);
+    sh.lineTo(r, -h * 0.5 + rectH);
+    sh.absarc(0, -h * 0.5 + rectH, r, 0, Math.PI, false);
+    sh.closePath();
+    const paneGeo = new T.ShapeGeometry(sh, 18);
+    const uv = paneGeo.attributes.uv;
+    const pos = paneGeo.attributes.position;
+    const totalH = rectH + r;
+    for (let i = 0; i < pos.count; i++) {
+      uv.setXY(i, (pos.getX(i) + r) / w, (pos.getY(i) + h * 0.5) / totalH);
+    }
+    uv.needsUpdate = true;
+
+    const archY = -h * 0.5 + rectH;
     g.add(
-      this.mesh(new T.BoxGeometry(w, h * 0.72, 0.08), this.m.window, 0, -h * 0.14, 0),
-      this.mesh(new T.CylinderGeometry(w * 0.5, w * 0.5, 0.08, 16, 1, false, 0, Math.PI).rotateZ(Math.PI / 2).rotateY(Math.PI / 2), this.m.window, 0, h * 0.22, 0),
-      // Carved ivory outer pilasters & stone sill
-      this.mesh(new T.BoxGeometry(0.14, h * 0.76, 0.16), this.m.marble, -w / 2 - 0.05, -h * 0.12, 0.03),
-      this.mesh(new T.BoxGeometry(0.14, h * 0.76, 0.16), this.m.marble, w / 2 + 0.05, -h * 0.12, 0.03),
-      this.mesh(new T.BoxGeometry(w + 0.34, 0.13, 0.24), this.m.marble, 0, -h * 0.52, 0.06),
+      // Recessed dark backing box + crisp planar arched window glass cleanly seated at z = +0.025
+      this.mesh(new T.BoxGeometry(w + 0.04, rectH + 0.04, 0.04), this.m.obsidian, 0, -h * 0.5 + rectH * 0.5, 0),
+      this.mesh(paneGeo, this.m.window, 0, 0, 0.032),
+      // Carved ivory outer pilasters, sill corbels & stone sill
+      this.mesh(new T.BoxGeometry(0.14, rectH + 0.06, 0.16), this.m.marble, -w / 2 - 0.06, -h * 0.5 + rectH * 0.5, 0.04),
+      this.mesh(new T.BoxGeometry(0.14, rectH + 0.06, 0.16), this.m.marble, w / 2 + 0.06, -h * 0.5 + rectH * 0.5, 0.04),
+      this.mesh(new T.BoxGeometry(w + 0.36, 0.13, 0.24), this.m.marble, 0, -h * 0.54, 0.07),
+      this.mesh(new T.BoxGeometry(0.11, 0.16, 0.16), this.m.gold, -w * 0.36, -h * 0.66, 0.06),
+      this.mesh(new T.BoxGeometry(0.11, 0.16, 0.16), this.m.gold, w * 0.36, -h * 0.66, 0.06),
       // Snow cap on window sill
-      this.mesh(new T.BoxGeometry(w + 0.30, 0.06, 0.20), this.m.snow, 0, -h * 0.44, 0.08),
+      this.mesh(new T.BoxGeometry(w + 0.30, 0.06, 0.20), this.m.snow, 0, -h * 0.455, 0.09),
       // Golden Gothic arch hood molding
-      this.mesh(new T.TorusGeometry(w * 0.54, 0.065, 8, 18, Math.PI), this.m.gold, 0, h * 0.22, 0.05),
-      // Dark obsidian iron mullions
-      this.mesh(new T.BoxGeometry(0.04, h * 0.96, 0.11), this.m.obsidian, 0, 0.02, 0.02),
-      this.mesh(new T.BoxGeometry(w * 0.96, 0.04, 0.11), this.m.obsidian, 0, -h * 0.06, 0.02),
-      this.mesh(new T.BoxGeometry(w * 0.92, 0.04, 0.11), this.m.obsidian, 0, h * 0.22, 0.02)
+      this.mesh(new T.TorusGeometry(w * 0.54, 0.065, 8, 22, Math.PI), this.m.gold, 0, archY, 0.055),
+      // Protruding 3D dark obsidian iron mullions cleanly in front of crisp glass
+      this.mesh(new T.BoxGeometry(0.042, totalH * 0.96, 0.05), this.m.obsidian, 0, -h * 0.5 + totalH * 0.48, 0.055),
+      this.mesh(new T.BoxGeometry(w * 0.96, 0.042, 0.05), this.m.obsidian, 0, -h * 0.12, 0.055),
+      this.mesh(new T.BoxGeometry(w * 0.94, 0.042, 0.05), this.m.obsidian, 0, archY, 0.055)
     );
     return g;
   }
@@ -780,18 +824,19 @@ export class ClaudeCastle {
       g.add(this.mesh(new T.BoxGeometry(W, 0.14, 0.14), this.m.gold, 0, H - 0.04, rz));
     }
 
-    // 4. Three Tall Arched Gothic Castle Windows on North Wall (using live day/night paneMat!)
+    // 4. Three Tall Arched Gothic Castle Windows on North Wall (crisp winter aurora leaded-glass!)
     for (const wx of [-2.15, 0.10, 2.25]) {
       const wg = new T.Group();
       wg.position.set(wx, 1.88, -D / 2 + 0.07);
-      const pane = this.mesh(new T.BoxGeometry(1.12, 1.32, 0.04), paneMat, 0, 0, 0);
+      const pane = this.mesh(new T.PlaneGeometry(1.12, 1.34), this.m.nightPane || paneMat, 0, 0, 0.025);
       pane.castShadow = false;
       wg.add(
         pane,
         this.mesh(new T.BoxGeometry(1.26, 0.10, 0.16), im, 0, -0.70, 0.06),
-        this.mesh(new T.TorusGeometry(0.58, 0.06, 8, 18, Math.PI), this.m.gold, 0, 0.56, 0.04),
-        this.mesh(new T.BoxGeometry(0.035, 1.34, 0.07), this.m.obsidian, 0, 0, 0.03),
-        this.mesh(new T.BoxGeometry(1.12, 0.035, 0.07), this.m.obsidian, 0, 0.02, 0.03),
+        this.mesh(new T.TorusGeometry(0.58, 0.06, 8, 22, Math.PI), this.m.gold, 0, 0.56, 0.04),
+        this.mesh(new T.BoxGeometry(0.038, 1.34, 0.06), this.m.obsidian, 0, 0, 0.045),
+        this.mesh(new T.BoxGeometry(1.12, 0.038, 0.06), this.m.obsidian, 0, 0.14, 0.045),
+        this.mesh(new T.BoxGeometry(1.12, 0.038, 0.06), this.m.obsidian, 0, -0.18, 0.045),
         // Draped Terracotta-Orange Velvet Curtains with Golden Tie-Backs!
         this.mesh(new T.CylinderGeometry(0.10, 0.14, 1.62, 10), this.m.velvet, -0.66, 0.04, 0.09),
         this.mesh(new T.CylinderGeometry(0.10, 0.14, 1.62, 10), this.m.velvet, 0.66, 0.04, 0.09),

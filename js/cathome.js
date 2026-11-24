@@ -1,22 +1,30 @@
-// 哈基米星猫小窝乐园 (Gemini's Starlight Kitty Sanctuary)
+// 极其猫乐园 (Starlight Kitty Sanctuary)
 // Located in the scenic southeast snowy pine glade at (52, 64), connected via starlight trail from (4, 66).
+
+import {
+  makeStoneMasonryTex,
+  makeShingleRoofTex,
+  makeTimberWallTex,
+  makeCrispWindowTex,
+  buildCrispWindow
+} from "./archcraft.js?v=11242125";
 
 const CAT_SNACKS = [
   "烤得外酥里嫩的黄金小鱼干配热乎乎的草莓星奶，本喵极其极其幸福喵～",
   "喵呜～一口焦香小鱼干配冰蓝星辉特调，寒气瞬间跑光光啦！",
   "刚出炉的猫爪鲷鱼烧冒着甜丝丝的热气，主人快和本喵一起尝一口喵～",
   "热乎乎的樱粉双子星奶喝下去，连猫耳朵都暖洋洋地竖起来啦！",
-  "今日份限量「哈基米特供鱼干拼盘」端上桌！补充了极其极其满满的能量喵～"
+  "今日份限量「极其猫特供鱼干拼盘」端上桌！补充了极其极其满满的能量喵～"
 ];
 
 const POOL_LINES = [
-  "咕噜咕噜～暖融融的星喵牛奶温泉泡着极其极其舒服，冻僵的小爪子一下子全化开啦喵！",
+  "咕噜咕噜～暖融融的极其猫牛奶温泉泡着极其极其舒服，冻僵的小爪子一下子全化开啦喵！",
   "雪花落在热腾腾的星光泉水上化作点点微光，听着小猫呼噜声都不想走啦～",
   "暖呼呼的泉水带着淡淡的草莓奶香，浑身都被星光和暖意包住啦喵～"
 ];
 
 const DEN_LINES = [
-  "钻进极其极其软乎乎的哈基米猫窝软垫里打个盹儿，透过猫耳玻璃顶看雪飘下来，简直太幸福啦喵～",
+  "钻进极其极其软乎乎的极其猫窝软垫里打个盹儿，透过猫耳玻璃顶看雪飘下来，简直太幸福啦喵～",
   "暖炉劈啪作响，猫窝里暖烘烘的，本喵要在这里赖着陪主人看极光喵～"
 ];
 
@@ -253,6 +261,21 @@ export class CatHome {
       polygonOffsetUnits: -2
     }));
 
+    const rend = this.game.renderer;
+    const stoneWallTex = makeStoneMasonryTex(T, rend, 6, 1.5);
+    const shingleTex = makeShingleRoofTex(T, rend, "indigo", 3, 2);
+    const timberTex = makeTimberWallTex(T, rend, 3, 2);
+    const winCozyTex = makeCrispWindowTex(T, rend, "cozy");
+    const winCozyMat = plain(new T.MeshStandardMaterial({
+      map: winCozyTex,
+      emissiveMap: winCozyTex,
+      emissive: new T.Color(1.0, 0.90, 0.72),
+      emissiveIntensity: 0.72,
+      roughness: 0.16,
+      metalness: 0.08
+    }));
+    this.emissives.push({ mat: winCozyMat, base: 0.65, night: 1.38, phase: 2.1 });
+
     this.m = {
       indigo: std(0.09, 0.11, 0.26, 0.38, { metalness: 0.36 }),
       indigoWood: std(0.14, 0.16, 0.31, 0.62, { metalness: 0.08 }),
@@ -260,9 +283,30 @@ export class CatHome {
       lavender: std(0.72, 0.68, 0.96, 0.76, { metalness: 0.02 }),
       sakura: std(0.98, 0.62, 0.85, 0.40, { metalness: 0.04, emissive: new T.Color(0.72, 0.22, 0.54), emissiveIntensity: 0.28 }),
       cream: std(0.95, 0.95, 0.98, 0.64, { metalness: 0.02 }),
+      snow: std(0.96, 0.98, 1.0, 0.76, { metalness: 0.0 }),
       sisal: std(0.84, 0.76, 0.62, 0.88, { metalness: 0.0 }),
       gold: std(0.98, 0.82, 0.46, 0.20, { metalness: 0.86 }),
       stone: std(0.68, 0.72, 0.80, 0.84, { metalness: 0.04 }),
+      stoneWall: plain(new T.MeshStandardMaterial({
+        map: stoneWallTex,
+        color: new T.Color(0.28, 0.33, 0.62),
+        roughness: 0.68,
+        metalness: 0.10,
+        side: T.DoubleSide
+      })),
+      shingleRoof: plain(new T.MeshStandardMaterial({
+        map: shingleTex,
+        roughness: 0.52,
+        metalness: 0.14,
+        side: T.DoubleSide
+      })),
+      timberWall: plain(new T.MeshStandardMaterial({
+        map: timberTex,
+        color: new T.Color(0.46, 0.52, 0.78),
+        roughness: 0.70,
+        metalness: 0.06
+      })),
+      winCozy: winCozyMat,
       darkWood: std(0.24, 0.17, 0.13, 0.76, { metalness: 0.02 }),
       taiyaki: std(0.82, 0.50, 0.18, 0.55, { metalness: 0.05 }),
       cyan: cyanGlow,
@@ -638,10 +682,10 @@ export class CatHome {
     const cap = this.mesh(new T.SphereGeometry(0.11, 10, 8), this.m.gold, 0, 2.28, 0);
     const eL = this.mkCatEar(0.24); eL.position.set(-0.09, 2.34, 0); eL.rotation.z = 0.28;
     const eR = this.mkCatEar(0.24); eR.position.set(0.09, 2.34, 0); eR.rotation.z = -0.28;
-    const plaqueS = this.makeSignPlaque("✦ 哈基米星猫小窝 →", 1.65, 0.42);
-    const plaqueN = this.makeSignPlaque("← 哈基米星猫小窝 ✦", 1.65, 0.42);
+    const plaqueS = this.makeSignPlaque("✦ 极其猫乐园 →", 1.55, 0.42);
+    const plaqueN = this.makeSignPlaque("← 极其猫乐园 ✦", 1.55, 0.42);
     // Combine South-facing (+Z -> right is +X East) and North-facing (-Z -> left is +X East) onto one board!
-    const board = new T.Mesh(new T.BoxGeometry(1.65, 0.42, 0.08), [
+    const board = new T.Mesh(new T.BoxGeometry(1.55, 0.42, 0.08), [
       this.m.gold, this.m.gold, this.m.gold, this.m.gold, plaqueS.material[4], plaqueN.material[4]
     ]);
     board.position.set(0.55, 1.75, 0);
@@ -740,7 +784,7 @@ export class CatHome {
     this.spinners.push({ obj: topStar, speed: 1.35, bobY: 5.18, bobAmp: 0.06 });
 
     // Glowing nameplate
-    const plaque = this.makeSignPlaque("✦ 哈基米星猫小窝 ✦", 2.9, 0.64);
+    const plaque = this.makeSignPlaque("✦ 极其猫乐园 ✦", 2.75, 0.64);
     plaque.position.set(0, 3.88, 0);
 
     // Fairy star accents along the arch
@@ -795,7 +839,7 @@ export class CatHome {
       id: "cathome_fireworks",
       pos: new T.Vector3(px, py + 1.1, pz),
       r: 2.8,
-      label: "燃放哈基米双子星猫猫烟花",
+      label: "燃放极其猫双子星烟花",
       can: () => !this.game.player.skiing && !this.game.player.riding && !this.game.player.seat,
       act: () => this.triggerFireworks(px, py + 1.2, pz)
     });
@@ -815,7 +859,7 @@ export class CatHome {
         col: FW_PALETTE[i % FW_PALETTE.length]
       });
     }
-    g.ui.toast("咻——砰！哈基米双子星猫猫烟花在星猫小窝上空绽放啦喵～", 4.5);
+    g.ui.toast("咻——砰！极其猫双子星烟花在极其猫乐园上空绽放啦喵～", 4.5);
   }
 
   launchCatRocket(item) {
@@ -916,20 +960,41 @@ export class CatHome {
       }
     );
 
-    // Open-front curved lower starry walls (rear 256°, leaving wide 104° doorway around local +Z!)
+    // Open-front curved lower starry ashlar masonry walls (rear 256°, leaving wide 104° doorway around local +Z!)
     const domeR = 3.85;
     const openHalf = 0.92; // ±52.7° open front entrance (doorway width ~6.1m chord!)
     const wallSpan = Math.PI * 2 - openHalf * 2;
     const wallH = 1.48;
     // CylinderGeometry theta=0 is at +Z, increasing toward +X -> start at +openHalf, sweep wallSpan
     const wallGeo = new T.CylinderGeometry(domeR, domeR, wallH, 32, 1, true, openHalf, wallSpan);
-    const wallMat = this.wrapMat(new T.MeshStandardMaterial({
-      color: new T.Color(0.11, 0.13, 0.30),
-      roughness: 0.42,
-      metalness: 0.32,
-      side: T.DoubleSide
-    }), { key: "plain" });
-    g.add(this.mesh(wallGeo, wallMat, 0, deckH + wallH / 2, 0));
+    g.add(this.mesh(wallGeo, this.m.stoneWall, 0, deckH + wallH / 2, 0));
+
+    // Carved stone base plinth rail around solid curved wall
+    const basePts = [];
+    for (let i = 0; i <= 28; i++) {
+      const a = openHalf + (wallSpan * i) / 28;
+      basePts.push(new T.Vector3(Math.sin(a) * (domeR + 0.04), deckH + 0.10, Math.cos(a) * (domeR + 0.04)));
+    }
+    g.add(this.mesh(new T.TubeGeometry(new T.CatmullRomCurve3(basePts), 32, 0.11, 8, false), this.m.stone));
+
+    // 4 CRISP 3D RECESSED ARCHED COZY WINDOWS mounted cleanly around the curved exterior dome wall!
+    const domeWinMats = {
+      frame: this.m.indigoWood,
+      brass: this.m.gold,
+      snow: this.m.snow,
+      pane: this.m.winCozy,
+      shutter: this.m.peri
+    };
+    for (let i = 0; i < 4; i++) {
+      const a = openHalf + wallSpan * (0.14 + i * 0.24);
+      const dw = buildCrispWindow(T, domeWinMats, {
+        w: 0.96, h: 0.96, arch: true, shutters: false, flowerBox: true,
+        boxFillMats: [this.m.cyan, this.m.pink, this.m.warm]
+      });
+      dw.position.set(Math.sin(a) * (domeR + 0.04), deckH + 0.80, Math.cos(a) * (domeR + 0.04));
+      dw.rotation.y = a;
+      g.add(dw);
+    }
 
     // Gold circular eave trim ring (around solid wall span) & dome zenith ring
     const eaveY = deckH + wallH;
@@ -989,7 +1054,7 @@ export class CatHome {
     g.add(this.mesh(new T.TubeGeometry(new T.CatmullRomCurve3(doorPts), 22, 0.095, 8, false), this.m.gold));
 
     // Glowing header plaque above the doorway
-    const denSign = this.makeSignPlaque("✦ 哈基米小窝 ✦", 2.35, 0.50);
+    const denSign = this.makeSignPlaque("✦ 极其猫窝 ✦", 2.15, 0.50);
     denSign.position.set(0, eaveY + 1.38, domeR + 0.14);
     g.add(denSign);
 
@@ -1194,7 +1259,7 @@ export class CatHome {
       id: "cathome_bed",
       pos: bedWorld,
       r: 2.6,
-      label: "蜷进哈基米星梦猫窝睡觉觉（可盖被子·摸猫头·看美梦喵～）",
+      label: "蜷进极其猫窝睡觉觉（可盖被子·摸猫头·看美梦喵～）",
       can: () => !this.game.player.seat && !this.game.player.riding && !this.game.player.skiing,
       act: () => this.enterDenBed(yaw)
     });
@@ -1940,25 +2005,83 @@ export class CatHome {
     g.position.set(bx, by, bz);
     g.rotation.y = yaw;
 
-    // Stall body & glowing gold-trimmed counter
+    // Sculpted Stone Plinth + Paneled Chalet Counter with Gilded Trim & Timber Rear Wall!
     g.add(
-      this.mesh(new T.BoxGeometry(3.1, 1.05, 1.35), this.m.indigoWood, 0, 0.525, 0),
-      this.mesh(new T.BoxGeometry(3.26, 0.10, 1.56), this.m.cream, 0, 1.08, 0.06),
-      this.mesh(new T.BoxGeometry(3.28, 0.04, 0.06), this.m.gold, 0, 1.08, 0.84)
+      this.mesh(new T.BoxGeometry(3.36, 0.16, 1.58), this.m.stone, 0, 0.08, 0),
+      this.mesh(new T.BoxGeometry(3.14, 0.94, 1.36), this.m.timberWall, 0, 0.62, 0),
+      this.mesh(new T.BoxGeometry(3.30, 0.10, 1.60), this.m.cream, 0, 1.12, 0.06),
+      this.mesh(new T.BoxGeometry(3.32, 0.045, 0.06), this.m.gold, 0, 1.12, 0.86),
+      // Solid textured timber rear wall + side counter wings (gives real chalet enclosure!)
+      this.mesh(new T.BoxGeometry(3.14, 1.62, 0.16), this.m.timberWall, 0, 1.92, -0.62),
+      this.mesh(new T.BoxGeometry(0.16, 1.56, 0.66), this.m.timberWall, -1.49, 1.90, -0.32),
+      this.mesh(new T.BoxGeometry(0.16, 1.56, 0.66), this.m.timberWall, 1.49, 1.90, -0.32),
+      // Rear wooden wall shelf with glowing spice/tea jars
+      this.mesh(new T.BoxGeometry(2.75, 0.07, 0.24), this.m.darkWood, 0, 1.48, -0.44)
     );
-    // 4 Corner posts + slanted striped awning
-    for (const [px, pz] of [[-1.44, -0.58], [1.44, -0.58], [-1.44, 0.58], [1.44, 0.58]]) {
-      g.add(this.mesh(new T.CylinderGeometry(0.065, 0.075, 2.55, 8), this.m.indigo, px, 1.32, pz));
+    // Decorative raised counter wainscot panels across the front face
+    for (const px of [-0.95, 0, 0.95]) {
+      g.add(
+        this.mesh(new T.BoxGeometry(0.76, 0.66, 0.05), this.m.indigoWood, px, 0.62, 0.69),
+        this.mesh(new T.BoxGeometry(0.64, 0.54, 0.04), this.m.peri, px, 0.62, 0.715)
+      );
     }
-    const roof = this.mesh(new T.BoxGeometry(3.55, 0.10, 2.05), this.m.awning, 0, 2.66, 0.10);
-    roof.rotation.x = 0.18;
-    g.add(roof);
+    // Crisp 3D Recessed Cozy Kitchen Window on both interior & exterior rear chalet wall!
+    const barWinMats = { frame: this.m.indigoWood, brass: this.m.gold, snow: this.m.snow, pane: this.m.winCozy, shutter: this.m.peri };
+    const wIn = buildCrispWindow(T, barWinMats, { w: 1.02, h: 0.88, arch: true });
+    wIn.position.set(0, 1.96, -0.53);
+    const wOut = buildCrispWindow(T, barWinMats, { w: 1.02, h: 0.88, arch: true, shutters: true });
+    wOut.position.set(0, 1.96, -0.71);
+    wOut.rotation.y = Math.PI;
+    g.add(wIn, wOut);
 
-    // Rooftop Cat-Ear Signboard
-    const sign = this.makeSignPlaque("✦ 小鱼干星奶吧 ✦", 2.35, 0.48);
-    sign.position.set(0, 3.04, 0.65);
-    const beL = this.mkCatEar(0.55); beL.position.set(-0.92, 3.24, 0.65); beL.rotation.z = 0.24;
-    const beR = this.mkCatEar(0.55); beR.position.set(0.92, 3.24, 0.65); beR.rotation.z = -0.24;
+    // 4 Carved Corner Posts + Diagonal Timber Roof Brackets
+    for (const [px, pz] of [[-1.46, -0.58], [1.46, -0.58], [-1.46, 0.58], [1.46, 0.58]]) {
+      g.add(
+        this.mesh(new T.CylinderGeometry(0.075, 0.085, 2.58, 10), this.m.indigo, px, 1.38, pz),
+        this.mesh(new T.TorusGeometry(0.095, 0.02, 6, 12).rotateX(Math.PI / 2), this.m.gold, px, 2.62, pz)
+      );
+    }
+    for (const sx of [-1, 1]) {
+      const br = this.mesh(new T.BoxGeometry(0.07, 0.52, 0.07), this.m.darkWood, sx * 1.24, 2.42, 0.58);
+      br.rotation.z = sx * 0.72;
+      g.add(br);
+    }
+
+    // Pitched Scalloped Indigo-Slate Shingle Chalet Gable Roof + Thick Snow Blanket Eaves!
+    const roofPitch = 0.44;
+    const slopeLen = 1.48;
+    const roofW = 3.92;
+    const ridgeY = 3.30;
+    const eaveDrop = Math.sin(roofPitch) * (slopeLen * 0.5);
+    const slopeZ = Math.cos(roofPitch) * (slopeLen * 0.5);
+    for (const side of [-1, 1]) {
+      const sh = this.mesh(new T.BoxGeometry(roofW, 0.11, slopeLen), this.m.shingleRoof, 0, ridgeY - eaveDrop, side * slopeZ);
+      sh.rotation.x = side * roofPitch;
+      const sn = this.mesh(new T.BoxGeometry(roofW + 0.06, 0.08, slopeLen + 0.06), this.m.snow, 0, ridgeY - eaveDrop + 0.075, side * slopeZ);
+      sn.rotation.x = side * roofPitch;
+      g.add(sh, sn);
+    }
+    // Gable triangular end walls (West & East) + golden ridge beam with end finials
+    const gShape = new T.Shape();
+    gShape.moveTo(-1.12, 0); gShape.lineTo(1.12, 0); gShape.lineTo(0, 0.64); gShape.closePath();
+    const gGeo = new T.ExtrudeGeometry(gShape, { depth: 0.14, bevelEnabled: false });
+    gGeo.translate(0, 0, -0.07);
+    for (const sx of [-1.52, 1.52]) {
+      const gw = this.mesh(gGeo, this.m.timberWall, sx, 2.66, 0);
+      gw.rotation.y = Math.PI / 2;
+      g.add(gw);
+    }
+    g.add(
+      this.mesh(new T.CylinderGeometry(0.065, 0.065, roofW + 0.16, 10).rotateZ(Math.PI / 2), this.m.gold, 0, ridgeY + 0.05, 0),
+      this.mesh(new T.SphereGeometry(0.11, 10, 8), this.m.gold, -roofW / 2 - 0.12, ridgeY + 0.05, 0),
+      this.mesh(new T.SphereGeometry(0.11, 10, 8), this.m.gold, roofW / 2 + 0.12, ridgeY + 0.05, 0)
+    );
+
+    // Clean Rooftop Cat-Ear Signboard: 「极其猫鱼干吧」
+    const sign = this.makeSignPlaque("✦ 极其猫鱼干吧 ✦", 2.25, 0.48);
+    sign.position.set(0, 3.16, 0.92);
+    const beL = this.mkCatEar(0.55); beL.position.set(-0.90, 3.36, 0.92); beL.rotation.z = 0.24;
+    const beR = this.mkCatEar(0.55); beR.position.set(0.90, 3.36, 0.92); beR.rotation.z = -0.24;
     g.add(sign, beL, beR);
 
     // Counter props: glowing cyan & pink star-milk bottles + sizzling taiyaki fish grill + warm hanging lamp!
@@ -2081,7 +2204,7 @@ export class CatHome {
       id: "cathome_pool",
       pos: new T.Vector3(px, py + 0.9, pz),
       r: 3.1,
-      label: "泡泡星喵牛奶暖泉 · 听猫猫呼噜声",
+      label: "泡泡极其猫暖泉 · 听猫猫呼噜声",
       can: () => !this.game.player.skiing && !this.game.player.riding && !this.game.player.seat,
       act: () => {
         const gm = this.game;
@@ -2143,7 +2266,7 @@ export class CatHome {
         this.spawnStarBurst(px, py + 0.8, pz, 22, 3.4);
         gm.character?.play("cheer");
         gm.ui.toast(gm.avatar === "gemini"
-          ? "喵呜～幻翼星云飞猫已经振翅飞落到星猫小窝召唤台啦，快骑上去兜风喵～"
+          ? "喵呜～幻翼星云飞猫已经振翅飞落到极其猫乐园召唤台啦，快骑上去兜风喵～"
           : "Claude 的橙花小直升机已经召到停机坪啦！", 4.8);
       }
     });

@@ -1,16 +1,22 @@
-// 哈基米元素周期表化学实验室（独立室内大场景 + 穿戴装备更衣柜 + 118 Og 神秘武器封存核心舱！）
-// - Exterior Observatory at (76, 102): Victorian-Starlight glass conservatory with Neon/Argon lanterns,
-//   raised Gemini 4 signboard, spinning rooftop molecular spire, and push-to-enter brass double doors!
+// 极其猫实验室（雕花猫猫炼金屋外观 + 独立室内粒子对撞密室 + 可穿戴化学装备 + 118 Og 神秘武器！）
+// - Exterior Cat-House Alchemy Mansion at (76, 102): Carved ashlar masonry, scalloped slate roof with twin giant
+//   architectural Cat-Ear Turret Dormers, Cat-Head Stained-Glass Rose Window, projecting East/West octagonal copper
+//   bay windows with crisp 512x768 leaded-glass alchemy panes & potion boxes, and steampunk copper chimney!
 // - Dedicated Indoor Grand Collider Lab at LAB_ORIGIN = (1500, 1500, 1500) (16m × 14m × 5.6m):
-//   1) SW Lab Gear Wardrobe: Equip Cat-Scientist Safety Goggles + Starlight Alchemist Collar + Floating 10 Ne/18 Ar Pods (+ Tier-2 Bohr Halo!)
-//   2) 4 Interactive Gemini 4 Element Reactor Pillars (1 H, 6 C, 10 Ne, 18 Ar) shooting 3D Energy Laser Beams into the center!
-//   3) Center 118 Og Secret Weapon Containment Vault: Once Lab Gear is worn & all 4 beams converge, launch the 3s Particle Collider
-//      Synthesis Sequence to shatter the laser shield & permanently unlock the secret weapon「118 Og · 周期表元素炮」!
-//   4) North Reagent Workbench (5 Live Reactions) & Gemini 4 Meme Chalkboard!
-//   5) West Giant Gemini 4 Periodic Table Wall + Microscope & Butterfly-Pea pH Color-Changing Elixir!
-//   6) East 3D Molecular & Atomic Holo-Pedestal (6 C Diamond Lattice, 10 Ne/18 Ar Bohr Shells, 1 H Ice Ring, Gemini Surfactant)!
+//   Octagonal brass-inlaid tile floor, 6 recessed arched cathedral aurora windows, apothecary reagent shelves,
+//   SW 极其猫装备柜, 4 Gemini 4 Element Laser Reactors, Center 118 Og Secret Weapon Vault, Workbench, Periodic Table & Holo-Pedestal!
 
-import { buildChemGunMesh } from "./labweapon.js?v=11241845";
+import { buildChemGunMesh } from "./labweapon.js?v=11242125";
+import {
+  makeStoneMasonryTex,
+  makeShingleRoofTex,
+  makeTimberWallTex,
+  makeLabFloorTex,
+  makeCrispWindowTex,
+  makeCatRoseWindowTex,
+  makeCleanSignTex,
+  buildCrispWindow
+} from "./archcraft.js?v=11242125";
 
 export const LAB_ORIGIN = { x: 1500, y: 1500, z: 1500 };
 
@@ -121,8 +127,8 @@ export class ChemLab {
     this.cx = this.re.chemlab.x; // 76
     this.cz = this.re.chemlab.z; // 102
     this.baseY = this.qt(this.cx, this.cz);
-    this.deckH = 0.24;
-    this.out = { x: this.cx, z: this.cz + 6.6 };
+    this.deckH = 0.36;
+    this.out = { x: this.cx, z: this.cz + 7.4 };
 
     // Indoor state (strictly separate from Claude's Castle cabin.inside!)
     this.inside = false;
@@ -451,7 +457,7 @@ export class ChemLab {
     c.textAlign = "left";
     c.fillStyle = "#ffe896";
     c.font = "800 32px 'Microsoft YaHei', sans-serif";
-    c.fillText("⚗️ 哈基米化学密室 · Gemini 4 元素家族 & 118 Og 武器合成指南", 38, 62);
+    c.fillText("⚗️ 极其猫实验室 · Gemini 4 元素与 118 Og 指南", 38, 62);
 
     c.fillStyle = "#7cf4ff";
     c.font = "700 23px 'Segoe UI', 'Microsoft YaHei', sans-serif";
@@ -614,27 +620,50 @@ export class ChemLab {
 
   _makePalette() {
     const T = this.THREE;
+    const rend = this.game.renderer;
     const plain = (m) => this.wrapMat(m, { key: "plain" });
     const std = (hex, rough = 0.50, extra = {}) =>
       plain(new T.MeshStandardMaterial({ color: hex, roughness: rough, ...extra }));
 
+    const stoneTex = makeStoneMasonryTex(T, rend, "#ece8e0", 2.8, 1.8);
+    const roofIndigoTex = makeShingleRoofTex(T, rend, "indigo", 3.6, 2.4);
+    const roofCopperTex = makeShingleRoofTex(T, rend, "copper", 2.4, 2.0);
+    const timberTex = makeTimberWallTex(T, rend, true, 2.0, 1.5);
+    const floorTex = makeLabFloorTex(T, rend, 6.0, 5.2);
+    const winAlchTex = makeCrispWindowTex(T, rend, "alchemy");
+    const winNightTex = makeCrispWindowTex(T, rend, "nightsky");
+    const catRoseTex = makeCatRoseWindowTex(T, rend);
+
     return {
       plain,
       std,
-      stone: std(0xdbe2f0, 0.70),
+      stone: plain(new T.MeshStandardMaterial({ map: stoneTex, roughness: 0.72 })),
+      stonePlain: std(0xe4e0d8, 0.74),
       stoneDark: std(0x4a5572, 0.76),
-      labFloor: std(0x182138, 0.42, { metalness: 0.22 }),
-      labWall: std(0x1e2a4b, 0.56, { metalness: 0.14 }),
+      labFloor: plain(new T.MeshStandardMaterial({ map: floorTex, roughness: 0.36, metalness: 0.24 })),
+      labWall: std(0x1b2646, 0.56, { metalness: 0.14 }),
       oak: std(0x9a6b44, 0.66),
-      woodDark: std(0x4b3120, 0.74),
+      woodDark: plain(new T.MeshStandardMaterial({ map: timberTex, roughness: 0.68 })),
+      shutter: std(0x223664, 0.56, { metalness: 0.12 }),
       granite: std(0x1f2538, 0.32, { metalness: 0.18 }),
-      brass: std(0xf0c665, 0.20, { metalness: 0.88 }),
-      iron: std(0x30394d, 0.38, { metalness: 0.72 }),
-      snow: std(0xf4f8ff, 0.76),
+      brass: std(0xf2c868, 0.20, { metalness: 0.88 }),
+      iron: std(0x283042, 0.38, { metalness: 0.72 }),
+      snow: std(0xf6f9ff, 0.74),
       indigo: std(0x192344, 0.42, { metalness: 0.28 }),
-      roofTeal: std(0x1c6e8c, 0.42, { metalness: 0.18 }),
+      roofIndigo: plain(new T.MeshStandardMaterial({ map: roofIndigoTex, roughness: 0.54, metalness: 0.16 })),
+      roofCopper: plain(new T.MeshStandardMaterial({ map: roofCopperTex, roughness: 0.40, metalness: 0.32 })),
       whiteCoat: std(0xf7faff, 0.34, { emissive: new T.Color(0.14, 0.22, 0.36), emissiveIntensity: 0.22 }),
-      winGlow: std(0x88e6ff, 0.18, { emissive: new T.Color(0.24, 0.62, 0.92), emissiveIntensity: 0.75 }),
+      winAlch: plain(new T.MeshStandardMaterial({
+        map: winAlchTex, emissive: new T.Color(0.55, 0.78, 0.96), emissiveMap: winAlchTex, emissiveIntensity: 0.78, roughness: 0.14
+      })),
+      winNight: plain(new T.MeshStandardMaterial({
+        map: winNightTex, emissive: new T.Color(0.45, 0.72, 0.92), emissiveMap: winNightTex, emissiveIntensity: 0.75, roughness: 0.14
+      })),
+      catRose: plain(new T.MeshStandardMaterial({
+        map: catRoseTex, emissive: new T.Color(0.75, 0.85, 1.0), emissiveMap: catRoseTex, emissiveIntensity: 0.78, roughness: 0.16
+      })),
+      winGlow: std(0x88e6ff, 0.18, { emissive: new T.Color(0.24, 0.62, 0.92), emissiveIntensity: 0.72 }),
+      earGlass: std(0xff9ee0, 0.16, { emissive: new T.Color(0.95, 0.45, 0.78), emissiveIntensity: 0.82 }),
       cyanGlow: std(0x52f2ff, 0.12, { emissive: new T.Color(0.20, 0.86, 1.0), emissiveIntensity: 1.15 }),
       pinkGlow: std(0xff72da, 0.12, { emissive: new T.Color(0.95, 0.28, 0.80), emissiveIntensity: 1.15 }),
       neonGlow: std(0xff6e42, 0.12, { emissive: new T.Color(1.0, 0.36, 0.14), emissiveIntensity: 1.25 }),
@@ -642,7 +671,7 @@ export class ChemLab {
       emeraldGlow: std(0x42f59e, 0.12, { emissive: new T.Color(0.14, 0.88, 0.46), emissiveIntensity: 1.05 }),
       goldGlow: std(0xffdc66, 0.14, { emissive: new T.Color(1.0, 0.72, 0.18), emissiveIntensity: 1.20 }),
       glassPane: plain(new T.MeshStandardMaterial({
-        color: 0xdaf6ff, roughness: 0.08, metalness: 0.10, transparent: true, opacity: 0.28, depthWrite: false, side: T.DoubleSide
+        color: 0xdaf6ff, roughness: 0.08, metalness: 0.10, transparent: true, opacity: 0.26, depthWrite: false, side: T.DoubleSide
       })),
       flaskGlass: plain(new T.MeshStandardMaterial({
         color: 0xeafaff, roughness: 0.06, metalness: 0.12, transparent: true, opacity: 0.38, depthWrite: false
@@ -659,7 +688,7 @@ export class ChemLab {
       if (!this.game.explore.sites.some((s) => s.id === "chemlab")) {
         this.game.explore.sites.push({
           id: "chemlab",
-          name: "哈基米元素化学实验室",
+          name: "极其猫实验室",
           x: this.cx,
           z: this.cz,
           r: 13
@@ -672,7 +701,9 @@ export class ChemLab {
   }
 
   // ===========================================================================
-  // PART A: EXTERIOR ALCHEMY OBSERVATORY AT (76, 102) WITH PUSH-TO-ENTER DOORS!
+  // PART A: SCULPTED CAT-HOUSE ALCHEMY MANSION AT (76, 102) — 「极其猫实验室」!
+  //   Multi-tiered pitched roof + Giant Twin Cat-Ear Turret Dormers + Cat Rose Window
+  //   + East/West Octagonal Copper Bay Windows + Crisp Shuttered Leaded-Glass Windows!
   // ===========================================================================
   _buildExterior() {
     const T = this.THREE;
@@ -680,144 +711,305 @@ export class ChemLab {
     const m = this.m;
 
     const ext = new T.Group();
-    ext.name = "hajimi_chemlab_ext";
+    ext.name = "jiqimao_chemlab_ext";
     ext.position.set(this.cx, this.baseY, this.cz);
     this.ext = ext;
 
-    const W = 10.6, D = 8.4, H = 4.4;
+    const W = 9.6, D = 7.6, H = 4.2;
     const hw = W / 2, hd = D / 2;
-    const roofBaseY = this.deckH + H;
+    const wallTopY = this.deckH + H; // 4.56
+    const roofH = 2.65;
+    const ridgeY = wallTopY + roofH; // 7.21
+    const winMats = { frame: m.woodDark, brass: m.brass, snow: m.snow, pane: m.winAlch, shutter: m.shutter };
 
-    // Foundation plinth + welcoming front porch step
+    // 1. Stepped Carved-Stone Foundation + Tiled Balustrade Porch & Stairs
     ext.add(
-      this.mesh(new T.BoxGeometry(W + 0.6, this.deckH + 0.5, D + 0.6), m.stoneDark, 0, (this.deckH - 0.5) / 2, 0),
-      this.mesh(new T.BoxGeometry(4.2, 0.18, 1.8), m.stone, 0, 0.09, hd + 0.9),
-      this.mesh(new T.BoxGeometry(4.3, 0.05, 1.88), m.brass, 0, 0.19, hd + 0.9)
+      this.mesh(new T.BoxGeometry(W + 0.7, this.deckH + 0.55, D + 0.7), m.stoneDark, 0, (this.deckH - 0.55) / 2, 0),
+      this.mesh(new T.BoxGeometry(W + 0.26, 0.14, D + 0.26), m.stonePlain, 0, this.deckH + 0.04, 0),
+      // Projecting South Porch Deck & 2 Wide Stone Entrance Steps
+      this.mesh(new T.BoxGeometry(4.8, this.deckH + 0.35, 2.3), m.stoneDark, 0, (this.deckH - 0.35) / 2, hd + 1.15),
+      this.mesh(new T.BoxGeometry(4.65, 0.08, 2.15), m.oak, 0, this.deckH - 0.02, hd + 1.12),
+      this.mesh(new T.BoxGeometry(2.6, 0.20, 0.55), m.stonePlain, 0, 0.10, hd + 2.48),
+      this.mesh(new T.BoxGeometry(2.8, 0.10, 0.45), m.stonePlain, 0, 0.05, hd + 2.92)
     );
+    // Porch Balustrades & Golden Cat-Ear Newel Posts!
+    for (const side of [-1, 1]) {
+      const nx = side * 1.48;
+      ext.add(
+        this.mesh(new T.BoxGeometry(0.92, 0.09, 0.14), m.stonePlain, side * 1.92, this.deckH + 0.74, hd + 2.14),
+        this.mesh(new T.BoxGeometry(0.14, 0.09, 2.10), m.stonePlain, side * 2.32, this.deckH + 0.74, hd + 1.12),
+        this.mesh(new T.BoxGeometry(0.24, 0.94, 0.24), m.stonePlain, nx, this.deckH + 0.47, hd + 2.14),
+        this.mesh(new T.SphereGeometry(0.14, 12, 10), m.brass, nx, this.deckH + 1.02, hd + 2.14),
+        this.mesh(new T.ConeGeometry(0.065, 0.16, 4), m.brass, nx - 0.08, this.deckH + 1.16, hd + 2.14),
+        this.mesh(new T.ConeGeometry(0.065, 0.16, 4), m.brass, nx + 0.08, this.deckH + 1.16, hd + 2.14)
+      );
+      for (let b = 0; b < 5; b++) {
+        ext.add(this.mesh(new T.CylinderGeometry(0.036, 0.044, 0.68, 8), m.stonePlain, side * 2.32, this.deckH + 0.36, hd + 0.35 + b * 0.42));
+      }
+    }
     world.platforms.push({
-      test: (px, pz) => Math.abs(px - this.cx) <= 2.2 && pz >= this.cz + hd && pz <= this.cz + hd + 1.9,
-      y: () => this.baseY + 0.21,
-      wood: false
+      test: (px, pz) => Math.abs(px - this.cx) <= 2.45 && pz >= this.cz + hd - 0.1 && pz <= this.cz + hd + 3.1,
+      y: (px, pz) => {
+        const dz = pz - (this.cz + hd);
+        if (dz > 2.68) return this.baseY + 0.10;
+        if (dz > 2.25) return this.baseY + 0.22;
+        return this.baseY + this.deckH + 0.02;
+      },
+      wood: true
     });
 
-    // Enclosed frosted-starlight conservatory walls (solid building shell — enter through front brass doors!)
-    const addExtWall = (x, z, len, rotY) => {
-      const wg = new T.Group();
-      wg.position.set(x, this.deckH, z);
-      wg.rotation.y = rotY;
-      wg.add(
-        this.mesh(new T.BoxGeometry(len, 1.35, 0.30), m.stone, 0, 0.675, 0),
-        this.mesh(new T.BoxGeometry(len + 0.06, 0.09, 0.36), m.brass, 0, 1.38, 0),
-        this.mesh(new T.BoxGeometry(len, H - 1.56, 0.16), m.winGlow, 0, 1.38 + (H - 1.56) / 2, 0),
-        this.mesh(new T.BoxGeometry(len, 0.20, 0.32), m.indigo, 0, H - 0.10, 0)
+    // 2. Half-Timbered Carved Ivory Ashlar Masonry Main Body + Corner Quoins + Timber Framing
+    ext.add(
+      this.mesh(new T.BoxGeometry(W, H, D), m.stone, 0, this.deckH + H / 2, 0),
+      // Decorative mid-wall carved belt rail & upper eaves cornice
+      this.mesh(new T.BoxGeometry(W + 0.18, 0.14, D + 0.18), m.woodDark, 0, this.deckH + 1.25, 0),
+      this.mesh(new T.BoxGeometry(W + 0.24, 0.16, D + 0.24), m.woodDark, 0, wallTopY - 0.08, 0),
+      this.mesh(new T.BoxGeometry(W + 0.28, 0.06, D + 0.28), m.brass, 0, wallTopY + 0.02, 0)
+    );
+    // Corner carved stone & timber pilasters + Tudor beams
+    for (const [cx, cz] of [[-hw, -hd], [hw, -hd], [-hw, hd], [hw, hd]]) {
+      ext.add(
+        this.mesh(new T.BoxGeometry(0.42, H + 0.08, 0.42), m.woodDark, cx, this.deckH + H / 2, cz),
+        this.mesh(new T.BoxGeometry(0.48, 0.12, 0.48), m.brass, cx, this.deckH + 1.25, cz)
       );
-      const nMul = Math.max(1, Math.round(len / 2.1) - 1);
-      for (let i = 1; i <= nMul; i++) {
-        const mx = -len / 2 + (len * i) / (nMul + 1);
-        wg.add(this.mesh(new T.BoxGeometry(0.10, H - 1.45, 0.24), m.brass, mx, 1.40 + (H - 1.45) / 2, 0));
+      for (let q = 0; q < 5; q++) {
+        ext.add(this.mesh(new T.BoxGeometry(0.50, 0.24, 0.50), m.stonePlain, cx, this.deckH + 0.26 + q * 0.84, cz));
       }
-      ext.add(wg);
-    };
-
-    addExtWall(0, -hd + 0.15, W - 0.2, 0);
-    addExtWall(-hw + 0.15, 0, D - 0.2, Math.PI / 2);
-    addExtWall(hw - 0.15, 0, D - 0.2, Math.PI / 2);
-    addExtWall(-3.6, hd - 0.15, 3.2, 0);
-    addExtWall(3.6, hd - 0.15, 3.2, 0);
-
-    // Grand Brass & Indigo Double Entrance Portal (South front!)
-    const doorG = new T.Group();
-    doorG.position.set(0, this.deckH, hd - 0.08);
-    doorG.add(
-      // Upper transom glow panel & brass header
-      this.mesh(new T.BoxGeometry(4.0, 1.15, 0.24), m.indigo, 0, 3.82, 0),
-      this.mesh(new T.BoxGeometry(3.4, 0.72, 0.28), m.winGlow, 0, 3.82, 0.02),
-      this.mesh(new T.BoxGeometry(4.1, 0.12, 0.34), m.brass, 0, 3.22, 0.04),
-      // Solid double doors with glowing cyan/gold portholes & brass handles!
-      this.mesh(new T.BoxGeometry(3.75, 3.20, 0.18), m.indigo, 0, 1.60, 0),
-      this.mesh(new T.BoxGeometry(0.08, 3.16, 0.22), m.brass, 0, 1.60, 0.03),
-      this.mesh(new T.TorusGeometry(0.42, 0.045, 8, 20), m.brass, -0.82, 2.05, 0.11),
-      this.mesh(new T.TorusGeometry(0.42, 0.045, 8, 20), m.brass, 0.82, 2.05, 0.11),
-      this.mesh(new T.CylinderGeometry(0.38, 0.38, 0.04, 18).rotateX(Math.PI / 2), m.neonGlow, -0.82, 2.05, 0.10),
-      this.mesh(new T.CylinderGeometry(0.38, 0.38, 0.04, 18).rotateX(Math.PI / 2), m.argonGlow, 0.82, 2.05, 0.10),
-      this.mesh(new T.CylinderGeometry(0.035, 0.035, 0.42, 10), m.brass, -0.22, 1.38, 0.15),
-      this.mesh(new T.CylinderGeometry(0.035, 0.035, 0.42, 10), m.brass, 0.22, 1.38, 0.15)
-    );
-    ext.add(doorG);
-
-    // Corner & portal stone pilasters
-    for (const [px, pz] of [[-hw + 0.18, -hd + 0.18], [hw - 0.18, -hd + 0.18], [-hw + 0.18, hd - 0.18], [hw - 0.18, hd - 0.18], [-2.02, hd - 0.14], [2.02, hd - 0.14]]) {
-      ext.add(
-        this.mesh(new T.BoxGeometry(0.42, H + 0.1, 0.42), m.stone, px, this.deckH + H / 2, pz),
-        this.mesh(new T.BoxGeometry(0.48, 0.12, 0.48), m.brass, px, this.deckH + H, pz)
-      );
     }
-
-    // Entrance 10 Ne (Neon Orange) & 18 Ar (Argon Violet) Discharge Lanterns!
-    for (const sx of [-2.02, 2.02]) {
-      ext.add(
-        this.mesh(new T.CylinderGeometry(0.035, 0.035, 0.36, 8), m.brass, sx, this.deckH + 3.18, hd + 0.36),
-        this.mesh(new T.OctahedronGeometry(0.20, 1), sx < 0 ? m.neonGlow : m.argonGlow, sx, this.deckH + 2.95, hd + 0.36)
-      );
-    }
-
-    // Raised Unobstructed Gemini 4 Neon Signboard on brass brackets above the snow eave!
-    const signTex = this._makeSignTex("⚗️ 哈基米元素周期表化学实验室 ⚗️", "Gemini 4 · 1 H · 6 C · 10 Ne · 18 Ar · 探索 118 Og 神秘武器!");
-    const signMat = m.plain(new T.MeshStandardMaterial({ map: signTex, roughness: 0.25, emissive: new T.Color(0.22, 0.36, 0.56), emissiveMap: signTex, emissiveIntensity: 0.60 }));
+    // East & West Triangular Ashlar Gable Pediments closing the pitched roof ends cleanly!
+    const gableShape = new T.Shape();
+    gableShape.moveTo(-hd, 0);
+    gableShape.lineTo(hd, 0);
+    gableShape.lineTo(0, roofH);
+    gableShape.closePath();
+    const gableGeo = new T.ExtrudeGeometry(gableShape, { depth: 0.24, bevelEnabled: false });
+    gableGeo.rotateY(Math.PI / 2);
     ext.add(
-      this.mesh(new T.BoxGeometry(5.5, 1.24, 0.16), [m.brass, m.brass, m.snow, m.brass, signMat, signMat], 0, roofBaseY + 0.98, hd + 0.24),
-      this.mesh(new T.BoxGeometry(0.10, 0.38, 0.10), m.brass, -1.9, roofBaseY + 0.34, hd + 0.24),
-      this.mesh(new T.BoxGeometry(0.10, 0.38, 0.10), m.brass, 1.9, roofBaseY + 0.34, hd + 0.24)
+      this.mesh(gableGeo, m.stone, -hw, wallTopY, 0),
+      this.mesh(gableGeo, m.stone, hw - 0.24, wallTopY, 0)
     );
 
-    // Non-overlapping roof eaves + snow caps + glass pyramid dome + spinning molecular spire!
-    const ewEaveLen = D - 0.52;
+    // 3. EAST & WEST PROJECTING OCTAGONAL COPPER BAY-WINDOW ALCOVES (Breaks the square box!)
+    for (const side of [-1, 1]) {
+      const bay = new T.Group();
+      bay.position.set(side * (hw + 0.35), this.deckH, -0.15);
+      bay.rotation.y = side > 0 ? Math.PI / 2 : -Math.PI / 2;
+      const bayH = 3.75, bayR = 1.68;
+      bay.add(
+        this.mesh(new T.CylinderGeometry(bayR, bayR + 0.12, 0.45, 6), m.stoneDark, 0, 0.15, 0),
+        this.mesh(new T.CylinderGeometry(bayR, bayR, bayH, 6), m.stone, 0, bayH / 2, 0),
+        this.mesh(new T.TorusGeometry(bayR + 0.02, 0.07, 6, 6).rotateX(Math.PI / 2), m.brass, 0, bayH + 0.02, 0),
+        // Steep Scalloped Copper Conical Turret Roof + Snow Cap + Brass Finial!
+        this.mesh(new T.ConeGeometry(bayR + 0.48, 2.35, 6), m.roofCopper, 0, bayH + 1.18, 0),
+        this.mesh(new T.ConeGeometry(bayR + 0.38, 0.85, 6), m.snow, 0, bayH + 2.02, 0),
+        this.mesh(new T.CylinderGeometry(0.035, 0.055, 0.52, 8), m.brass, 0, bayH + 2.58, 0),
+        this.mesh(new T.SphereGeometry(0.12, 10, 8), m.goldGlow, 0, bayH + 2.86, 0)
+      );
+      // 3 Crisp Recessed Alchemy Windows around the projecting bay faces + mini potion boxes!
+      for (const ang of [-Math.PI / 3, 0, Math.PI / 3]) {
+        const wObj = buildCrispWindow(T, winMats, {
+          w: 0.96, h: 1.72, arch: true, flowerBox: true,
+          boxFillMats: [m.cyanGlow, m.neonGlow, m.argonGlow]
+        });
+        const dist = bayR * Math.cos(Math.PI / 6) + 0.02;
+        wObj.position.set(Math.sin(ang) * dist, 2.18, Math.cos(ang) * dist);
+        wObj.rotation.y = ang;
+        bay.add(wObj);
+      }
+      ext.add(bay);
+    }
+
+    // 4. CRISP SHUTTERED ALCHEMY WINDOWS ON FRONT & BACK FACADES (ZERO BLUR!)
+    for (const wx of [-3.35, 3.35]) {
+      const wf = buildCrispWindow(T, winMats, {
+        w: 1.22, h: 1.75, arch: true, shutters: true, flowerBox: true,
+        boxFillMats: [m.cyanGlow, m.goldGlow, m.neonGlow, m.argonGlow]
+      });
+      wf.position.set(wx, this.deckH + 2.32, hd + 0.02);
+      ext.add(wf);
+    }
+    for (const wx of [-2.85, 0, 2.85]) {
+      const wb = buildCrispWindow(T, winMats, { w: 1.24, h: 1.72, arch: true, shutters: wx !== 0 });
+      wb.position.set(wx, this.deckH + 2.32, -hd - 0.02);
+      wb.rotation.y = Math.PI;
+      ext.add(wb);
+    }
+
+    // 5. PROJECTING GABLED CAT-ENTRANCE PORTICO + CAT ROSE WINDOW + CLEAN "极其猫实验室" SIGN!
+    const port = new T.Group();
+    port.position.set(0, this.deckH, hd);
+    const pW = 4.15, pD = 1.45, pH = 3.85;
+    port.add(
+      // Portico side walls & stone columns
+      this.mesh(new T.BoxGeometry(0.42, pH, pD), m.stone, -pW / 2 + 0.21, pH / 2, pD / 2),
+      this.mesh(new T.BoxGeometry(0.42, pH, pD), m.stone, pW / 2 - 0.21, pH / 2, pD / 2),
+      this.mesh(new T.BoxGeometry(pW + 0.16, 0.28, pD + 0.18), m.woodDark, 0, pH + 0.08, pD / 2),
+      // Recessed Arched Oak & Brass Double Entrance Doors!
+      this.mesh(new T.BoxGeometry(3.25, 3.15, 0.20), m.woodDark, 0, 1.58, 0.85),
+      this.mesh(new T.BoxGeometry(0.09, 3.10, 0.26), m.brass, 0, 1.56, 0.88),
+      this.mesh(new T.TorusGeometry(1.56, 0.11, 8, 26, Math.PI), m.brass, 0, 2.02, 0.94),
+      // Glowing 10 Ne & 18 Ar Beveled Leaded-Glass Door Inserts + Lower Carved Panels + Golden Handles
+      this.mesh(new T.BoxGeometry(0.78, 1.14, 0.06), m.brass, -0.78, 1.92, 0.95),
+      this.mesh(new T.BoxGeometry(0.78, 1.14, 0.06), m.brass, 0.78, 1.92, 0.95),
+      this.mesh(new T.BoxGeometry(0.66, 1.02, 0.08), m.neonGlow, -0.78, 1.92, 0.96),
+      this.mesh(new T.BoxGeometry(0.66, 1.02, 0.08), m.argonGlow, 0.78, 1.92, 0.96),
+      // Crisp 3D brass cross-mullions over the door glass panes
+      this.mesh(new T.BoxGeometry(0.036, 1.04, 0.04), m.brass, -0.78, 1.92, 1.005),
+      this.mesh(new T.BoxGeometry(0.68, 0.036, 0.04), m.brass, -0.78, 1.92, 1.005),
+      this.mesh(new T.BoxGeometry(0.036, 1.04, 0.04), m.brass, 0.78, 1.92, 1.005),
+      this.mesh(new T.BoxGeometry(0.68, 0.036, 0.04), m.brass, 0.78, 1.92, 1.005),
+      // Lower carved oak wainscot door panels with brass molding
+      this.mesh(new T.BoxGeometry(0.84, 0.88, 0.05), m.brass, -0.78, 0.68, 0.95),
+      this.mesh(new T.BoxGeometry(0.72, 0.76, 0.06), m.woodWarm, -0.78, 0.68, 0.96),
+      this.mesh(new T.BoxGeometry(0.84, 0.88, 0.05), m.brass, 0.78, 0.68, 0.95),
+      this.mesh(new T.BoxGeometry(0.72, 0.76, 0.06), m.woodWarm, 0.78, 0.68, 0.96),
+      this.mesh(new T.CylinderGeometry(0.036, 0.036, 0.44, 10), m.brass, -0.22, 1.32, 1.02),
+      this.mesh(new T.CylinderGeometry(0.036, 0.036, 0.44, 10), m.brass, 0.22, 1.32, 1.02)
+    );
+    // Steep Pitched Gable Roof crowning the Front Portico!
+    const pgH = 1.95, pgHalf = pW / 2 + 0.42;
+    const pgLen = Math.hypot(pgH, pgHalf);
+    const pgAng = Math.atan2(pgH, pgHalf);
+    const pgTri = new T.Shape();
+    pgTri.moveTo(-pW / 2, 0); pgTri.lineTo(pW / 2, 0); pgTri.lineTo(0, pgH - 0.12); pgTri.closePath();
+    const pgTriGeo = new T.ExtrudeGeometry(pgTri, { depth: pD + 0.15, bevelEnabled: false });
+    port.add(this.mesh(pgTriGeo, m.stone, 0, pH + 0.16, 0));
+    for (const side of [-1, 1]) {
+      const slope = this.mesh(new T.BoxGeometry(pgLen + 0.2, 0.18, pD + 0.75), m.roofIndigo, side * (pgHalf / 2), pH + 0.18 + pgH / 2, pD / 2 + 0.15);
+      slope.rotation.z = -side * pgAng;
+      const snowSl = this.mesh(new T.BoxGeometry(pgLen + 0.24, 0.10, pD + 0.80), m.snow, side * (pgHalf / 2), pH + 0.30 + pgH / 2, pD / 2 + 0.15);
+      snowSl.rotation.z = -side * pgAng;
+      port.add(slope, snowSl);
+    }
+    port.add(this.mesh(new T.CylinderGeometry(0.09, 0.09, pD + 0.85, 8).rotateX(Math.PI / 2), m.brass, 0, pH + pgH + 0.22, pD / 2 + 0.15));
+
+    // GLOWING UPRIGHT CAT-HEAD STAINED-GLASS ROSE WINDOW (CircleGeometry guarantees upright 0..1 UVs!)
+    port.add(
+      this.mesh(new T.CylinderGeometry(0.70, 0.70, 0.08, 28).rotateX(Math.PI / 2), m.woodDark, 0, pH + 0.94, pD + 0.16),
+      this.mesh(new T.CircleGeometry(0.68, 32), m.catRose, 0, pH + 0.94, pD + 0.215),
+      this.mesh(new T.TorusGeometry(0.70, 0.065, 8, 28), m.brass, 0, pH + 0.94, pD + 0.22)
+    );
+
+    // CLEAN, SIMPLE, BOLD SIGNBOARD: 「极其猫实验室」 (with cute mini brass cat ears!)
+    const signTex = makeCleanSignTex(T, this.game.renderer, "极其猫实验室", "", { bg0: "#141e44", bg1: "#25346e", border: "#f4cb66", glow: "#6ef0ff" });
+    const signMat = m.plain(new T.MeshStandardMaterial({ map: signTex, roughness: 0.24, emissive: new T.Color(0.24, 0.36, 0.56), emissiveMap: signTex, emissiveIntensity: 0.56 }));
+    port.add(
+      this.mesh(new T.BoxGeometry(3.35, 0.80, 0.14), [m.brass, m.brass, m.snow, m.brass, signMat, signMat], 0, 3.55, pD + 0.14),
+      this.mesh(new T.ConeGeometry(0.16, 0.34, 4), m.brass, -1.25, 4.10, pD + 0.14),
+      this.mesh(new T.ConeGeometry(0.16, 0.34, 4), m.brass, 1.25, 4.10, pD + 0.14)
+    );
+    // Hanging 10 Ne (orange-red) & 18 Ar (violet-blue) Brass Porch Sconces
+    for (const side of [-1, 1]) {
+      const sx = side * 1.92;
+      port.add(
+        this.mesh(new T.BoxGeometry(0.08, 0.08, 0.36), m.iron, sx, 2.95, pD + 0.14),
+        this.mesh(new T.CylinderGeometry(0.03, 0.03, 0.22, 8), m.brass, sx, 2.82, pD + 0.28),
+        this.mesh(new T.OctahedronGeometry(0.17, 1), side < 0 ? m.neonGlow : m.argonGlow, sx, 2.64, pD + 0.28),
+        this.mesh(new T.ConeGeometry(0.20, 0.16, 6), m.brass, sx, 2.80, pD + 0.28)
+      );
+    }
+    ext.add(port);
+
+    // 6. STEEP SCALLOPED PITCHED ROOF + GIANT SCULPTED ARCHITECTURAL CAT-EAR DORMER TURRETS!!
+    const halfSpanZ = hd + 0.58;
+    const slopeLen = Math.hypot(roofH, halfSpanZ);
+    const slopeAng = Math.atan2(roofH, halfSpanZ);
+    for (const side of [-1, 1]) {
+      const rPane = this.mesh(new T.BoxGeometry(W + 1.05, 0.24, slopeLen + 0.22), m.roofIndigo, 0, wallTopY + roofH / 2 - 0.04, side * (halfSpanZ / 2));
+      rPane.rotation.x = side * slopeAng;
+      const sPane = this.mesh(new T.BoxGeometry(W + 1.12, 0.12, slopeLen + 0.26), m.snow, 0, wallTopY + roofH / 2 + 0.12, side * (halfSpanZ / 2));
+      sPane.rotation.x = side * slopeAng;
+      ext.add(rPane, sPane);
+    }
+    // Golden ridge crest beam
+    ext.add(this.mesh(new T.CylinderGeometry(0.14, 0.14, W + 1.25, 10).rotateZ(Math.PI / 2), m.brass, 0, ridgeY + 0.08, 0));
+
+    // MONUMENTAL TWIN ARCHITECTURAL CAT-EAR DORMER TURRETS crowning left & right roof slopes!
+    const earShape = new T.Shape();
+    earShape.moveTo(-1.26, 0);
+    earShape.lineTo(1.26, 0);
+    earShape.lineTo(0, 2.82);
+    earShape.closePath();
+    const earGeo = new T.ExtrudeGeometry(earShape, { depth: 1.75, bevelEnabled: true, bevelThickness: 0.07, bevelSize: 0.06, bevelSegments: 2 });
+    earGeo.translate(0, 0, -0.875);
+
+    const innerEarShape = new T.Shape();
+    innerEarShape.moveTo(-0.70, 0.28);
+    innerEarShape.lineTo(0.70, 0.28);
+    innerEarShape.lineTo(0, 2.08);
+    innerEarShape.closePath();
+    const innerEarGeo = new T.ShapeGeometry(innerEarShape);
+
+    for (const side of [-1, 1]) {
+      const ear = new T.Group();
+      ear.position.set(side * 2.95, ridgeY - 0.88, 1.05);
+      ear.rotation.z = -side * 0.14;
+      ear.rotation.y = side * 0.06;
+      ear.add(
+        this.mesh(earGeo, m.roofIndigo, 0, 0, 0),
+        // Glowing pink-gold inner-ear gothic stained glass + crisp iron mullions!
+        this.mesh(innerEarGeo, m.earGlass, 0, 0, 0.955),
+        this.mesh(new T.BoxGeometry(0.06, 1.66, 0.045), m.iron, 0, 1.14, 0.985),
+        this.mesh(new T.BoxGeometry(1.06, 0.06, 0.045), m.iron, 0, 0.88, 0.985),
+        // Sculpted snow piping along both pitched ear edges & golden tip star finial!
+        (() => { const b = this.mesh(new T.BoxGeometry(0.18, 3.08, 1.92), m.snow, -0.68, 1.44, 0); b.rotation.z = -0.42; return b; })(),
+        (() => { const b = this.mesh(new T.BoxGeometry(0.18, 3.08, 1.92), m.snow, 0.68, 1.44, 0); b.rotation.z = 0.42; return b; })(),
+        this.mesh(new T.OctahedronGeometry(0.26, 0), m.goldGlow, 0, 3.04, 0)
+      );
+      ext.add(ear);
+    }
+
+    // 7. STEAMPUNK STONE & COPPER ALCHEMY CHIMNEY STACK (Right-rear roof!)
+    const chim = new T.Group();
+    chim.position.set(3.55, wallTopY + 1.2, -2.05);
+    chim.add(
+      this.mesh(new T.BoxGeometry(0.88, 2.6, 0.88), m.stone, 0, 1.3, 0),
+      this.mesh(new T.BoxGeometry(1.04, 0.18, 1.04), m.brass, 0, 2.55, 0),
+      this.mesh(new T.CylinderGeometry(0.30, 0.34, 1.05, 14), m.roofCopper, 0, 3.12, 0),
+      this.mesh(new T.TorusGeometry(0.38, 0.045, 8, 20).rotateX(Math.PI / 2), m.brass, 0, 2.88, 0),
+      this.mesh(new T.TorusGeometry(0.38, 0.045, 8, 20).rotateX(Math.PI / 2), m.brass, 0, 3.22, 0),
+      this.mesh(new T.ConeGeometry(0.48, 0.38, 8), m.brass, 0, 3.88, 0)
+    );
+    ext.add(chim);
+
+    // 8. SPINNING 6-ELEMENT MOLECULAR WEATHERVANE SPIRE AT ROOF PEAK!
     ext.add(
-      this.mesh(new T.BoxGeometry(W + 0.8, 0.22, 0.72), m.roofTeal, 0, roofBaseY + 0.11, -hd - 0.1),
-      this.mesh(new T.BoxGeometry(W + 0.8, 0.22, 0.72), m.roofTeal, 0, roofBaseY + 0.11, hd + 0.1),
-      this.mesh(new T.BoxGeometry(0.72, 0.22, ewEaveLen), m.roofTeal, -hw - 0.04, roofBaseY + 0.11, 0),
-      this.mesh(new T.BoxGeometry(0.72, 0.22, ewEaveLen), m.roofTeal, hw + 0.04, roofBaseY + 0.11, 0),
-      this.mesh(new T.BoxGeometry(W + 0.86, 0.10, 0.76), m.snow, 0, roofBaseY + 0.26, -hd - 0.1),
-      this.mesh(new T.BoxGeometry(W + 0.86, 0.10, 0.76), m.snow, 0, roofBaseY + 0.26, hd + 0.1),
-      this.mesh(new T.BoxGeometry(0.76, 0.10, ewEaveLen - 0.04), m.snow, -hw - 0.04, roofBaseY + 0.26, 0),
-      this.mesh(new T.BoxGeometry(0.76, 0.10, ewEaveLen - 0.04), m.snow, hw + 0.04, roofBaseY + 0.26, 0),
-      this.mesh(new T.ConeGeometry(6.2, 2.50, 4, 1, true).rotateY(Math.PI / 4), m.glassPane, 0, roofBaseY + 1.36, 0),
-      this.mesh(new T.TorusGeometry(1.10, 0.08, 8, 24).rotateX(Math.PI / 2), m.brass, 0, roofBaseY + 2.52, 0),
-      this.mesh(new T.CylinderGeometry(0.06, 0.09, 1.45, 10), m.brass, 0, roofBaseY + 3.24, 0)
+      this.mesh(new T.CylinderGeometry(0.06, 0.11, 1.35, 10), m.brass, 0, ridgeY + 0.72, 0),
+      this.mesh(new T.SphereGeometry(0.16, 10, 8), m.brass, 0, ridgeY + 0.25, 0)
     );
     const spireMol = new T.Group();
-    spireMol.position.set(0, roofBaseY + 4.24, 0);
+    spireMol.position.set(0, ridgeY + 1.72, 0);
     spireMol.add(
-      this.mesh(new T.TorusGeometry(0.74, 0.065, 8, 6), m.brass),
-      this.mesh(new T.TorusGeometry(0.44, 0.045, 8, 28), m.cyanGlow)
+      this.mesh(new T.TorusGeometry(0.72, 0.065, 8, 6), m.brass),
+      this.mesh(new T.TorusGeometry(0.42, 0.045, 8, 28), m.cyanGlow)
     );
     for (let i = 0; i < 6; i++) {
       const a = (i / 6) * Math.PI * 2;
       const dotMat = [m.cyanGlow, m.goldGlow, m.neonGlow, m.argonGlow, m.pinkGlow, m.emeraldGlow][i];
-      spireMol.add(this.mesh(new T.SphereGeometry(0.14, 10, 8), dotMat, Math.cos(a) * 0.74, Math.sin(a) * 0.74, 0));
+      spireMol.add(this.mesh(new T.SphereGeometry(0.14, 10, 8), dotMat, Math.cos(a) * 0.72, Math.sin(a) * 0.72, 0));
     }
     ext.add(spireMol);
     this.spinners.push({ obj: spireMol, speed: 0.75 });
 
-    // Solid exterior building collider
-    world.boxes.push({
-      x0: this.cx - hw - 0.15, x1: this.cx + hw + 0.15,
-      z0: this.cz - hd - 0.15, z1: this.cz + hd + 0.15,
-      h: 7
-    });
+    // Solid exterior building colliders (main body + projecting bay alcoves + portico side walls)
+    world.boxes.push(
+      { x0: this.cx - hw - 0.15, x1: this.cx + hw + 0.15, z0: this.cz - hd - 0.15, z1: this.cz + hd + 0.95, h: 8 },
+      { x0: this.cx - hw - 1.95, x1: this.cx - hw + 0.1, z0: this.cz - 1.85, z1: this.cz + 1.55, h: 6 },
+      { x0: this.cx + hw - 0.1, x1: this.cx + hw + 1.95, z0: this.cz - 1.85, z1: this.cz + 1.55, h: 6 }
+    );
 
     // Warm outdoor entrance glow
-    const el = new T.PointLight(0x9ceeff, 11, 16, 1.5);
-    el.position.set(this.cx, this.baseY + 3.2, this.cz + hd + 1.5);
+    const el = new T.PointLight(0xffdfb8, 12, 18, 1.5);
+    el.position.set(this.cx, this.baseY + 3.4, this.cz + hd + 2.2);
     scene.add(el);
-    this.extLights.push({ l: el, base: 11 });
+    this.extLights.push({ l: el, base: 12 });
 
     // Exterior Door Enter Spot!
     world.spots.push({
       id: "chemlab_enter",
-      pos: new T.Vector3(this.cx, this.baseY + 1.35, this.cz + hd + 0.95),
-      r: 2.8,
-      label: "推门进入「哈基米元素化学实验室（室内）」",
+      pos: new T.Vector3(this.cx, this.baseY + 1.45, this.cz + hd + 1.55),
+      r: 2.9,
+      label: "推门进入「极其猫实验室」",
       can: () => !this.inside && !(this.game.cabin && this.game.cabin.inside) && !this.game.player.riding && !this.game.player.skiing && !this.game.player.seat,
       act: () => this.enter()
     });
@@ -838,7 +1030,7 @@ export class ChemLab {
     const hw = IW / 2, hd = ID / 2;
 
     const g = new T.Group();
-    g.name = "hajimi_chemlab_int";
+    g.name = "jiqimao_chemlab_int";
     g.position.set(O.x, O.y, O.z);
     g.visible = false; // Toggled ON only while player is inside!
     this.intGroup = g;
@@ -846,45 +1038,84 @@ export class ChemLab {
     const isIn = () => this.inside && !this.game.player.riding && !this.game.player.skiing && !this.game.player.seat;
 
     // -------------------------------------------------------------------------
-    // 1. GRAND ENCLOSED HALL SHELL (Floor, Collider Rings, 4 Walls, Skylight Dome!)
+    // 1. GRAND ENCLOSED HALL SHELL (Mosaic Tile Floor, Stone Wainscot, Cathedral Aurora Windows!)
     // -------------------------------------------------------------------------
     g.add(
-      // Deep midnight-slate polished floor
+      // Crisp 512x512 Octagonal Slate & Brass Inlay Mosaic Floor
       this.mesh(new T.BoxGeometry(IW + 0.6, 0.24, ID + 0.6), m.labFloor, 0, -0.12, 0),
-      // 4 Solid enclosing walls + stone lower wainscot + brass dado & crown trim
+      // 4 Solid enclosing walls + textured carved ashlar stone lower wainscot + brass dado & crown trim
       this.mesh(new T.BoxGeometry(IW + 0.4, IH, 0.24), m.labWall, 0, IH / 2, -hd - 0.10),
       this.mesh(new T.BoxGeometry(IW + 0.4, IH, 0.24), m.labWall, 0, IH / 2, hd + 0.10),
       this.mesh(new T.BoxGeometry(0.24, IH, ID + 0.4), m.labWall, -hw - 0.10, IH / 2, 0),
       this.mesh(new T.BoxGeometry(0.24, IH, ID + 0.4), m.labWall, hw + 0.10, IH / 2, 0),
-      // Lower stone wainscoting
-      this.mesh(new T.BoxGeometry(IW, 1.15, 0.08), m.stone, 0, 0.575, -hd + 0.04),
-      this.mesh(new T.BoxGeometry(IW, 1.15, 0.08), m.stone, 0, 0.575, hd - 0.04),
-      this.mesh(new T.BoxGeometry(0.08, 1.15, ID), m.stone, -hw + 0.04, 0.575, 0),
-      this.mesh(new T.BoxGeometry(0.08, 1.15, ID), m.stone, hw - 0.04, 0.575, 0),
-      // Brass dado & upper crown rails
-      this.mesh(new T.BoxGeometry(IW, 0.08, 0.12), m.brass, 0, 1.18, -hd + 0.06),
-      this.mesh(new T.BoxGeometry(IW, 0.08, 0.12), m.brass, 0, 1.18, hd - 0.06),
-      this.mesh(new T.BoxGeometry(0.12, 0.08, ID), m.brass, -hw + 0.06, 1.18, 0),
-      this.mesh(new T.BoxGeometry(0.12, 0.08, ID), m.brass, hw - 0.06, 1.18, 0),
+      this.mesh(new T.BoxGeometry(IW, 1.18, 0.08), m.stone, 0, 0.59, -hd + 0.04),
+      this.mesh(new T.BoxGeometry(IW, 1.18, 0.08), m.stone, 0, 0.59, hd - 0.04),
+      this.mesh(new T.BoxGeometry(0.08, 1.18, ID), m.stone, -hw + 0.04, 0.59, 0),
+      this.mesh(new T.BoxGeometry(0.08, 1.18, ID), m.stone, hw - 0.04, 0.59, 0),
+      this.mesh(new T.BoxGeometry(IW, 0.08, 0.12), m.brass, 0, 1.20, -hd + 0.06),
+      this.mesh(new T.BoxGeometry(IW, 0.08, 0.12), m.brass, 0, 1.20, hd - 0.06),
+      this.mesh(new T.BoxGeometry(0.12, 0.08, ID), m.brass, -hw + 0.06, 1.20, 0),
+      this.mesh(new T.BoxGeometry(0.12, 0.08, ID), m.brass, hw - 0.06, 1.20, 0),
       this.mesh(new T.BoxGeometry(IW, 0.14, 0.16), m.brass, 0, IH - 0.07, -hd + 0.08),
       this.mesh(new T.BoxGeometry(IW, 0.14, 0.16), m.brass, 0, IH - 0.07, hd - 0.08),
       this.mesh(new T.BoxGeometry(0.16, 0.14, ID), m.brass, -hw + 0.08, IH - 0.07, 0),
       this.mesh(new T.BoxGeometry(0.16, 0.14, ID), m.brass, hw - 0.08, IH - 0.07, 0),
-      // Coffered Starlight Laboratory Ceiling with Illuminated Cyan Skylight Panels!
+      // Coffered Starlight Laboratory Ceiling with Illuminated Skylight Panels
       this.mesh(new T.BoxGeometry(IW + 0.4, 0.22, ID + 0.4), m.indigo, 0, IH + 0.11, 0),
       this.mesh(new T.BoxGeometry(9.6, 0.05, 7.6), m.winGlow, 0, IH - 0.01, -0.5)
     );
 
-    // Architectural brass ceiling ribs & corner columns
+    // Architectural carved timber-and-brass ceiling trusses & wall pilasters
     for (const rx of [-4.8, 0, 4.8]) {
-      g.add(this.mesh(new T.BoxGeometry(0.18, 0.18, ID), m.brass, rx, IH - 0.09, 0));
+      g.add(this.mesh(new T.BoxGeometry(0.20, 0.22, ID), m.woodDark, rx, IH - 0.11, 0));
+      g.add(this.mesh(new T.BoxGeometry(0.24, 0.05, ID), m.brass, rx, IH - 0.23, 0));
     }
     for (const rz of [-4.2, -0.5, 3.2]) {
-      g.add(this.mesh(new T.BoxGeometry(IW, 0.16, 0.18), m.brass, 0, IH - 0.09, rz));
+      g.add(this.mesh(new T.BoxGeometry(IW, 0.20, 0.20), m.woodDark, 0, IH - 0.10, rz));
+      g.add(this.mesh(new T.BoxGeometry(IW, 0.05, 0.24), m.brass, 0, IH - 0.21, rz));
     }
-    for (const [px, pz] of [[-hw + 0.2, -hd + 0.2], [hw - 0.2, -hd + 0.2], [-hw + 0.2, hd - 0.2], [hw - 0.2, hd - 0.2]]) {
-      g.add(this.mesh(new T.BoxGeometry(0.42, IH, 0.42), m.stoneDark, px, IH / 2, pz));
+    for (const [px, pz] of [[-hw + 0.2, -hd + 0.2], [hw - 0.2, -hd + 0.2], [-hw + 0.2, hd - 0.2], [hw - 0.2, hd - 0.2], [-4.8, -hd + 0.14], [4.8, -hd + 0.14], [hw - 0.14, -3.6], [hw - 0.14, 2.4]]) {
+      g.add(
+        this.mesh(new T.BoxGeometry(0.36, IH, 0.36), m.stonePlain, px, IH / 2, pz),
+        this.mesh(new T.BoxGeometry(0.42, 0.12, 0.42), m.brass, px, 1.24, pz),
+        this.mesh(new T.BoxGeometry(0.42, 0.14, 0.42), m.brass, px, IH - 0.20, pz)
+      );
     }
+
+    // 6 CRISP RECESSED CATHEDRAL STAINED-GLASS AURORA WINDOWS (ZERO BLUR!)
+    const inWinMats = { frame: m.woodDark, brass: m.brass, snow: m.stonePlain, pane: m.winNight };
+    for (const [wx, wz, ry] of [
+      [-6.2, -hd + 0.12, 0],
+      [6.2, -hd + 0.12, 0],
+      [hw - 0.12, -5.0, -Math.PI / 2],
+      [hw - 0.12, 4.2, -Math.PI / 2],
+      [-4.6, hd - 0.12, Math.PI],
+      [4.6, hd - 0.12, Math.PI]
+    ]) {
+      const iw = buildCrispWindow(T, inWinMats, { w: 1.55, h: 2.35, arch: true });
+      iw.position.set(wx, 2.95, wz);
+      iw.rotation.y = ry;
+      g.add(iw);
+    }
+
+    // Built-in Carved Oak Apothecary Potion Bookshelf in SE Alcove (x = +6.55, z = +4.45)!
+    const apoth = new T.Group();
+    apoth.position.set(6.55, 0, 4.45);
+    apoth.rotation.y = -Math.PI * 0.28;
+    apoth.add(
+      this.mesh(new T.BoxGeometry(2.15, 2.55, 0.56), m.woodDark, 0, 1.28, 0),
+      this.mesh(new T.BoxGeometry(2.26, 0.12, 0.64), m.brass, 0, 2.58, 0)
+    );
+    const botCols = [m.cyanGlow, m.neonGlow, m.argonGlow, m.goldGlow, m.pinkGlow, m.emeraldGlow];
+    for (let sh = 0; sh < 3; sh++) {
+      const sy = 0.72 + sh * 0.64;
+      apoth.add(this.mesh(new T.BoxGeometry(1.98, 0.05, 0.46), m.oak, 0, sy, 0.06));
+      for (let b = 0; b < 6; b++) {
+        apoth.add(this.mesh(new T.CylinderGeometry(0.055, 0.065, 0.24, 10), botCols[(sh * 2 + b) % botCols.length], -0.75 + b * 0.30, sy + 0.15, 0.12));
+      }
+    }
+    g.add(apoth);
+    world.circles.push({ x: O.x + 6.55, z: O.z + 4.45, r: 1.15 });
 
     // Glowing Circular Particle-Collider Floor Emblem (with polygonOffset -> 0 Z-fighting!)
     const ringMat = m.plain(new T.MeshStandardMaterial({
@@ -917,46 +1148,44 @@ export class ChemLab {
     // -------------------------------------------------------------------------
     const exitG = new T.Group();
     exitG.position.set(0, 0, hd - 0.14);
-    const exitTex = this._makeSignTex("🚪 返回圣诞雪境 · EXIT", "推门走出哈基米元素化学实验室", "#ffd772");
+    const exitTex = makeCleanSignTex(T, this.game.renderer, "返回雪境 · EXIT", "", { border: "#f2ca66", glow: "#ffe088" });
     const exitMat = m.plain(new T.MeshStandardMaterial({ map: exitTex, roughness: 0.25, emissive: new T.Color(0.22, 0.30, 0.42), emissiveMap: exitTex, emissiveIntensity: 0.55 }));
     exitG.add(
-      this.mesh(new T.BoxGeometry(3.2, 3.1, 0.16), m.indigo, 0, 1.55, 0),
+      this.mesh(new T.BoxGeometry(3.2, 3.1, 0.16), m.woodDark, 0, 1.55, 0),
       this.mesh(new T.BoxGeometry(3.4, 0.14, 0.24), m.brass, 0, 3.15, -0.04),
       this.mesh(new T.BoxGeometry(0.08, 3.05, 0.20), m.brass, 0, 1.54, -0.04),
       this.mesh(new T.CylinderGeometry(0.032, 0.032, 0.40, 10), m.brass, -0.22, 1.35, -0.14),
       this.mesh(new T.CylinderGeometry(0.032, 0.032, 0.40, 10), m.brass, 0.22, 1.35, -0.14),
-      this.mesh(new T.PlaneGeometry(2.6, 0.65), exitMat, 0, 3.65, -0.04).rotateY(Math.PI)
+      this.mesh(new T.PlaneGeometry(2.4, 0.54), exitMat, 0, 3.65, -0.04).rotateY(Math.PI)
     );
     g.add(exitG);
     world.spots.push({
       id: "chemlab_exit",
       pos: new T.Vector3(O.x, O.y + 1.25, O.z + hd - 0.65),
       r: 2.3,
-      label: "走出化学实验室（回到雪境）",
+      label: "走出「极其猫实验室」（回到雪境）",
       can: isIn,
       act: () => this.leave()
     });
 
     // -------------------------------------------------------------------------
-    // 3. SOUTH-WEST: 🥼 化学家装备更衣展示柜 (Lab Gear Wardrobe, x = -5.4, z = +4.6)
+    // 3. SOUTH-WEST: 🥼 极其猫装备柜 (Lab Gear Wardrobe, x = -5.4, z = +4.65)
     // -------------------------------------------------------------------------
     const lockG = new T.Group();
     lockG.position.set(-5.4, 0, 4.65);
     lockG.rotation.y = Math.PI * 0.20;
 
-    const lockSignTex = this._makeSignTex("🥼 哈基米化学家更衣装备柜", "护目镜 · 星光白大褂 · 悬浮 Ne/Ar 反应罐!", "#52f2ff");
+    const lockSignTex = makeCleanSignTex(T, this.game.renderer, "极其猫装备柜", "", { border: "#52f2ff", glow: "#6ef0ff" });
     const lockSignMat = m.plain(new T.MeshStandardMaterial({ map: lockSignTex, roughness: 0.25, emissive: new T.Color(0.20, 0.40, 0.56), emissiveMap: lockSignTex, emissiveIntensity: 0.62 }));
 
     lockG.add(
-      // Wardrobe base, back & top header
       this.mesh(new T.BoxGeometry(2.10, 0.42, 0.92), m.indigo, 0, 0.21, 0),
       this.mesh(new T.BoxGeometry(2.18, 0.07, 0.98), m.brass, 0, 0.44, 0),
       this.mesh(new T.BoxGeometry(2.10, 2.25, 0.14), m.indigo, 0, 1.55, -0.40),
       this.mesh(new T.BoxGeometry(0.12, 2.25, 0.88), m.brass, -1.00, 1.55, 0),
       this.mesh(new T.BoxGeometry(0.12, 2.25, 0.88), m.brass, 1.00, 1.55, 0),
       this.mesh(new T.BoxGeometry(2.20, 0.16, 0.98), m.brass, 0, 2.68, 0),
-      this.mesh(new T.PlaneGeometry(2.05, 0.52), lockSignMat, 0, 3.06, 0.42),
-      // Front glass display showcase pane
+      this.mesh(new T.PlaneGeometry(2.05, 0.48), lockSignMat, 0, 3.04, 0.42),
       (() => { const p = this.mesh(new T.BoxGeometry(1.88, 2.12, 0.04), m.glassPane, 0, 1.54, 0.42); p.renderOrder = 3; return p; })()
     );
 
@@ -990,9 +1219,9 @@ export class ChemLab {
       r: 2.75,
       label: () => {
         const tier = this.game.labGear ? this.game.labGear.tier : 0;
-        if (tier === 0) return "穿戴「哈基米化学家全套装备」（护目镜·白大褂·双子反应罐）";
-        if (tier === 1) return "升级「118 号炼金大师超频模式」（悬浮四元素光环！）";
-        return "脱下化学家装备 · 换回日常装束";
+        if (tier === 0) return "穿戴「极其猫化学装备」（护目镜·白大褂·双子反应罐）";
+        if (tier === 1) return "升级「118 号炼金大师模式」（悬浮四元素光环！）";
+        return "脱下化学装备 · 换回日常装束";
       },
       can: isIn,
       act: () => {
@@ -1396,7 +1625,7 @@ export class ChemLab {
     }, () => {
       if (!this.seenInside) {
         this.seenInside = true;
-        t.ui.toast("⚗️ 欢迎进入「哈基米化学密室」！先去左下角更衣柜穿戴化学装备，再点亮 4 根 Gemini 4 元素柱解锁中央 118 Og 神秘武器喵！", 9.5);
+        t.ui.toast("⚗️ 欢迎来到「极其猫实验室」！先去左下角「极其猫装备柜」穿戴防护装备，再点亮 4 根元素柱解锁中央 118 Og 神秘武器喵！", 9.5);
       }
     });
   }
@@ -1586,7 +1815,33 @@ export class ChemLab {
     for (const item of this.intLights) {
       item.l.intensity = this.inside ? item.base * synthBoost : 0;
     }
-    if (!this.inside) return;
+    if (!this.inside) {
+      // Gentle rising alchemical starlight steam from the copper rooftop chimney!
+      if (g.puffs && dt > 0) {
+        this._chimneyAcc = (this._chimneyAcc || 0) + dt * 2.6;
+        if (this._chimneyAcc >= 1) {
+          this._chimneyAcc -= 1;
+          const dist = Math.hypot(g.player.pos.x - this.cx, g.player.pos.z - this.cz);
+          if (dist < 48) {
+            const pk = Math.random() > 0.5;
+            g.puffs.spawn(
+              this.cx + 3.55 + (Math.random() - 0.5) * 0.22,
+              this.cy + 9.85,
+              this.cz - 2.05 + (Math.random() - 0.5) * 0.22,
+              (Math.random() - 0.5) * 0.28 + 0.16,
+              0.72 + Math.random() * 0.35,
+              (Math.random() - 0.5) * 0.28,
+              0.20 + Math.random() * 0.12,
+              0.42,
+              2.4 + Math.random() * 0.8,
+              pk ? 0.72 : 0.86, pk ? 0.94 : 0.78, 1.0,
+              -0.06, 0.7
+            );
+          }
+        }
+      }
+      return;
+    }
 
     // Animate Wardrobe Gear Preview & Holo-Pedestal Molecules
     if (this.lockerPreview) {

@@ -6,6 +6,14 @@
 //    - 冬日姜饼钟楼 (-118, 134)：三层糖霜姜饼钟楼与实时走针大钟、旋转拐杖糖风车、报时糖果星雨！
 //    - 幽蓝冰瀑秘境 (118, -124)：多层冰川蓝冻结冰瀑、半透明琉璃冰洞与「霜风祝福共鸣晶石」！
 
+import {
+  makeGingerbreadTex,
+  makeShingleRoofTex,
+  makeCrispWindowTex,
+  buildCrispWindow,
+  buildCrispDoor
+} from "./archcraft.js?v=11242125";
+
 export class WorldPlus {
   constructor(game, helpers) {
     this.game = game;
@@ -61,6 +69,7 @@ export class WorldPlus {
     c.fillText(text, 256, 58);
     const tex = new T.CanvasTexture(cv);
     tex.colorSpace = T.SRGBColorSpace;
+    tex.anisotropy = 8;
     const mat = this.wrapMat(new T.MeshStandardMaterial({
       map: tex,
       emissive: new T.Color(0.35, 0.30, 0.20),
@@ -73,39 +82,87 @@ export class WorldPlus {
   makeClockFaceTex() {
     const T = this.THREE;
     const cv = document.createElement("canvas");
-    cv.width = cv.height = 256;
+    cv.width = cv.height = 512;
     const c = cv.getContext("2d");
-    c.fillStyle = "#fff5dc";
-    c.beginPath(); c.arc(128, 128, 122, 0, Math.PI * 2); c.fill();
-    c.strokeStyle = "#d99d30";
-    c.lineWidth = 14;
+    const cx = 256, cy = 256;
+    const bg = c.createRadialGradient(cx, cy, 20, cx, cy, 244);
+    bg.addColorStop(0, "#fffdf4");
+    bg.addColorStop(0.76, "#fff0cc");
+    bg.addColorStop(1, "#e8c88c");
+    c.fillStyle = bg;
+    c.beginPath(); c.arc(cx, cy, 244, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = "#d99b2a";
+    c.lineWidth = 22;
     c.stroke();
-    c.strokeStyle = "#6c3618";
+    c.strokeStyle = "#7a3b14";
     c.lineWidth = 5;
-    for (let i = 0; i < 12; i++) {
-      const a = (i / 12) * Math.PI * 2;
+    c.beginPath(); c.arc(cx, cy, 212, 0, Math.PI * 2); c.stroke();
+    c.beginPath(); c.arc(cx, cy, 146, 0, Math.PI * 2); c.stroke();
+
+    // 60 fine minute ticks & 12 crisp Roman numerals!
+    const romans = ["XII", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI"];
+    for (let i = 0; i < 60; i++) {
+      const a = (i / 60) * Math.PI * 2 - Math.PI / 2;
+      const major = i % 5 === 0;
+      c.strokeStyle = major ? "#5e280e" : "#a46a34";
+      c.lineWidth = major ? 6 : 2.5;
       c.beginPath();
-      c.moveTo(128 + Math.cos(a) * 86, 128 + Math.sin(a) * 86);
-      c.lineTo(128 + Math.cos(a) * 106, 128 + Math.sin(a) * 106);
+      c.moveTo(cx + Math.cos(a) * (major ? 196 : 202), cy + Math.sin(a) * (major ? 196 : 202));
+      c.lineTo(cx + Math.cos(a) * 212, cy + Math.sin(a) * 212);
       c.stroke();
     }
+    c.fillStyle = "#54220a";
+    c.font = '900 32px Georgia, "Times New Roman", serif';
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2 - Math.PI / 2;
+      c.fillText(romans[i], cx + Math.cos(a) * 172, cy + Math.sin(a) * 172);
+    }
+    // Ornate golden 8-point center star compass
+    c.fillStyle = "rgba(217, 155, 42, 0.34)";
+    c.beginPath();
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2;
+      const r = i % 2 === 0 ? 112 : 34;
+      const px = cx + Math.cos(a) * r, py = cy + Math.sin(a) * r;
+      i === 0 ? c.moveTo(px, py) : c.lineTo(px, py);
+    }
+    c.closePath(); c.fill();
+
     const tex = new T.CanvasTexture(cv);
     tex.colorSpace = T.SRGBColorSpace;
+    tex.anisotropy = 8;
     return tex;
   }
 
   build() {
     const T = this.THREE;
     const { scene, explore } = this.game;
+    const rend = this.game.renderer;
     const plain = (m) => this.wrapMat(m, { key: "plain" });
     const std = (hex, rough = 0.55, extra = {}) =>
       plain(new T.MeshStandardMaterial({ color: hex, roughness: rough, ...extra }));
+
+    const gingerTex = makeGingerbreadTex(T, rend, 2, 2);
+    const redShingleTex = makeShingleRoofTex(T, rend, "red", 3, 2);
+    const winCozyTex = makeCrispWindowTex(T, rend, "cozy");
 
     this.m = {
       wood: std(0x6e4427, 0.80),
       darkWood: std(0x3f2414, 0.85),
       redWood: std(0xa62622, 0.62),
+      redShingle: plain(new T.MeshStandardMaterial({ map: redShingleTex, roughness: 0.50, metalness: 0.08 })),
       ginger: std(0xb96c35, 0.72),
+      gingerWall: plain(new T.MeshStandardMaterial({ map: gingerTex, roughness: 0.68, metalness: 0.04 })),
+      winCozy: plain(new T.MeshStandardMaterial({
+        map: winCozyTex,
+        emissiveMap: winCozyTex,
+        emissive: new T.Color(1.0, 0.88, 0.66),
+        emissiveIntensity: 0.80,
+        roughness: 0.16,
+        metalness: 0.08
+      })),
       icing: std(0xfaf7f2, 0.42),
       snow: std(0xf4f8ff, 0.60),
       marble: std(0xeaeff7, 0.34, { metalness: 0.08 }),
@@ -629,36 +686,87 @@ export class WorldPlus {
       this.mesh(new T.TorusGeometry(8.45, 0.12, 8, 36).rotateX(Math.PI / 2), this.m.ribbonRed, 0, 0.22, 0)
     );
 
-    // 3-Story Storybook Gingerbread Clocktower (12.5m tall!)
+    // 3-Story Storybook Gingerbread Clocktower (13.5m tall, textured spiced masonry + crisp arched bakery windows!)
     const tw = new T.Group();
+    const starFinial = this.mesh(new T.OctahedronGeometry(0.45, 0), this.m.gold, 0, 13.55, 0);
     tw.add(
-      // Base gingerbread hall (4.4 x 4.6 x 4.4)
-      this.mesh(new T.BoxGeometry(4.4, 4.6, 4.4), this.m.ginger, 0, 2.3, 0),
-      // White sugar-icing roof cornice & corner pillars
-      this.mesh(new T.BoxGeometry(4.85, 0.34, 4.85), this.m.icing, 0, 4.65, 0),
-      // Middle belfry clock chamber (3.5 x 4.2 x 3.5)
-      this.mesh(new T.BoxGeometry(3.5, 4.2, 3.5), this.m.ginger, 0, 6.8, 0),
-      this.mesh(new T.BoxGeometry(3.95, 0.30, 3.95), this.m.icing, 0, 8.95, 0),
-      // Steep festive red-and-icing pyramid spire crowned with golden star!
-      this.mesh(new T.ConeGeometry(2.75, 4.0, 4).rotateY(Math.PI / 4), this.m.redWood, 0, 11.0, 0),
-      this.mesh(new T.ConeGeometry(2.25, 1.4, 4).rotateY(Math.PI / 4), this.m.icing, 0, 12.3, 0),
-      this.mesh(new T.OctahedronGeometry(0.45, 0), this.m.gold, 0, 13.45, 0)
+      // Carved sugar-icing stone base plinth
+      this.mesh(new T.BoxGeometry(4.85, 0.34, 4.85), this.m.marble, 0, 0.17, 0),
+      // Base textured spiced-gingerbread hall (4.4 x 4.6 x 4.4)
+      this.mesh(new T.BoxGeometry(4.4, 4.6, 4.4), this.m.gingerWall, 0, 2.55, 0),
+      // Piped white sugar-icing roof cornice & scalloped icing skirt
+      this.mesh(new T.BoxGeometry(4.92, 0.34, 4.92), this.m.icing, 0, 4.90, 0),
+      this.mesh(new T.BoxGeometry(5.00, 0.08, 5.00), this.m.ribbonRed, 0, 4.70, 0),
+      // Middle belfry clock chamber (3.5 x 4.2 x 3.5) with textured gingerbread walls
+      this.mesh(new T.BoxGeometry(3.5, 4.2, 3.5), this.m.gingerWall, 0, 7.05, 0),
+      this.mesh(new T.BoxGeometry(4.02, 0.32, 4.02), this.m.icing, 0, 9.20, 0),
+      this.mesh(new T.BoxGeometry(4.08, 0.08, 4.08), this.m.gold, 0, 9.02, 0),
+      // Steep festive scalloped red-shingle & icing pyramid spire crowned with golden star!
+      this.mesh(new T.ConeGeometry(2.82, 4.05, 4).rotateY(Math.PI / 4), this.m.redShingle, 0, 11.25, 0),
+      this.mesh(new T.ConeGeometry(2.25, 1.4, 4).rotateY(Math.PI / 4), this.m.icing, 0, 12.55, 0),
+      starFinial
     );
-    this.spinners.push({ obj: tw.children[6], speed: 1.2 });
+    this.spinners.push({ obj: starFinial, speed: 1.2 });
 
-    // Striped red/white candy-cane corner columns + warm glowing bakery windows!
-    for (const [cx, cz] of [[-2.18, -2.18], [2.18, -2.18], [-2.18, 2.18], [2.18, 2.18]]) {
-      tw.add(this.mesh(new T.CylinderGeometry(0.22, 0.24, 4.6, 10), this.m.ribbonRed, cx, 2.3, cz));
+    // Striped red/white candy-cane corner columns + piped icing swag beads along cornices!
+    for (const [cx, cz] of [[-2.20, -2.20], [2.20, -2.20], [-2.20, 2.20], [2.20, 2.20]]) {
+      tw.add(this.mesh(new T.CylinderGeometry(0.22, 0.24, 4.65, 10), this.m.ribbonRed, cx, 2.55, cz));
       for (let r = 0; r < 6; r++) {
-        tw.add(this.mesh(new T.TorusGeometry(0.235, 0.055, 6, 14).rotateX(Math.PI / 2), this.m.icing, cx, 0.6 + r * 0.72, cz));
+        tw.add(this.mesh(new T.TorusGeometry(0.235, 0.055, 6, 14).rotateX(Math.PI / 2), this.m.icing, cx, 0.85 + r * 0.72, cz));
       }
     }
-    // Warm cozy glowing arched door & windows
-    tw.add(
-      this.mesh(new T.BoxGeometry(1.4, 2.3, 0.16), this.m.darkWood, 0, 1.15, 2.22),
-      this.mesh(new T.BoxGeometry(1.0, 1.0, 0.12), this.m.warmGlow, -1.45, 2.8, 2.22),
-      this.mesh(new T.BoxGeometry(1.0, 1.0, 0.12), this.m.warmGlow, 1.45, 2.8, 2.22)
-    );
+    for (let i = -3; i <= 3; i++) {
+      const off = i * 0.65;
+      tw.add(
+        this.mesh(new T.SphereGeometry(0.11, 8, 6), this.m.icing, off, 4.65, 2.45),
+        this.mesh(new T.SphereGeometry(0.11, 8, 6), this.m.icing, off, 4.65, -2.45),
+        this.mesh(new T.SphereGeometry(0.11, 8, 6), this.m.icing, 2.45, 4.65, off),
+        this.mesh(new T.SphereGeometry(0.11, 8, 6), this.m.icing, -2.45, 4.65, off)
+      );
+    }
+
+    // Sculpted Arched Double Gingerbread Bakery Door + Twin Glowing Porch Lanterns!
+    const gbMats = {
+      frame: this.m.icing,
+      door: this.m.darkWood,
+      brass: this.m.gold,
+      snow: this.m.snow,
+      pane: this.m.winCozy,
+      shutter: this.m.ribbonRed
+    };
+    const bakeryDoor = buildCrispDoor(T, gbMats, { w: 1.48, h: 2.28, double: true, arch: true });
+    bakeryDoor.position.set(0, 0.34, 2.21);
+    tw.add(bakeryDoor);
+    for (const sx of [-1.06, 1.06]) {
+      tw.add(
+        this.mesh(new T.BoxGeometry(0.08, 0.18, 0.16), this.m.darkWood, sx, 2.38, 2.26),
+        this.mesh(new T.SphereGeometry(0.11, 10, 8), this.m.warmGlow, sx, 2.24, 2.32)
+      );
+    }
+
+    // 5 ULTRA-CRISP 3D RECESSED ARCHED BAKERY WINDOWS (Front upper flanks + East, West & Rear walls!)
+    for (const wx of [-1.45, 1.45]) {
+      const fw = buildCrispWindow(T, gbMats, {
+        w: 0.92, h: 1.06, arch: true, shutters: false, flowerBox: true,
+        boxFillMats: [this.m.ribbonRed, this.m.pine, this.m.ribbonGold]
+      });
+      fw.position.set(wx, 3.45, 2.21);
+      tw.add(fw);
+    }
+    const sideSpecs = [
+      { x: 2.21, z: 0, ry: Math.PI / 2 },
+      { x: -2.21, z: 0, ry: -Math.PI / 2 },
+      { x: 0, z: -2.21, ry: Math.PI }
+    ];
+    for (const sp of sideSpecs) {
+      const sw = buildCrispWindow(T, gbMats, {
+        w: 1.24, h: 1.48, arch: true, shutters: true, flowerBox: true,
+        boxFillMats: [this.m.ribbonRed, this.m.pine, this.m.ribbonGold]
+      });
+      sw.position.set(sp.x, 2.45, sp.z);
+      sw.rotation.y = sp.ry;
+      tw.add(sw);
+    }
 
     // 4 Illuminated Golden Clock Faces with LIVE MOVING HANDS on all 4 sides!
     const clockTex = this.makeClockFaceTex();
@@ -669,7 +777,7 @@ export class WorldPlus {
     for (let i = 0; i < 4; i++) {
       const a = (i * Math.PI) / 2;
       const cf = new T.Group();
-      cf.position.set(Math.sin(a) * 1.78, 6.9, Math.cos(a) * 1.78);
+      cf.position.set(Math.sin(a) * 1.78, 7.10, Math.cos(a) * 1.78);
       cf.rotation.y = a;
       const minH = this.mesh(new T.BoxGeometry(0.08, 0.85, 0.05), this.m.darkWood, 0, 0.32, 0.09);
       const hrH = this.mesh(new T.BoxGeometry(0.11, 0.56, 0.05), this.m.ribbonRed, 0, 0.20, 0.12);
@@ -680,20 +788,21 @@ export class WorldPlus {
       this.clockHands.push({ minPiv, hrPiv });
     }
 
-    // Giant Spinning Peppermint Candy Wheel on the front gable!
+    // Giant Spinning Peppermint Candy Wheel crowning the upper clock-chamber cornice!
     const wheel = new T.Group();
-    wheel.position.set(0, 4.1, 2.38);
-    wheel.add(this.mesh(new T.TorusGeometry(0.68, 0.11, 8, 24), this.m.ribbonRed));
+    wheel.position.set(0, 9.26, 2.12);
+    wheel.add(this.mesh(new T.TorusGeometry(0.64, 0.10, 8, 24), this.m.ribbonRed));
     for (let i = 0; i < 6; i++) {
-      const spoke = this.mesh(new T.BoxGeometry(1.28, 0.12, 0.09), i % 2 ? this.m.icing : this.m.gold);
+      const spoke = this.mesh(new T.BoxGeometry(1.20, 0.11, 0.09), i % 2 ? this.m.icing : this.m.gold);
       spoke.rotation.z = (i / 6) * Math.PI;
       wheel.add(spoke);
     }
     this.spinners.push({ obj: wheel, speed: 0.9, axis: "z" });
     tw.add(wheel);
 
-    const sign = this.makeSign("姜 饼 钟 楼", 2.4, 0.48, "#5e2b14", "#ffe394");
-    sign.position.set(0, 2.75, 2.35);
+    // Crisp Signboard mounted cleanly along the mid-level icing cornice!
+    const sign = this.makeSign("姜 饼 钟 楼", 2.45, 0.50, "#5e2b14", "#ffe394");
+    sign.position.set(0, 4.92, 2.52);
     tw.add(sign);
     g.add(tw);
     world.boxes.push({ x0: x0 - 2.4, x1: x0 + 2.4, z0: z0 - 2.4, z1: z0 + 2.4, h: 12 });

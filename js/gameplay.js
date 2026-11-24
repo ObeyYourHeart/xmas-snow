@@ -74,7 +74,7 @@ export class GameplayPlus {
     // 12 scenic placements spanning both core landmarks & newly expanded outer wonders!
     const spots = [
       { id: "s_castle", name: "Claude 城堡广场", x: this.j.cabin.x + 1.5, z: this.j.cabin.z + 10.5, dy: 1.3 },
-      { id: "s_cathome", name: "哈基米星猫小窝", x: this.re.cathome.x, z: this.re.cathome.z + 8.5, dy: 1.4 },
+      { id: "s_cathome", name: "极其猫乐园", x: this.re.cathome.x, z: this.re.cathome.z + 8.5, dy: 1.4 },
       { id: "s_pond", name: "冰晶冰湖中心", x: this.j.pond.x + 5.5, z: this.j.pond.z + 1.5, dy: 1.3 },
       { id: "s_spring", name: "林间温泉雪汤", x: this.re.spring.x, z: this.re.spring.z - 5.2, dy: 1.4 },
       { id: "s_market", name: "圣诞集市拱门", x: this.re.market.x, z: this.re.market.z - 9.5, dy: 1.4 },
