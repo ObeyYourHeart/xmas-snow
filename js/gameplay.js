@@ -220,7 +220,7 @@ export class GameplayPlus {
     const g = this.game, pl = g.player;
     if (!g.started || !pl || !pl.enabled || pl.riding || pl.seat || pl.skiing || pl.scope) return false;
     if (this.dashCd > 0) return false;
-    if (g.cabin && g.cabin.inside) return false;
+    if ((g.cabin && g.cabin.inside) || (g.chemlab && g.chemlab.inside)) return false;
 
     const yaw = pl.view === "tp" && g.character ? g.character.yaw : pl.yaw;
     this.dashDirX = -Math.sin(yaw);
@@ -317,9 +317,15 @@ export class GameplayPlus {
       g.ui.toast("请先下坐骑/起身或脱下滑雪板再使用星光传送喵～", 3.5);
       return false;
     }
-    // Exit Claude Castle interior cleanly if currently indoors
+    // Exit Claude Castle or Hajimi ChemLab interior cleanly if currently indoors
     if (g.cabin && g.cabin.inside && g.cabin.leave) {
       g.cabin.leave();
+    }
+    if (g.chemlab && g.chemlab.inside) {
+      g.chemlab.inside = false;
+      if (g.chemlab.intGroup) g.chemlab.intGroup.visible = false;
+      g.snowAmount = g.chemlab.snowWas ?? 1.2;
+      g.perf && g.perf._updateCulling();
     }
 
     // Choose a guaranteed safe, clear offset beside the landmark (avoid buildings/water/ponds!)

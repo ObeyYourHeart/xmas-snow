@@ -340,6 +340,15 @@ html, body { overscroll-behavior: none; }
 #toolbar button[data-tool] i { width: 16px; height: 16px; border: 2px dashed var(--ink2); border-radius: 50%; opacity: .55; }
 #toolbar button[data-tool] u { text-decoration: none; font-weight: 700; }
 #toolbar button[data-tool].on { border-color: var(--accent); background: #fff; }
+#toolbar button[data-tool="chemgun"].secret-tool {
+  border-color: #f0b83a;
+  background: linear-gradient(135deg, rgba(255, 246, 212, .92), rgba(226, 248, 255, .92));
+  box-shadow: 0 0 10px rgba(82, 242, 255, .45), inset 0 0 0 1px rgba(255, 214, 92, .55);
+}
+#toolbar button[data-tool="chemgun"].secret-tool.on {
+  border-color: #ff62c8;
+  box-shadow: 0 0 14px rgba(255, 98, 200, .68), 0 0 6px rgba(82, 242, 255, .6);
+}
 #btnPets { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 48px; margin-top: 4px; padding: 5px 2px; border-radius: 10px; border: 1px solid var(--line); background: rgba(255, 255, 255, .62); font-size: 12px; line-height: 1.25; white-space: nowrap; }
 #btnPets:hover { background: #fff; }
 #btnPets b { font-variant-numeric: tabular-nums; }

@@ -323,7 +323,7 @@ export class PerfOptimizer {
           y: wc.y,
           z: wc.z,
           r: bs.radius,
-          indoor: !!opts.indoor,
+          indoor: opts.indoor || false,
           skyline: !!opts.skyline
         });
       }
@@ -436,8 +436,13 @@ export class PerfOptimizer {
     if (g.tower && g.tower.root) {
       this._batchZone("tower", g.tower, [g.tower.root], { singleCell: true, skyline: true });
     }
-    if (g.chemlab && g.chemlab.root) {
-      this._batchZone("chemlab", g.chemlab, [g.chemlab.root], { singleCell: true });
+    if (g.chemlab && g.chemlab.ext) {
+      this._batchZone("chemlab_ext", g.chemlab, [g.chemlab.ext], { singleCell: true });
+    }
+    if (g.chemlab && g.chemlab.intGroup) {
+      g.chemlab.intGroup.visible = true;
+      this._batchZone("chemlab_int", g.chemlab, [g.chemlab.intGroup], { singleCell: true, indoor: "chemlab", attachTo: g.chemlab.intGroup });
+      g.chemlab.intGroup.visible = !!(g.chemlab && g.chemlab.inside);
     }
 
     this.stats.drawCallsSaved = Math.max(0, this.stats.mergedSourceMeshes - this.stats.mergedOutputMeshes);
@@ -486,7 +491,8 @@ export class PerfOptimizer {
     if (!snow || !snow.points || !snow.points.geometry) return;
     const total = snow.count || 26000;
     const dens = snow.u && snow.u.uDensity ? Math.max(0, Math.min(1, snow.u.uDensity.value)) : 1;
-    const drawCnt = this.game.cabin && this.game.cabin.inside ? 0 : Math.min(total, Math.ceil(total * dens));
+    const anyInside = !!((this.game.cabin && this.game.cabin.inside) || (this.game.chemlab && this.game.chemlab.inside));
+    const drawCnt = anyInside ? 0 : Math.min(total, Math.ceil(total * dens));
     if (drawCnt !== this.stats.snowDrawCount) {
       this.stats.snowDrawCount = drawCnt;
       snow.points.geometry.setDrawRange(0, drawCnt);
@@ -496,12 +502,20 @@ export class PerfOptimizer {
   _updateCulling() {
     const g = this.game;
     const cam = g.camera;
-    const inside = !!(g.cabin && g.cabin.inside);
+    const inCastle = !!(g.cabin && g.cabin.inside);
+    const inLab = !!(g.chemlab && g.chemlab.inside);
+    const inside = inCastle || inLab;
 
     if (g.castle && g.castle.intGroup) {
-      g.castle.intGroup.visible = inside;
+      g.castle.intGroup.visible = inCastle;
     }
-    // Hide massive outdoor terrain, forest & snow meshes completely when inside Claude's Castle!
+    if (g.chemlab && g.chemlab.intGroup) {
+      g.chemlab.intGroup.visible = inLab;
+    }
+    if (g.chemlab && g.chemlab.ext) {
+      g.chemlab.ext.visible = !inside;
+    }
+    // Hide massive outdoor terrain, forest & snow meshes completely when inside Claude's Castle or Hajimi's Lab!
     if (g.terrain) {
       if (g.terrain.ground) g.terrain.ground.visible = !inside;
       // Only toggle legacy terrain.ice if CrystalPond hasn't retired it!
@@ -527,8 +541,9 @@ export class PerfOptimizer {
     for (let i = 0; i < this.batchCells.length; i++) {
       const c = this.batchCells[i];
       if (c.indoor) {
-        c.obj.visible = inside;
-        if (!inside) culled++;
+        const showIn = c.indoor === "chemlab" ? inLab : inCastle;
+        c.obj.visible = showIn;
+        if (!showIn) culled++;
         continue;
       }
       if (inside) {
