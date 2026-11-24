@@ -1040,18 +1040,22 @@ export function enhanceAudio(audio, game) {
   };
 
   // =========================================================================
-  // 5. MAGICAL SKY-CAT MOUNT AUDIO (Replaces Helicopter Rotor for Gemini!)
+  // 5. MAGICAL SKY-CAT MOUNT AUDIO (Soothing Alpine Glide Breeze + Soft Wingbeats)
   // =========================================================================
   const origRotor = audio.rotor.bind(audio);
   let chimeCd = 0;
-  const skyNotes = [1046.5, 1174.66, 1318.51, 1567.98, 1760, 2093];
+  let wingPuffCd = 0;
 
   audio.mountStart = function (gem = isGem()) {
     if (!this.ctx) return;
     if (gem) {
-      kittyChirp(0.02, 0.85, true);
-      starArp([784, 988, 1318, 1568, 2093], 0.042, 0.78, 0.35);
-      catBell(0.14, 0.75, 1.15);
+      // Soft airy lift swell + warm acoustic sleigh-bell greeting + gentle kitty chirp (zero harsh synths!)
+      noiseSweep({ brown: true, f0: 210, f1: 580, dur: 0.34, atk: 0.06, gain: 0.032, q: 0.55, rev: 0.28 });
+      if (!realBell(3, 0.14, 1.0, 0.03)) {
+        toneSweep({ delay: 0.03, f0: 784, dur: 0.26, gain: 0.016, lp: 2600, rev: 0.32 });
+      }
+      realBell(5, 0.11, 1.12, 0.12);
+      kittyChirp(0.05, 0.42, true);
     } else {
       audio.pick();
     }
@@ -1063,102 +1067,125 @@ export function enhanceAudio(audio, game) {
     const now = ctx.currentTime;
 
     if (!gem) {
-      // Silence sky-cat synth cleanly if it was active
       if (this._catFly) {
-        this._catFly.out.gain.setTargetAtTime(0, now, 0.12);
+        this._catFly.out.gain.setTargetAtTime(0, now, 0.14);
       }
       return origRotor(vol, load);
     }
 
     // Silence Claude's helicopter rotor cleanly if it was active
     if (this.rot) {
-      this.rot.out.gain.setTargetAtTime(0, now, 0.12);
+      this.rot.out.gain.setTargetAtTime(0, now, 0.14);
     }
 
     if (!this._catFly) {
       if (vol < 0.01) return;
-      // 1) Airy feathered wingbeat breeze (bandpass brown noise gently pulsed by wingbeat LFO)
-      const breeze = ctx.createBufferSource();
-      breeze.buffer = this.brown;
-      breeze.loop = true;
-      const wingFlt = ctx.createBiquadFilter();
-      wingFlt.type = "bandpass";
-      wingFlt.frequency.value = 520;
-      wingFlt.Q.value = 0.65;
+      // 1) Silky alpine winter glide breeze (dual-stage warm lowpassed brown noise, ZERO oscillators/buzz!)
+      const glideSrc = ctx.createBufferSource();
+      glideSrc.buffer = this.brown;
+      glideSrc.loop = true;
+
+      const glideLp1 = ctx.createBiquadFilter();
+      glideLp1.type = "lowpass";
+      glideLp1.frequency.value = 300;
+      glideLp1.Q.value = 0.5;
+
+      const glideLp2 = ctx.createBiquadFilter();
+      glideLp2.type = "lowpass";
+      glideLp2.frequency.value = 540;
+      glideLp2.Q.value = 0.5;
+
+      const glideAmp = ctx.createGain();
+      glideAmp.gain.value = 0.52;
+
+      // 2) Soft feathered wingbeat air-swells (deep velvety 170-260 Hz air cushion gently breathing!)
+      const wingSrc = ctx.createBufferSource();
+      wingSrc.buffer = this.brown;
+      wingSrc.loop = true;
+
+      const wingBp = ctx.createBiquadFilter();
+      wingBp.type = "bandpass";
+      wingBp.frequency.value = 185;
+      wingBp.Q.value = 0.55;
+
+      const wingLp = ctx.createBiquadFilter();
+      wingLp.type = "lowpass";
+      wingLp.frequency.value = 420;
+
       const wingAmp = ctx.createGain();
-      wingAmp.gain.value = 0.48;
+      wingAmp.gain.value = 0.28;
+
       const wingLfo = ctx.createOscillator();
       wingLfo.type = "sine";
-      wingLfo.frequency.value = 2.2;
+      wingLfo.frequency.value = 1.25;
       const wingMod = ctx.createGain();
-      wingMod.gain.value = 0.34;
+      wingMod.gain.value = 0.19;
       wingLfo.connect(wingMod).connect(wingAmp.gain);
-
-      // 2) Warm cozy celestial cat-purr pad (gentle 96 Hz triangle + 26 Hz soft purr flutter)
-      const purrOsc = ctx.createOscillator();
-      purrOsc.type = "triangle";
-      purrOsc.frequency.value = 92;
-      const purrLp = ctx.createBiquadFilter();
-      purrLp.type = "lowpass";
-      purrLp.frequency.value = 260;
-      const purrAmp = ctx.createGain();
-      purrAmp.gain.value = 0.09;
-      const purrLfo = ctx.createOscillator();
-      purrLfo.type = "sine";
-      purrLfo.frequency.value = 26;
-      const purrMod = ctx.createGain();
-      purrMod.gain.value = 0.045;
-      purrLfo.connect(purrMod).connect(purrAmp.gain);
-
-      // 3) Dreamy aurora shimmer harmonic (soft high fifth)
-      const padOsc = ctx.createOscillator();
-      padOsc.type = "sine";
-      padOsc.frequency.value = 392;
-      const padAmp = ctx.createGain();
-      padAmp.gain.value = 0.022;
 
       const out = ctx.createGain();
       out.gain.value = 0;
 
-      breeze.connect(wingFlt).connect(wingAmp).connect(out);
-      purrOsc.connect(purrLp).connect(purrAmp).connect(out);
-      padOsc.connect(padAmp).connect(out);
+      glideSrc.connect(glideLp1).connect(glideLp2).connect(glideAmp).connect(out);
+      wingSrc.connect(wingBp).connect(wingLp).connect(wingAmp).connect(out);
 
       out.connect(this.master);
       if (this.rev) {
         const revSend = ctx.createGain();
-        revSend.gain.value = 0.34;
+        revSend.gain.value = 0.24;
         out.connect(revSend).connect(this.rev);
       }
 
-      breeze.start();
+      glideSrc.start(0, 0.13);
+      wingSrc.start(0, 0.77);
       wingLfo.start();
-      purrOsc.start();
-      purrLfo.start();
-      padOsc.start();
 
-      this._catFly = { wingFlt, wingLfo, purrOsc, padOsc, out };
+      this._catFly = { glideLp1, glideAmp, wingBp, wingAmp, wingLfo, wingMod, out };
     }
 
     const cf = this._catFly;
-    const k = Math.min(1, vol * 3.2);
-    cf.out.gain.setTargetAtTime(0.24 * vol * vol, now, 0.14);
-    cf.wingLfo.frequency.setTargetAtTime(1.5 + 1.9 * load, now, 0.25);
-    cf.wingFlt.frequency.setTargetAtTime(420 + 420 * k + 340 * load, now, 0.25);
-    cf.purrOsc.frequency.setTargetAtTime(84 + 28 * k + 14 * load, now, 0.25);
-    cf.padOsc.frequency.setTargetAtTime(392 + 131 * load, now, 0.35);
+    const smoothV = Math.max(0, Math.min(1, vol));
+    const activeLoad = Math.max(0, Math.min(1, load));
 
-    // Occasional twinkling celestial wind-chime sparkle while soaring!
-    if (vol > 0.38 && now > chimeCd) {
-      chimeCd = now + (load > 0.35 ? 0.42 : 0.95) + Math.random() * 0.55;
-      const note = skyNotes[Math.floor(Math.random() * skyNotes.length)];
-      toneSweep({
-        f0: note,
-        dur: 0.42,
-        gain: 0.011 * vol * (0.6 + 0.5 * load),
-        rev: 0.52,
-        pan: (Math.random() - 0.5) * 0.7
+    // Gentle, ultra-soothing master envelope (quiet velvet glide at hover, breezy sweep when soaring!)
+    const targetOut = smoothV < 0.02 ? 0 : (0.042 + 0.048 * activeLoad) * smoothV * smoothV;
+    cf.out.gain.setTargetAtTime(targetOut, now, 0.22);
+
+    // Alpine air opens gently as speed / climb builds (never harsh or hissy)
+    cf.glideLp1.frequency.setTargetAtTime(210 + 170 * smoothV + 190 * activeLoad, now, 0.28);
+    cf.wingBp.frequency.setTargetAtTime(145 + 65 * smoothV + 70 * activeLoad, now, 0.28);
+    cf.wingLfo.frequency.setTargetAtTime(1.12 + 0.68 * activeLoad, now, 0.35);
+    cf.wingAmp.gain.setTargetAtTime(0.18 + 0.24 * activeLoad, now, 0.30);
+    cf.wingMod.gain.setTargetAtTime(0.11 + 0.16 * activeLoad, now, 0.30);
+
+    // Subtle acoustic feathered downstroke air-brush when actively climbing hard
+    if (smoothV > 0.55 && activeLoad > 0.55 && now > wingPuffCd) {
+      wingPuffCd = now + 0.62 + Math.random() * 0.22;
+      noiseSweep({
+        brown: true,
+        f0: 260,
+        f1: 120,
+        dur: 0.26,
+        atk: 0.05,
+        gain: 0.014 * smoothV * activeLoad,
+        q: 0.5,
+        rev: 0.22
       });
+    }
+
+    // Rare, whisper-soft real acoustic bell sparkle while gliding swiftly across the winter sky
+    if (smoothV > 0.45 && activeLoad > 0.14 && now > chimeCd) {
+      chimeCd = now + 2.8 + Math.random() * 2.1;
+      const bellIdx = [2, 3, 4, 5][Math.floor(Math.random() * 4)];
+      if (!realBell(bellIdx, 0.046 * smoothV, 0.96 + Math.random() * 0.12)) {
+        toneSweep({
+          f0: [1046.5, 1174.66, 1318.51, 1567.98][bellIdx - 2],
+          dur: 0.38,
+          gain: 0.0055 * smoothV,
+          lp: 2600,
+          rev: 0.42,
+          pan: (Math.random() - 0.5) * 0.6
+        });
+      }
     }
   };
 

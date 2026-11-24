@@ -54,7 +54,8 @@ export class ReindeerUpgrade {
       emissiveIntensity: 1.6,
       roughness: 0.12,
       transparent: true,
-      opacity: 0.62
+      opacity: 0.62,
+      depthWrite: false
     }));
     const warmGlow = plain(new T.MeshStandardMaterial({
       color: 0xffe48c, emissive: new T.Color(1.0, 0.76, 0.24), emissiveIntensity: 1.6, roughness: 0.15

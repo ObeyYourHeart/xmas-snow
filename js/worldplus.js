@@ -120,11 +120,11 @@ export class WorldPlus {
       })),
       cyanIce: plain(new T.MeshPhysicalMaterial({
         color: 0x62e2ff, emissive: new T.Color(0.14, 0.58, 0.88), emissiveIntensity: 0.52,
-        roughness: 0.10, metalness: 0.06, clearcoat: 1.0, transparent: true, opacity: 0.82
+        roughness: 0.10, metalness: 0.06, clearcoat: 1.0
       })),
       deepIce: plain(new T.MeshPhysicalMaterial({
         color: 0x2278b8, emissive: new T.Color(0.06, 0.32, 0.62), emissiveIntensity: 0.42,
-        roughness: 0.14, clearcoat: 0.9, transparent: true, opacity: 0.86
+        roughness: 0.14, clearcoat: 0.9
       })),
       pinkGlow: plain(new T.MeshStandardMaterial({
         color: 0xff8ce0, emissive: new T.Color(0.95, 0.36, 0.84), emissiveIntensity: 1.35, roughness: 0.15
@@ -220,7 +220,7 @@ export class WorldPlus {
         this.mesh(new T.ConeGeometry(0.40, 0.16, 6), this.m.snow, 0, 1.44, 0)
       );
       g.add(lt);
-      world.circles.push({ x: x0 + lx, z: z0 + lz, r: 0.30 });
+      world.circles.push({ x: x0 + lx, z: z0 + lz, r: 0.30, top: 1.32 });
     }
     this.addLight(x0, y0 + 2.3, z0 - 3.4, 0xffb866, 9, 14);
 
@@ -289,7 +289,7 @@ export class WorldPlus {
         );
       }
       g.add(tbl);
-      world.circles.push({ x: tx, z: tz, r: 0.70 });
+      world.circles.push({ x: tx, z: tz, r: 0.70, top: 0.92 });
     }
     this.group.add(g);
   }
@@ -398,7 +398,7 @@ export class WorldPlus {
         this.mesh(new T.BoxGeometry(0.85, 0.08, 0.48), this.m.plaid, 0.22, 0.56, 0)
       );
       fg.add(bench);
-      world.circles.push({ x: fx + bx, z: fz + bz, r: 0.72 });
+      world.circles.push({ x: fx + bx, z: fz + bz, r: 0.72, top: 0.58 });
     }
     this.group.add(fg);
 
@@ -486,14 +486,14 @@ export class WorldPlus {
       this.addLight(lk.x, ly + 2.4, lk.z, 0xffd27a, 12, 22);
     }
 
-    // 4) Forest Watchtower (瞭望塔): glowing golden summit beacon star visible across the entire valley!
+    // 4) Forest Watchtower (瞭望塔): glowing golden summit beacon star crowning the North alpine roof peak!
     if (this.re.tower) {
       const tw = this.re.tower;
       const ty = this.qt(tw.x, tw.z);
-      const beacon = this.mesh(new T.OctahedronGeometry(0.42, 0), this.m.warmGlow, tw.x, ty + 11.4, tw.z);
+      const beacon = this.mesh(new T.OctahedronGeometry(0.42, 0), this.m.warmGlow, tw.x, ty + 13.85, tw.z - 1.82);
       this.spinners.push({ obj: beacon, speed: 1.6 });
       this.group.add(beacon);
-      this.addLight(tw.x, ty + 11.4, tw.z, 0xffcf76, 14, 26);
+      this.addLight(tw.x, ty + 13.85, tw.z - 1.82, 0xffcf76, 14, 26);
     }
   }
 
@@ -519,8 +519,12 @@ export class WorldPlus {
       this.mesh(new T.TorusGeometry(2.6, 0.06, 6, 32).rotateX(Math.PI / 2), this.m.pinkGlow, 0, deckH + 0.03, 0)
     );
     world.platforms.push({
-      test: (x, z) => Math.hypot(x - x0, z - z0) < 7.8,
-      y: () => y0 + deckH
+      test: (x, z) => Math.hypot(x - x0, z - z0) < 8.5,
+      y: (x, z) => {
+        const d = Math.hypot(x - x0, z - z0);
+        if (d <= 7.6) return y0 + deckH;
+        return y0 + deckH * Math.max(0, Math.min(1, (8.5 - d) / 0.9));
+      }
     });
 
     // Soaring Golden & Crystal Astrological Arch spanning the north side of the plaza!
@@ -574,7 +578,7 @@ export class WorldPlus {
     sign.position.set(0, 2.55, 0);
     bellPed.add(sign);
     g.add(bellPed);
-    world.circles.push({ x: x0, z: z0 + 3.6, r: 0.78 });
+    world.circles.push({ x: x0, z: z0 + 3.6, r: 0.78, top: deckH + 1.18 });
     this.addLight(x0, y0 + 4.4, z0, 0x72ecff, 16, 26);
 
     world.spots.push({
@@ -792,7 +796,7 @@ export class WorldPlus {
     sign.position.set(4.4, 2.2, 2.2);
     sign.rotation.y = -0.35;
     g.add(sign);
-    world.circles.push({ x: x0 + 4.4, z: z0 + 2.2, r: 0.55 }, { x: x0 - 4.4, z: z0 + 1.8, r: 0.55 });
+    world.circles.push({ x: x0 + 4.4, z: z0 + 2.2, r: 0.55, top: 1.08 }, { x: x0 - 4.4, z: z0 + 1.8, r: 0.55, top: 1.08 });
     this.addLight(x0, y0 + 3.2, z0 - 1.2, 0x4ae8ff, 16, 26);
 
     world.spots.push({

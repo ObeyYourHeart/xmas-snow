@@ -433,6 +433,9 @@ export class PerfOptimizer {
     if (g.pondFx && g.pondFx.group) {
       this._batchZone("pond", g.pondFx, [g.pondFx.group], { singleCell: true });
     }
+    if (g.tower && g.tower.root) {
+      this._batchZone("tower", g.tower, [g.tower.root], { singleCell: true, skyline: true });
+    }
 
     this.stats.drawCallsSaved = Math.max(0, this.stats.mergedSourceMeshes - this.stats.mergedOutputMeshes);
     this.stats.totalCells = this.batchCells.length;

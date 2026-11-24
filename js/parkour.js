@@ -395,7 +395,8 @@ export class WinterTrialCourse {
       })),
       thinIce: plain(new T.MeshStandardMaterial({
         color: 0x90ecff, emissive: new T.Color(0.14, 0.64, 0.92), emissiveIntensity: 0.55,
-        roughness: 0.10, transparent: true, opacity: 0.82
+        roughness: 0.10, transparent: true, opacity: 0.84,
+        polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1
       })),
       lanternOff: plain(new T.MeshStandardMaterial({
         color: 0xff9e66, emissive: new T.Color(0.65, 0.24, 0.08), emissiveIntensity: 0.45, roughness: 0.25
@@ -664,7 +665,7 @@ export class WinterTrialCourse {
       const tileMat = this.m.thinIce.clone();
       cg.add(
         this.mesh(new T.BoxGeometry(sz, 0.36, sz), tileMat, 0, -0.18, 0),
-        this.mesh(new T.BoxGeometry(sz + 0.10, 0.055, sz + 0.10), this.m.snow, 0, -0.028, 0)
+        this.mesh(new T.BoxGeometry(sz + 0.10, 0.045, sz + 0.10), this.m.snow, 0, 0.022, 0)
       );
       g.add(cg);
       const cr = {

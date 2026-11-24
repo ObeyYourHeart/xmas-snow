@@ -309,9 +309,7 @@ export class CrystalPond {
         color: new T.Color(0.48, 0.95, 1.0),
         emissive: new T.Color(0.14, 0.72, 0.92),
         emissiveIntensity: 0.68,
-        roughness: 0.16,
-        transparent: true,
-        opacity: 0.82
+        roughness: 0.16
       }), { key: "plain" });
       for (let i = 0; i < 10; i++) {
         const ang = (i / 10) * Math.PI * 2 + 0.3;
@@ -448,11 +446,12 @@ export class CrystalPond {
         metalness: 0.04,
         transparent: true,
         opacity: 0.82,
+        depthWrite: false,
         side: T.DoubleSide
       }), { key: "plain" });
 
       this.iceWall = new T.Mesh(wallGeo, wallMat);
-      this.iceWall.renderOrder = 2;
+      this.iceWall.renderOrder = 1;
       this.iceWall.matrixAutoUpdate = false;
       this.iceWall.updateMatrix();
       root.add(this.iceWall);
@@ -783,11 +782,9 @@ export class CrystalPond {
     const crystalIceMat = this.wrapMat(new T.MeshStandardMaterial({
       color: new T.Color(0.42, 0.84, 0.99),
       emissive: new T.Color(0.06, 0.28, 0.44),
-      emissiveIntensity: 0.30,
-      roughness: 0.14,
-      metalness: 0.04,
-      transparent: true,
-      opacity: 0.84
+      emissiveIntensity: 0.34,
+      roughness: 0.12,
+      metalness: 0.04
     }), { key: "plain" });
 
     const frostCapMat = this.wrapMat(new T.MeshStandardMaterial({

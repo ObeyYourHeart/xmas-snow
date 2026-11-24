@@ -122,7 +122,8 @@ export class GrandFerrisWheel {
       snow: std(0xf5f8ff, 0.74),
       velvet: std(0xa82438, 0.72),
       glass: plain(new T.MeshStandardMaterial({
-        color: 0xdaf6ff, roughness: 0.08, metalness: 0.12, transparent: true, opacity: 0.36
+        color: 0xdaf6ff, roughness: 0.08, metalness: 0.12, transparent: true, opacity: 0.36,
+        depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1
       })),
       warmBulb: plain(new T.MeshStandardMaterial({
         color: 0xfff0b2, emissive: new T.Color(1.0, 0.78, 0.30), emissiveIntensity: 1.4, roughness: 0.15
@@ -176,11 +177,11 @@ export class GrandFerrisWheel {
       addStrut(footB, topPt, 0.34, 0.56, this.m.ivory);
       // Mid-height horizontal tie beam & gilded brace
       addStrut(new T.Vector3(hx * 1.09, hubY * 0.48, legSpanZ * 0.52), new T.Vector3(hx * 1.09, hubY * 0.48, -legSpanZ * 0.52), 0.18, 0.18, this.m.gold);
-      // Stone foundation plinths + colliders
+      // Stone foundation plinths extended 0.5m underground (zero slope floating!) + colliders
       for (const fz of [legSpanZ, -legSpanZ]) {
         const fx = hx * 1.18;
         root.add(
-          this.mesh(new T.CylinderGeometry(0.92, 1.18, 0.85, 10), this.m.stone, fx, 0.425, fz),
+          this.mesh(new T.CylinderGeometry(0.92, 1.24, 1.35, 10), this.m.stone, fx, 0.175, fz),
           this.mesh(new T.TorusGeometry(0.95, 0.08, 6, 18).rotateX(Math.PI / 2), this.m.gold, fx, 0.86, fz)
         );
         const wp = this.localToWorld(fx, 0, fz);
@@ -198,8 +199,8 @@ export class GrandFerrisWheel {
     const deckH = 1.15;
     root.add(
       this.mesh(new T.BoxGeometry(4.4, deckH, 6.4), this.m.stone, 4.6, deckH / 2, 0),
-      this.mesh(new T.BoxGeometry(4.5, 0.10, 6.5), this.m.deck, 4.6, deckH, 0),
-      this.mesh(new T.BoxGeometry(4.58, 0.06, 6.58), this.m.gold, 4.6, deckH + 0.04, 0),
+      this.mesh(new T.BoxGeometry(4.58, 0.06, 6.58), this.m.gold, 4.6, deckH - 0.02, 0),
+      this.mesh(new T.BoxGeometry(4.5, 0.10, 6.5), this.m.deck, 4.6, deckH + 0.02, 0),
       // Wide gentle entry ramp on +X side (X: 6.8..9.6, Z: -2.0..+2.0)
       this.mesh(new T.BoxGeometry(2.9, 0.16, 4.0), this.m.deck, 8.2, deckH / 2, 0)
     );
@@ -253,9 +254,9 @@ export class GrandFerrisWheel {
     padG.add(
       this.mesh(new T.TorusGeometry(2.6, 0.075, 8, 36).rotateX(Math.PI / 2), this.m.gold),
       this.mesh(new T.TorusGeometry(2.25, 0.045, 6, 36).rotateX(Math.PI / 2), this.m.cyanGlow, 0, 0.01, 0),
-      this.mesh(new T.BoxGeometry(0.24, 0.03, 1.5), this.m.gold, -0.52, 0.01, 0),
-      this.mesh(new T.BoxGeometry(0.24, 0.03, 1.5), this.m.gold, 0.52, 0.01, 0),
-      this.mesh(new T.BoxGeometry(1.04, 0.03, 0.24), this.m.gold, 0, 0.01, 0)
+      this.mesh(new T.BoxGeometry(0.24, 0.03, 1.5), this.m.gold, -0.52, 0.012, 0),
+      this.mesh(new T.BoxGeometry(0.24, 0.03, 1.5), this.m.gold, 0.52, 0.012, 0),
+      this.mesh(new T.BoxGeometry(0.80, 0.03, 0.24), this.m.gold, 0, 0.012, 0)
     );
     root.add(padG);
 
@@ -341,11 +342,11 @@ export class GrandFerrisWheel {
           this.mesh(new T.CylinderGeometry(0.065, 0.065, hangDrop, 8), this.m.gold, 0, -hangDrop / 2, sz)
         );
       }
-      // Solid Walkable Wooden Floor Deck (y = -hangDrop) + Gilded Trim!
+      // Solid Walkable Wooden Floor Deck (y = -hangDrop) + Recessed Gilded Rim (zero Z-fighting!)
       cg.add(
         this.mesh(new T.BoxGeometry(cabW, 0.22, cabD), this.m.deck, 0, -hangDrop - 0.11, 0),
         this.mesh(new T.BoxGeometry(cabW + 0.12, 0.10, cabD + 0.12), cabMat, 0, -hangDrop - 0.18, 0),
-        this.mesh(new T.BoxGeometry(cabW + 0.14, 0.055, cabD + 0.14), this.m.gold, 0, -hangDrop - 0.02, 0)
+        this.mesh(new T.BoxGeometry(cabW + 0.14, 0.055, cabD + 0.14), this.m.gold, 0, -hangDrop - 0.055, 0)
       );
       // Lower Colored Skirt Panels + Panoramic Glass Balustrades on 3 sides (-X, -Z, +Z)
       // (+X side has wide open entry doorway facing the boarding terrace!)
@@ -503,7 +504,7 @@ export class GrandFerrisWheel {
       );
     }
     this.root.add(tg);
-    world.circles.push({ x: wp.x, z: wp.z, r: 1.0 });
+    world.circles.push({ x: wp.x, z: wp.z, r: 1.0, top: 1.15 });
 
     world.spots.push({
       id: "ferris_wish_lantern",

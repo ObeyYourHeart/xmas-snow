@@ -69,6 +69,11 @@ export class CatHome {
     this.denBed = {
       riding: false,
       eye: new this.THREE.Vector3(),
+      bedPos: new this.THREE.Vector3(),
+      focus: new this.THREE.Vector3(),
+      bedYaw: 0,
+      zzz: [],
+      zzzOrigin: new this.THREE.Vector3(),
       spot: null,
       exitPos: new this.THREE.Vector3(),
       exitYaw: 0,
@@ -162,7 +167,11 @@ export class CatHome {
       roughness: 0.08,
       metalness: 0.05,
       transparent: true,
-      opacity: 0.86
+      opacity: 0.86,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -2
     }));
 
     this.m = {
@@ -702,7 +711,7 @@ export class CatHome {
     g.add(ped);
     scene.add(g);
 
-    world.circles.push({ x: px, z: pz, r: 0.62 });
+    world.circles.push({ x: px, z: pz, r: 0.62, top: 0.92 });
     world.spots.push({
       id: "cathome_fireworks",
       pos: new T.Vector3(px, py + 1.1, pz),
@@ -952,17 +961,19 @@ export class CatHome {
     bedRim.rotateX(Math.PI / 2);
     const bedRimMesh = this.mesh(bedRim, this.m.sakura, 0, 0.24, 0);
     bedRimMesh.scale.set(1, 0.78, 1);
-    const blanket = this.mesh(new T.BoxGeometry(1.15, 0.07, 0.92), this.m.peri, 0.25, 0.255, 0.18);
-    blanket.rotation.y = 0.22;
+    const blanket = this.mesh(new T.BoxGeometry(1.18, 0.06, 0.94), this.m.peri, 0.0, 0.25, 0.06);
+    blanket.rotation.y = 0.08;
     const bEarL = this.mkCatEar(0.52, this.m.lavender, this.m.sakura);
     bEarL.position.set(-0.52, 0.34, -1.16); bEarL.rotation.z = 0.28;
     const bEarR = this.mkCatEar(0.52, this.m.lavender, this.m.sakura);
     bEarR.position.set(0.52, 0.34, -1.16); bEarR.rotation.z = -0.28;
-    const starPillow = this.mesh(this.starMd, this.m.cyan, -0.45, 0.30, -0.45);
-    starPillow.rotation.set(Math.PI / 2 - 0.25, 0.2, 0.3);
+    // Star pillow neatly positioned right under the sleeping cat's head (+X side of plush cushion!)
+    const starPillow = this.mesh(this.starMd, this.m.cyan, 0.50, 0.275, -0.05);
+    starPillow.rotation.set(Math.PI / 2 - 0.14, 0.15, 0.25);
+    // Cozy snow-kitty plushie tucked on the opposite back-left corner so sleeping character has zero clipping!
     const bedKitty = this.mkSnowKitty(0.68);
-    bedKitty.position.set(0.68, 0.23, -0.42);
-    bedKitty.rotation.y = -0.55;
+    bedKitty.position.set(-0.74, 0.24, -0.52);
+    bedKitty.rotation.y = 0.65;
     bedG.add(bedBase, bedInner, bedRimMesh, blanket, bEarL, bEarR, starPillow, bedKitty);
     g.add(bedG);
 
@@ -1017,23 +1028,68 @@ export class CatHome {
     this.hearthPos.set(1.95, deckH + 0.65, -0.15).applyMatrix4(g.matrixWorld);
     this.addLight(dx, dy + 2.35, dz, 0xffd2a8, 11, 15, true);
 
-    // Cozy Cat-Bed Nap Seat Interaction!
+    // Interior furniture colliders (prevent walking straight through hearth, snack table & bookshelf!)
+    const addDenCol = (lx, lz, r, top) => {
+      const wp = new T.Vector3(lx, 0, lz).applyMatrix4(g.matrixWorld);
+      world.circles.push({ x: wp.x, z: wp.z, r, top });
+    };
+    addDenCol(1.95, -0.15, 0.54, deckH + 0.78);  // Mini Kitty Hearth
+    addDenCol(1.45, 1.15, 0.56, deckH + 0.52);   // Strawberry-Milk Snack Table
+    addDenCol(-2.15, -0.35, 0.62, deckH + 1.45); // Starry Bookshelf
+
+    // Cozy Visible 3rd-Person Cat-Bed Nap Seat Interaction (watch Gemini curled up sleeping on the bed!)
     this.denBed.eye.set(0, deckH + 1.05, -1.25).applyMatrix4(g.matrixWorld);
-    this.denBed.exitPos.set(0, 0, 1.65).applyMatrix4(g.matrixWorld);
+    this.denBed.bedPos.set(-0.56, deckH + 0.44, -1.30).applyMatrix4(g.matrixWorld);
+    this.denBed.focus.set(0.05, deckH + 0.60, -1.28).applyMatrix4(g.matrixWorld);
+    this.denBed.zzzOrigin.set(0.48, deckH + 0.85, -1.32).applyMatrix4(g.matrixWorld);
+    this.denBed.bedYaw = yaw + Math.PI;
+    this.denBed.exitPos.set(0, 0, 1.55).applyMatrix4(g.matrixWorld);
     this.denBed.exitYaw = yaw;
     this.denBed.spot = {
       id: "cathome_bed_exit",
-      label: "从猫窝里起身",
+      label: "叫醒猫猫 · 从猫窝里起身",
       can: () => true,
       act: () => this.leaveDenBed()
     };
+
+    // Floating adorable pastel "Z / z / ✦" dream sprites hovering over the sleeping kitty!
+    const mkDreamSprite = (glyph, colorHex, scale) => {
+      const cv = document.createElement("canvas");
+      cv.width = cv.height = 128;
+      const ctx = cv.getContext("2d");
+      ctx.clearRect(0, 0, 128, 128);
+      ctx.font = "900 84px 'Segoe UI', 'Microsoft YaHei', sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.shadowColor = colorHex;
+      ctx.shadowBlur = 18;
+      ctx.lineWidth = 10;
+      ctx.strokeStyle = "rgba(18, 22, 52, 0.75)";
+      ctx.strokeText(glyph, 64, 66);
+      ctx.fillStyle = colorHex;
+      ctx.fillText(glyph, 64, 66);
+      const tex = new T.CanvasTexture(cv);
+      tex.colorSpace = T.SRGBColorSpace;
+      const mat = new T.SpriteMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false, fog: false });
+      const sp = new T.Sprite(mat);
+      sp.scale.setScalar(scale);
+      sp.visible = false;
+      sp.renderOrder = 7;
+      scene.add(sp);
+      return sp;
+    };
+    this.denBed.zzz = [
+      { sp: mkDreamSprite("Z", "#88f2ff", 0.34), ph: 0.0 },
+      { sp: mkDreamSprite("z", "#ff9ce0", 0.27), ph: 0.33 },
+      { sp: mkDreamSprite("✦", "#ffe680", 0.23), ph: 0.66 }
+    ];
 
     const bedWorld = new T.Vector3(0, deckH + 0.55, -1.25).applyMatrix4(g.matrixWorld);
     world.spots.push({
       id: "cathome_bed",
       pos: bedWorld,
-      r: 2.5,
-      label: "钻进哈基米猫窝打个盹儿（暖呼呼回温）",
+      r: 2.6,
+      label: "蜷进哈基米星梦猫窝睡觉觉（可 360° 欣赏猫猫睡觉喵～）",
       can: () => !this.game.player.seat && !this.game.player.riding && !this.game.player.skiing,
       act: () => this.enterDenBed(yaw)
     });
@@ -1043,28 +1099,39 @@ export class CatHome {
     const g = this.game, p = g.player;
     this.denBed.riding = true;
     this.denBed.sparkT = 0;
-    this.chime([523.25, 659.25, 783.99, 987.77], 0.10, 0.14);
-    g.cold && (g.cold.w = Math.min(100, g.cold.w + 35), g.cold.wet = 0);
+    this.chime([523.25, 659.25, 783.99, 987.77], 0.11, 0.12);
+    g.cold && (g.cold.w = Math.min(100, g.cold.w + 45), g.cold.wet = 0);
     p.seat = {
       pos: this.denBed.eye,
+      tp: true,
+      sleep: true,
+      focus: this.denBed.focus,
+      dist: 2.55,
+      bedPos: this.denBed.bedPos,
+      bedYaw: this.denBed.bedYaw,
       spot: this.denBed.spot,
       exit: () => this.leaveDenBed()
     };
-    // Look outward through the open dome entrance (local +Z in world = yaw + PI for camera forward -Z)
-    p.yaw = viewYaw + Math.PI;
-    p.pitch = 0.06;
+    // Position cozy 3rd-person camera right inside the open dome doorway looking gently down at our sleeping cat!
+    p.yaw = viewYaw + 0.24;
+    p.pitch = -0.32;
     g.character?.stop(0.1);
-    g.ui.toast(DEN_LINES[this.denIdx++ % DEN_LINES.length], 5);
+    g.ui.toast(DEN_LINES[this.denIdx++ % DEN_LINES.length] + "（拖鼠标可 360° 看猫猫睡觉，按 E 或空格起床）", 6);
   }
 
   leaveDenBed() {
     if (!this.denBed.riding) return;
     const g = this.game, p = g.player;
     this.denBed.riding = false;
+    for (const z of this.denBed.zzz) {
+      z.sp.visible = false;
+      z.sp.material.opacity = 0;
+    }
     p.seat = null;
     p.pos.set(this.denBed.exitPos.x, 0, this.denBed.exitPos.z);
     p.vel.set(0, 0);
     p.yaw = this.denBed.exitYaw + Math.PI;
+    p.pitch = -0.08;
     g.audio?.pick && g.audio.pick();
     g.character?.play("happy");
   }
@@ -1156,7 +1223,12 @@ export class CatHome {
     g.add(arm, yPivot);
 
     scene.add(g);
-    world.circles.push({ x: cx, z: cz, r: 0.86 });
+    // Split base condo (h = 1.22m) & slim upper sisal trunk (r = 0.24, h = 2.95m) so players can cleanly
+    // climb & jump onto all 3 cat-tree tiers including the top Tier 3 crescent-moon lookout!
+    world.circles.push(
+      { x: cx, z: cz, r: 0.82, top: 1.22 },
+      { x: cx, z: cz, r: 0.24, top: 2.95 }
+    );
     world.spots.push({
       id: "cathome_cattree",
       pos: new T.Vector3(cx - 1.05, cy + 1.5, cz + 0.98),
@@ -1429,7 +1501,13 @@ export class CatHome {
     this.grillPos.set(0.68, 1.42, 0.05).applyMatrix4(g.matrixWorld);
     this.addLight(bx, by + 2.25, bz + 0.75, 0xffc88a, 8.5, 12, false);
 
-    world.circles.push({ x: bx - 0.85, z: bz, r: 0.95 }, { x: bx + 0.85, z: bz, r: 0.95 });
+    world.circles.push(
+      { x: bx - 0.85, z: bz, r: 0.95 },
+      { x: bx + 0.85, z: bz, r: 0.95 },
+      // Jumpable colliders for the 2 cute cat-ear barstools out front (prevent clipping!)
+      { x: bx - 0.78, z: bz + 1.22, r: 0.30, top: 0.64 },
+      { x: bx + 0.78, z: bz + 1.22, r: 0.30, top: 0.64 }
+    );
     world.spots.push({
       id: "cathome_snackbar",
       pos: new T.Vector3(bx, by + 1.15, bz + 1.1),
@@ -1497,8 +1575,8 @@ export class CatHome {
     this.fountainPos.set(-0.65, 0.40, -0.65).applyMatrix4(g.matrixWorld);
     this.addLight(px, py + 1.4, pz, 0x8be6ff, 7.5, 11, false);
 
-    // Collider only on the fountain pedestal (players can freely wade into the warm kitty footbath!)
-    world.circles.push({ x: px - 1.62, z: pz - 1.62, r: 0.72 });
+    // Collider only on the fountain pedestal (players can freely wade into the warm kitty footbath or jump over!)
+    world.circles.push({ x: px - 1.62, z: pz - 1.62, r: 0.72, top: 1.15 });
     world.spots.push({
       id: "cathome_pool",
       pos: new T.Vector3(px, py + 0.9, pz),
@@ -1548,7 +1626,7 @@ export class CatHome {
     g.add(post);
     scene.add(g);
 
-    world.circles.push({ x: px + bx, z: pz + bz, r: 0.22 });
+    world.circles.push({ x: px + bx, z: pz + bz, r: 0.22, top: 1.10 });
     world.spots.push({
       id: "cathome_summon",
       pos: new T.Vector3(px + bx, py + 1.1, pz + bz),
@@ -1669,16 +1747,35 @@ export class CatHome {
       }
     }
 
-    // 6. Den bed cozy lounging sparkles
-    if (this.denBed.riding && (this.denBed.sparkT -= dt) <= 0) {
-      this.denBed.sparkT = 0.55;
-      const pk = Math.random() > 0.5;
-      g.puffs.spawn(
-        this.denBed.eye.x + (Math.random() - 0.5) * 1.4,
-        this.denBed.eye.y + 0.1,
-        this.denBed.eye.z + (Math.random() - 0.5) * 1.4,
-        0, 0.45, 0, 0.05, 0.85, 0.8, pk ? 1 : 0.3, pk ? 0.55 : 0.9, pk ? 0.9 : 1, -0.1, 0.8
-      );
+    // 6. Den bed cozy lounging sparkles & floating glowing "Z / z / ✦" dream sprites!
+    if (this.denBed.riding) {
+      const o = this.denBed.zzzOrigin;
+      for (const item of this.denBed.zzz) {
+        const u = (time * 0.36 + item.ph) % 1;
+        item.sp.visible = true;
+        item.sp.position.set(
+          o.x + Math.sin(u * Math.PI * 2 + item.ph * 6) * 0.16,
+          o.y + u * 0.82,
+          o.z + Math.cos(u * Math.PI * 2 + item.ph * 6) * 0.10
+        );
+        const fade = Math.sin(u * Math.PI);
+        item.sp.material.opacity = fade * 0.92;
+      }
+      if ((this.denBed.sparkT -= dt) <= 0) {
+        this.denBed.sparkT = 0.55;
+        const pk = Math.random() > 0.5;
+        g.puffs.spawn(
+          this.denBed.focus.x + (Math.random() - 0.5) * 1.4,
+          this.denBed.focus.y + 0.15,
+          this.denBed.focus.z + (Math.random() - 0.5) * 1.4,
+          0, 0.42, 0, 0.05, 0.85, 0.8, pk ? 1 : 0.3, pk ? 0.55 : 0.9, pk ? 0.9 : 1, -0.1, 0.8
+        );
+      }
+    } else if (this.denBed.zzz.length && this.denBed.zzz[0].sp.visible) {
+      for (const item of this.denBed.zzz) {
+        item.sp.visible = false;
+        item.sp.material.opacity = 0;
+      }
     }
 
     // 7. Kitty Fireworks queue & rockets

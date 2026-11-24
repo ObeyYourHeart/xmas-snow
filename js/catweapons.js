@@ -145,6 +145,7 @@ export function buildGeminiWeapons(tools, helpers) {
     roughness: 0.08,
     transparent: true,
     opacity: 0.78,
+    depthWrite: false,
     side: T.DoubleSide
   }));
   const gTranslucentPink = wrap(new T.MeshStandardMaterial({
@@ -154,6 +155,7 @@ export function buildGeminiWeapons(tools, helpers) {
     roughness: 0.08,
     transparent: true,
     opacity: 0.78,
+    depthWrite: false,
     side: T.DoubleSide
   }));
 

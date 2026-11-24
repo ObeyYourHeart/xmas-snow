@@ -331,7 +331,7 @@ export class GameplayPlus {
       fire: [4.2, 3.2],
       market: [0, -10.5],
       wheel: [-8.5, -4.5],
-      tower: [4.5, 4.5],
+      tower: [5.6, 5.4],
       cathome: [-6.5, 8.5],
       observatory: [0, 6.8],
       clocktower: [0, 7.2],

@@ -533,12 +533,20 @@ export class ClaudeCastle {
       );
     }
 
-    // 5. Four Fairy-Tale Corner Turrets (clear of woodpile at +4.28, +1.70!)
+    // 5. Four Fairy-Tale Corner Turrets (clear of woodpile at +4.28, +1.70!) + solid turret colliders (zero clipping!)
     const tFL = this.mkTurret(0.86, 4.95, 2.85, 0.0); tFL.position.set(-3.78, 0, 2.98);
     const tFR = this.mkTurret(0.84, 4.70, 2.70, 1.4); tFR.position.set(3.78, 0, 2.98);
     const tBL = this.mkTurret(0.82, 4.45, 2.55, 2.8); tBL.position.set(-3.78, 0, -2.98);
     const tBR = this.mkTurret(0.82, 4.45, 2.55, 4.1); tBR.position.set(3.78, 0, -2.98);
     g.add(tFL, tFR, tBL, tBR);
+    if (this.game && this.game.world && this.game.world.circles) {
+      this.game.world.circles.push(
+        { x: wx - 3.78, z: wz + 2.98, r: 0.86 },
+        { x: wx + 3.78, z: wz + 2.98, r: 0.84 },
+        { x: wx - 3.78, z: wz - 2.98, r: 0.82 },
+        { x: wx + 3.78, z: wz - 2.98, r: 0.82 }
+      );
+    }
 
     // 6. Royal Stone Chimney Tower (exact A_smoke at +4.045, 6.80, -0.55!)
     g.add(
@@ -560,13 +568,14 @@ export class ClaudeCastle {
     // 8. Grand Castle Entrance Porch Terrace (y = 0.38, z = 2.8..4.97) & Steps (x = -1.9..-0.5, z = 4.97..5.66)
     g.add(
       this.mesh(new T.BoxGeometry(7.44, 0.38, 2.20), this.m.marble, 0, 0.19, 3.92),
-      this.mesh(new T.BoxGeometry(7.54, 0.06, 2.28), this.m.gold, 0, 0.37, 3.92),
+      // Gold edge molding recessed 5mm below marble top (zero Z-fighting with porch slab or carpet!)
+      this.mesh(new T.BoxGeometry(7.56, 0.07, 2.30), this.m.gold, 0, 0.34, 3.92),
       // Wide stone entrance steps matching exact platform ramp
       this.mesh(new T.BoxGeometry(1.52, 0.25, 0.38), this.m.marble, -1.20, 0.125, 5.14),
       this.mesh(new T.BoxGeometry(1.56, 0.13, 0.36), this.m.marble, -1.20, 0.065, 5.48),
-      // Royal Terracotta-Gold Carpet Runner from stairs straight to front door!
-      this.mesh(new T.BoxGeometry(1.06, 0.025, 2.02), this.m.terracotta, -1.20, 0.395, 4.02),
-      this.mesh(new T.BoxGeometry(1.14, 0.02, 2.06), this.m.gold, -1.20, 0.392, 4.02)
+      // Royal Terracotta-Gold Carpet Runner cleanly layered above marble slab!
+      this.mesh(new T.BoxGeometry(1.14, 0.016, 2.06), this.m.gold, -1.20, 0.390, 4.02),
+      this.mesh(new T.BoxGeometry(1.04, 0.022, 2.00), this.m.terracotta, -1.20, 0.402, 4.02)
     );
 
     // Front Porch Arcade Columns aligned with A_swag0..4 (x = -3.5, -1.95, -0.45, +1.55, +3.5, z = 4.94)

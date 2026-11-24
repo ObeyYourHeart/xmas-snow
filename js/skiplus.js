@@ -88,7 +88,7 @@ export class AlpineSkiUpgrade {
       })),
       iceChute: plain(new T.MeshStandardMaterial({
         color: 0xaef2ff, emissive: new T.Color(0.18, 0.62, 0.90), emissiveIntensity: 0.45,
-        roughness: 0.10, metalness: 0.15, transparent: true, opacity: 0.84, side: T.DoubleSide
+        roughness: 0.10, metalness: 0.18
       })),
       skiRed: std(0xd8323e, 0.32),
       skiBlue: std(0x2884d8, 0.32),
@@ -145,7 +145,7 @@ export class AlpineSkiUpgrade {
       rackG.add(pole);
     }
     scene.add(rackG);
-    world.circles.push({ x: rx, z: rz, r: 0.95 });
+    world.circles.push({ x: rx, z: rz, r: 0.95, top: 1.55 });
 
     // Interactive Summit Ski Equipment Spot: Take & Equip right on the mountain top!
     world.spots.push({
@@ -313,11 +313,15 @@ export class AlpineSkiUpgrade {
       // Warm Glowing Alpine Windows
       this.mesh(new T.BoxGeometry(1.15, 0.95, 0.08), this.m.warmGlow, -1.1, 1.65, 1.67),
       this.mesh(new T.BoxGeometry(1.15, 0.95, 0.08), this.m.warmGlow, 1.1, 1.65, 1.67),
-      // Outdoor Warming Brazier & Cedar Bench
+      // Outdoor Warming Brazier & Sturdy Grounded Cedar Benches (with real support legs!)
       this.mesh(new T.CylinderGeometry(0.45, 0.34, 0.52, 10), this.m.stone, 0, 0.26, 2.75),
       this.mesh(new T.SphereGeometry(0.30, 10, 8), this.m.ember, 0, 0.60, 2.75),
       this.mesh(new T.BoxGeometry(1.75, 0.12, 0.46), this.m.darkWood, -2.0, 0.46, 2.65),
-      this.mesh(new T.BoxGeometry(1.75, 0.12, 0.46), this.m.darkWood, 2.0, 0.46, 2.65)
+      this.mesh(new T.BoxGeometry(0.14, 0.44, 0.38), this.m.cedar, -2.65, 0.22, 2.65),
+      this.mesh(new T.BoxGeometry(0.14, 0.44, 0.38), this.m.cedar, -1.35, 0.22, 2.65),
+      this.mesh(new T.BoxGeometry(1.75, 0.12, 0.46), this.m.darkWood, 2.0, 0.46, 2.65),
+      this.mesh(new T.BoxGeometry(0.14, 0.44, 0.38), this.m.cedar, 1.35, 0.22, 2.65),
+      this.mesh(new T.BoxGeometry(0.14, 0.44, 0.38), this.m.cedar, 2.65, 0.22, 2.65)
     );
     const sTex = this.makeSignTex("⛷ 雪境滑雪俱乐部", "山脚与山顶均可领雪板 · 按 Q 穿脱");
     lg.add(this.mesh(new T.BoxGeometry(3.2, 0.85, 0.12), [
@@ -417,9 +421,10 @@ export class AlpineSkiUpgrade {
       railL.push(a.clone().addScaledVector(side, 0.68).add(new T.Vector3(0, 0.22, 0)));
       railR.push(a.clone().addScaledVector(side, -0.68).add(new T.Vector3(0, 0.22, 0)));
 
-      // Smooth ice plank segment oriented along the curve
-      const segM = new T.Mesh(new T.BoxGeometry(1.32, 0.14, len + 0.12), this.m.iceChute);
+      // Smooth ice plank segment cleanly staggered by ±0.005m in Y (zero seam Z-fighting!)
+      const segM = new T.Mesh(new T.BoxGeometry(1.32, 0.14, len + 0.05), this.m.iceChute);
       segM.position.copy(mid);
+      segM.position.y += (i % 2 ? 0.005 : -0.005);
       segM.lookAt(b);
       slideG.add(segM);
 

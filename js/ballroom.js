@@ -331,7 +331,7 @@ export class WinterBallroom {
         this.mesh(new T.BoxGeometry(2.48, 0.08, 0.26), gold, 0, 1.02, -0.36)
       );
       g.add(sf);
-      world.circles.push({ x: x0 + side * 6.2, z: z0 + 0.4, r: 0.95 });
+      world.circles.push({ x: x0 + side * 6.2, z: z0 + 0.4, r: 0.95, top: deckH + 0.85 });
     }
 
     // Warm Colorful Ballroom PointLights (auto-managed by O.localLights!)

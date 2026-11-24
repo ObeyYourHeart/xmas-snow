@@ -9,7 +9,7 @@ export class CatMount {
     this.THREE = game.THREE;
 
     this.root = null;
-    this.seat = new this.THREE.Vector3(0, 0.85, 0.06);
+    this.seat = new this.THREE.Vector3(0, 0.98, 0.05);
     this.lampAt = new this.THREE.Vector3(0, 1.54, -1.72);
 
     this.headG = null;
@@ -41,7 +41,10 @@ export class CatMount {
     const m = new this.THREE.Mesh(geo, mat);
     m.position.set(x, y, z);
     m.castShadow = false;
-    m.receiveShadow = true;
+    // Disable static shadow-map reception on the fast-moving luminous sky-cat mount
+    // so shadow-camera cell snaps during flight never flash blocky dark patches across the fur & wings.
+    m.receiveShadow = false;
+    m.frustumCulled = false;
     return m;
   }
 
@@ -158,7 +161,10 @@ export class CatMount {
     const velvetIndigo = std(0.13, 0.15, 0.36, 0.54, {
       metalness: 0.22,
       emissive: new T.Color(0.08, 0.10, 0.28),
-      emissiveIntensity: 0.22
+      emissiveIntensity: 0.22,
+      polygonOffset: true,
+      polygonOffsetFactor: -1,
+      polygonOffsetUnits: -1
     });
     const royalPeri = std(0.36, 0.44, 0.96, 0.36, {
       metalness: 0.24,
@@ -201,42 +207,35 @@ export class CatMount {
       roughness: 0.08
     }));
 
-    // Iridescent translucent feathered aurora wing materials!
+    // Pearlescent opaque feathered aurora wing materials (zero transparent-sort strobing or DoubleSide Z-fighting!)
     const wingFeatherCyan = plain(new T.MeshStandardMaterial({
-      color: new T.Color(0.74, 0.97, 1.0),
-      emissive: new T.Color(0.22, 0.80, 1.0),
-      emissiveIntensity: 0.68,
-      roughness: 0.14,
-      metalness: 0.12,
-      transparent: true,
-      opacity: 0.86,
-      side: T.DoubleSide
+      color: new T.Color(0.76, 0.98, 1.0),
+      emissive: new T.Color(0.18, 0.72, 0.96),
+      emissiveIntensity: 0.42,
+      roughness: 0.20,
+      metalness: 0.14
     }));
     const wingFeatherPink = plain(new T.MeshStandardMaterial({
-      color: new T.Color(1.0, 0.78, 0.96),
-      emissive: new T.Color(0.92, 0.34, 0.82),
-      emissiveIntensity: 0.64,
-      roughness: 0.14,
-      metalness: 0.12,
-      transparent: true,
-      opacity: 0.84,
-      side: T.DoubleSide
+      color: new T.Color(1.0, 0.80, 0.96),
+      emissive: new T.Color(0.86, 0.30, 0.76),
+      emissiveIntensity: 0.40,
+      roughness: 0.20,
+      metalness: 0.14
     }));
     const wingCovertSnow = plain(new T.MeshStandardMaterial({
       color: new T.Color(0.97, 0.98, 1.0),
-      emissive: new T.Color(0.32, 0.38, 0.66),
-      emissiveIntensity: 0.26,
-      roughness: 0.30,
-      side: T.DoubleSide
+      emissive: new T.Color(0.26, 0.32, 0.58),
+      emissiveIntensity: 0.22,
+      roughness: 0.32
     }));
 
     this.emissives.push(
-      { mat: cyanGlow, base: 1.1, active: 2.1 },
-      { mat: pinkGlow, base: 1.1, active: 2.1 },
-      { mat: eyeCyan, base: 0.85, active: 1.75 },
-      { mat: eyeRose, base: 0.85, active: 1.75 },
-      { mat: wingFeatherCyan, base: 0.48, active: 1.15 },
-      { mat: wingFeatherPink, base: 0.45, active: 1.10 }
+      { mat: cyanGlow, base: 0.72, active: 1.12 },
+      { mat: pinkGlow, base: 0.72, active: 1.12 },
+      { mat: eyeCyan, base: 0.68, active: 1.15 },
+      { mat: eyeRose, base: 0.68, active: 1.15 },
+      { mat: wingFeatherCyan, base: 0.34, active: 0.64 },
+      { mat: wingFeatherPink, base: 0.32, active: 0.62 }
     );
 
     const g = new T.Group();
@@ -284,16 +283,16 @@ export class CatMount {
     // =========================================================================
     // 2. ROYAL STARLIGHT VELVET SADDLE & LUMINOUS REINS (Rider sits at y = 1.24!)
     // =========================================================================
-    // Draped starry twilight-indigo saddle blanket hugging the cat's back (+Y!)
+    // Draped starry twilight-indigo saddle blanket hugging cleanly OUTSIDE the cat's back (+Y, zero Z-fighting!)
     const blanket = this.mesh(new T.CylinderGeometry(0.575, 0.59, 0.96, 24, 1, false, -Math.PI * 0.38, Math.PI * 0.76), velvetIndigo, 0, 0.78, 0.04);
     blanket.rotation.x = -Math.PI / 2;
-    blanket.scale.set(0.95, 1.0, 0.84);
+    blanket.scale.set(1.05, 1.0, 0.92);
     // Gold trim border on saddle blanket
     for (const side of [-1, 1]) {
       g.add(
-        this.mesh(new T.BoxGeometry(0.035, 0.04, 0.98), gold, side * 0.545, 0.66, 0.04),
-        this.mesh(new T.SphereGeometry(0.045, 8, 6), side < 0 ? cyanGlow : pinkGlow, side * 0.555, 0.66, -0.34),
-        this.mesh(new T.SphereGeometry(0.045, 8, 6), side < 0 ? pinkGlow : cyanGlow, side * 0.555, 0.66, 0.42)
+        this.mesh(new T.BoxGeometry(0.035, 0.04, 0.98), gold, side * 0.60, 0.66, 0.04),
+        this.mesh(new T.SphereGeometry(0.045, 8, 6), side < 0 ? cyanGlow : pinkGlow, side * 0.61, 0.66, -0.34),
+        this.mesh(new T.SphereGeometry(0.045, 8, 6), side < 0 ? pinkGlow : cyanGlow, side * 0.61, 0.66, 0.42)
       );
     }
     // Plush velvet cushion seat (top sits at y ≈ 1.24 so Gemini sits snugly on it!)
@@ -311,7 +310,7 @@ export class CatMount {
     // Royal Collar around the neck + giant golden cat bell + glowing starlight reins!
     const collar = this.mesh(new T.TorusGeometry(0.37, 0.055, 10, 26), royalPeri, 0, 1.10, -0.96);
     collar.rotation.x = Math.PI / 2 + 0.42;
-    const collarTrim = this.mesh(new T.TorusGeometry(0.385, 0.018, 8, 26), gold, 0, 1.10, -0.96);
+    const collarTrim = this.mesh(new T.TorusGeometry(0.428, 0.018, 8, 26), gold, 0, 1.10, -0.96);
     collarTrim.rotation.x = Math.PI / 2 + 0.42;
     const bellG = this.mkCatBell(1.55, gold, velvetIndigo);
     bellG.position.set(0, 0.90, -1.32);
@@ -359,14 +358,14 @@ export class CatMount {
 
     // Big Expressive Heterochromia Anime Cat Eyes (Left = Starry Cyan, Right = Dreamy Sakura-Rose!)
     for (const [side, irisMat] of [[-1, eyeCyan], [1, eyeRose]]) {
-      const eyeOuter = this.mesh(new T.SphereGeometry(0.125, 16, 12), irisMat, side * 0.21, 0.05, -0.42);
+      const eyeOuter = this.mesh(new T.SphereGeometry(0.125, 16, 12), irisMat, side * 0.21, 0.05, -0.435);
       eyeOuter.scale.set(1.06, 1.18, 0.45);
-      const pupil = this.mesh(new T.SphereGeometry(0.072, 12, 10), pupilDark, side * 0.21, 0.055, -0.465);
+      const pupil = this.mesh(new T.SphereGeometry(0.072, 12, 10), pupilDark, side * 0.21, 0.055, -0.478);
       pupil.scale.set(0.68, 1.15, 0.32);
-      const glint1 = this.mesh(new T.SphereGeometry(0.032, 8, 6), pureWhite, side * 0.21 - 0.032, 0.095, -0.488);
-      const glint2 = this.mesh(new T.SphereGeometry(0.016, 8, 6), pureWhite, side * 0.21 + 0.034, 0.020, -0.488);
+      const glint1 = this.mesh(new T.SphereGeometry(0.032, 8, 6), pureWhite, side * 0.21 - 0.032, 0.095, -0.502);
+      const glint2 = this.mesh(new T.SphereGeometry(0.016, 8, 6), pureWhite, side * 0.21 + 0.034, 0.020, -0.502);
       // Cute twilight-lavender upper eyelash brow arc
-      const lash = this.mesh(new T.TorusGeometry(0.115, 0.016, 6, 16, Math.PI * 0.85), velvetIndigo, side * 0.21, 0.08, -0.44);
+      const lash = this.mesh(new T.TorusGeometry(0.115, 0.016, 6, 16, Math.PI * 0.85), velvetIndigo, side * 0.21, 0.08, -0.455);
       lash.rotation.z = 0.08 * Math.PI - side * 0.14;
       headG.add(eyeOuter, pupil, glint1, glint2, lash);
     }
@@ -385,10 +384,10 @@ export class CatMount {
       }
     }
 
-    // Forehead Glowing Golden Crescent Moon & Twin-Star Tiara!
-    const tiaraArc = this.mesh(new T.TorusGeometry(0.115, 0.022, 8, 20, Math.PI * 1.35), gold, 0, 0.23, -0.45);
+    // Forehead Glowing Golden Crescent Moon & Twin-Star Tiara (clean forward clearance off skull fur!)
+    const tiaraArc = this.mesh(new T.TorusGeometry(0.115, 0.022, 8, 20, Math.PI * 1.35), gold, 0, 0.23, -0.485);
     tiaraArc.rotation.z = Math.PI * 0.82;
-    const tiaraGem = this.mesh(this.mkStarGeo(0.068, 0.085, 0.34, 0.024), cyanGlow, 0, 0.24, -0.47);
+    const tiaraGem = this.mesh(this.mkStarGeo(0.068, 0.085, 0.34, 0.024), cyanGlow, 0, 0.24, -0.506);
     headG.add(tiaraArc, tiaraGem);
 
     // Two Large Articulated Fluffy Cat Ears!
@@ -430,17 +429,17 @@ export class CatMount {
         this.mesh(new T.TubeGeometry(armCurve, 14, 0.026, 8, false), gold, 0, 0.038, -0.03)
       );
 
-      // Inner secondary feathers + fluffy snow covert row fanning backward (+Z) & outward (±X)!
+      // Inner secondary feathers + fluffy snow covert row cleanly shingled in Y (zero coplanar Z-fighting!)
       for (let i = 0; i < 6; i++) {
         const u = i / 5;
         const fx = side * (0.20 + u * 0.94);
-        const fy = 0.06 + u * 0.28;
+        const fy = 0.06 + u * 0.28 + i * 0.011;
         const fz = -0.04 - Math.sin(u * Math.PI) * 0.08;
         const fMat = i % 2 === 0 ? wingFeatherCyan : wingFeatherPink;
         const sec = this.mesh(secondaryGeo, fMat, fx, fy, fz);
         sec.rotation.set(Math.PI / 2 - 0.10, side * (0.14 + u * 0.28), 0);
         sec.scale.set(1.0, 0.85 + u * 0.28, 1.0);
-        const cov = this.mesh(covertGeo, wingCovertSnow, fx, fy + 0.045, fz - 0.02);
+        const cov = this.mesh(covertGeo, wingCovertSnow, fx, fy + 0.072, fz - 0.02);
         cov.rotation.set(Math.PI / 2 - 0.14, side * (0.10 + u * 0.24), 0);
         rootW.add(sec, cov);
       }
@@ -459,11 +458,11 @@ export class CatMount {
         this.mesh(new T.SphereGeometry(0.085, 10, 8), side < 0 ? cyanGlow : pinkGlow, 0, 0.02, -0.03)
       );
 
-      // 8 sweeping long primary translucent aurora flight feathers fanning out to majestic tips!
+      // 8 sweeping long primary pearlescent aurora flight feathers shingled cleanly in Y (zero overlap flicker!)
       for (let i = 0; i < 8; i++) {
         const u = i / 7;
         const fx = side * (0.06 + u * 1.04);
-        const fy = 0.04 - u * 0.10;
+        const fy = 0.04 - u * 0.10 + (i % 2 ? 0.022 : 0) + i * 0.008;
         const fz = u * 0.24;
         const fMat = i % 2 === 0 ? (side < 0 ? wingFeatherCyan : wingFeatherPink) : (side < 0 ? wingFeatherPink : wingFeatherCyan);
         const pri = this.mesh(primaryGeo, fMat, fx, fy, fz);
@@ -581,7 +580,7 @@ export class CatMount {
     hoverHalo.add(outerRing, innerRing);
     for (let k = 0; k < 6; k++) {
       const a = (k / 6) * Math.PI * 2;
-      const st = this.mesh(this.mkStarGeo(0.085, 0.085, 0.38, 0.018).rotateX(Math.PI / 2), k % 2 ? pinkGlow : cyanGlow, Math.cos(a) * 0.95, 0, Math.sin(a) * 0.95);
+      const st = this.mesh(this.mkStarGeo(0.085, 0.085, 0.38, 0.018).rotateX(Math.PI / 2), k % 2 ? pinkGlow : cyanGlow, Math.cos(a) * 0.95, 0.026, Math.sin(a) * 0.95);
       hoverHalo.add(st);
     }
     hoverHalo.visible = false;
@@ -682,9 +681,9 @@ export class CatMount {
       this.hoverHalo.rotation.y = time * 1.25;
     }
 
-    // 6) Emissive crystal & eye glow intensifies during flight and aurora night
+    // 6) Calm steady crystal & eye glow during flight (no bloom-threshold strobe!)
     const power = driven ? 1.0 : 0.45 + 0.55 * lamps;
-    const pulse = 0.92 + 0.08 * Math.sin(time * 3.6);
+    const pulse = 0.97 + 0.03 * Math.sin(time * 2.1);
     for (const em of this.emissives) {
       em.mat.emissiveIntensity = (em.base + (em.active - em.base) * power) * pulse;
     }
