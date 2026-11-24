@@ -436,6 +436,9 @@ export class PerfOptimizer {
     if (g.tower && g.tower.root) {
       this._batchZone("tower", g.tower, [g.tower.root], { singleCell: true, skyline: true });
     }
+    if (g.chemlab && g.chemlab.root) {
+      this._batchZone("chemlab", g.chemlab, [g.chemlab.root], { singleCell: true });
+    }
 
     this.stats.drawCallsSaved = Math.max(0, this.stats.mergedSourceMeshes - this.stats.mergedOutputMeshes);
     this.stats.totalCells = this.batchCells.length;

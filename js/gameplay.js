@@ -333,6 +333,7 @@ export class GameplayPlus {
       wheel: [-8.5, -4.5],
       tower: [5.6, 5.4],
       cathome: [-6.5, 8.5],
+      chemlab: [0, 8.2],
       observatory: [0, 6.8],
       clocktower: [0, 7.2],
       icefall: [0, 5.4],
