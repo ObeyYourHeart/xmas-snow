@@ -20,6 +20,70 @@ const DEN_LINES = [
   "暖炉劈啪作响，猫窝里暖烘烘的，本喵要在这里赖着陪主人看极光喵～"
 ];
 
+const SLEEP_DREAMS = [
+  {
+    id: "fish",
+    title: "✦ 正在做梦：黄金小鱼干云山",
+    img: "assets/dreams/dream_fish.jpg",
+    lines: [
+      "「唔嗯……焦香脆脆的黄金鲷鱼烧山……这条最大的留一半给主人……呼噜……」",
+      "「喵呜……云朵软得像棉花糖，整座山都是香喷喷的小鱼干……极其极其幸福……」"
+    ]
+  },
+  {
+    id: "aurora",
+    title: "✦ 正在做梦：骑飞猫追极光",
+    img: "assets/dreams/dream_aurora.jpg",
+    lines: [
+      "「嘿嘿……抓到一片青粉色的极光啦……给主人织一条会发光的围巾……呼……」",
+      "「飞猫飞高一点喵……星星海里掉下来好多甜丝丝的糖霜雪花……」"
+    ]
+  },
+  {
+    id: "cocoa",
+    title: "✦ 正在做梦：壁炉与草莓星奶",
+    img: "assets/dreams/dream_cocoa.jpg",
+    lines: [
+      "「棉花糖融进热乎乎的草莓星奶里啦……小猫也来喝一口……咕噜噜……」",
+      "「壁炉噼啪响着，窗外在下雪……和主人窝在一起极其极其暖和喵……」"
+    ]
+  },
+  {
+    id: "ferris",
+    title: "✦ 正在做梦：摩天轮与许愿天灯",
+    img: "assets/dreams/dream_ferris.jpg",
+    lines: [
+      "「坐到雪花摩天轮最高点啦……放飞暖金色天灯……愿主人每天都极其开心喵……」",
+      "「满天都是飘起来的小灯笼……本喵偷偷许了个极其极其甜的愿望……」"
+    ]
+  }
+];
+
+const TUCK_LINES = [
+  "「唔嗯……软软的星光小被子好暖和……极其极其喜欢主人帮本喵盖被子喵……呼噜……」",
+  "「蹭蹭被角……被主人掖好被子之后，连脚趾头都暖呼呼的啦……zzZ……」",
+  "「香香软软的被子盖上来啦……本喵要在暖烘烘的被窝里多赖一会儿喵……」"
+];
+
+const UNTUCK_LINES = [
+  "「呼～被窝里暖呼呼的，探出小爪子透透气喵……」",
+  "「翻个小身……露出亮晶晶的星光小裙子吹吹暖炉风喵～」"
+];
+
+const PET_LINES = [
+  "「呼噜噜噜……主人的手心极其极其暖和，挠耳朵根好舒服……别停下来喵……」",
+  "「喵呜～（睡梦里开心地拿毛茸茸的脑袋蹭了蹭主人的手心）极其喜欢主人……」",
+  "「唔嘿嘿……耳朵抖了一下……梦到主人一直在摸摸本喵的猫猫头……呼噜……」"
+];
+
+// Gentle twinkling winter celesta lullaby melody (Hz, soft pentatonic cradle song)
+const LULLABY_NOTES = [
+  523.25, 659.25, 783.99, 659.25,
+  880.00, 783.99, 659.25, 0,
+  587.33, 659.25, 783.99, 1046.50,
+  880.00, 783.99, 659.25, 523.25
+];
+
 const FW_PALETTE = [
   [0.24, 0.92, 1.45], // Gemini Cyan
   [1.35, 0.42, 1.05], // Sakura Pink
@@ -74,6 +138,21 @@ export class CatHome {
       bedYaw: 0,
       zzz: [],
       zzzOrigin: new this.THREE.Vector3(),
+      quilt: null,
+      quiltK: 0,
+      tucked: false,
+      petPulse: 0,
+      dreamIdx: 0,
+      dreamSub: 0,
+      dreamTimer: 0,
+      dreamSprite: null,
+      dreamTextures: [],
+      dreamOrigin: new this.THREE.Vector3(),
+      lullabyOn: false,
+      lullabyT: 0,
+      lullabyStep: 0,
+      hudEl: null,
+      barEl: null,
       spot: null,
       exitPos: new this.THREE.Vector3(),
       exitYaw: 0,
@@ -975,6 +1054,14 @@ export class CatHome {
     bedKitty.position.set(-0.74, 0.24, -0.52);
     bedKitty.rotation.y = 0.65;
     bedG.add(bedBase, bedInner, bedRimMesh, blanket, bEarL, bEarR, starPillow, bedKitty);
+
+    // Sculpted 3D Plush Starlight Tuck-In Quilt (drapes snugly over her curled torso/legs when tucked!)
+    const quiltG = this._buildSleepQuilt();
+    quiltG.position.set(-0.18, 0.27, 0.06);
+    quiltG.visible = false;
+    bedG.add(quiltG);
+    this.denBed.quilt = quiltG;
+
     g.add(bedG);
 
     // (b) Cozy Warm Mini Kitty Hearth & Strawberry-Milk Snack Table on inner-right
@@ -1084,53 +1171,461 @@ export class CatHome {
       { sp: mkDreamSprite("✦", "#ffe680", 0.23), ph: 0.66 }
     ];
 
+    // Floating 3D Storybook Dream-Cloud Picture Sprite hovering gracefully over her sleeping head!
+    this.denBed.dreamOrigin.set(0.30, deckH + 1.32, -1.46).applyMatrix4(g.matrixWorld);
+    this._initDreamCloudTextures();
+    const dreamMat = new T.SpriteMaterial({
+      map: this.denBed.dreamTextures[0] || null,
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      fog: false
+    });
+    const dreamSp = new T.Sprite(dreamMat);
+    dreamSp.scale.set(1.12, 1.12, 1);
+    dreamSp.visible = false;
+    dreamSp.renderOrder = 8;
+    scene.add(dreamSp);
+    this.denBed.dreamSprite = dreamSp;
+    this._ensureSleepUI();
+
     const bedWorld = new T.Vector3(0, deckH + 0.55, -1.25).applyMatrix4(g.matrixWorld);
     world.spots.push({
       id: "cathome_bed",
       pos: bedWorld,
       r: 2.6,
-      label: "蜷进哈基米星梦猫窝睡觉觉（可 360° 欣赏猫猫睡觉喵～）",
+      label: "蜷进哈基米星梦猫窝睡觉觉（可盖被子·摸猫头·看美梦喵～）",
       can: () => !this.game.player.seat && !this.game.player.riding && !this.game.player.skiing,
       act: () => this.enterDenBed(yaw)
     });
   }
 
+  _makeQuiltTex() {
+    const T = this.THREE;
+    const cv = document.createElement("canvas");
+    cv.width = cv.height = 512;
+    const c = cv.getContext("2d");
+
+    // Dreamy twilight-lavender to starry-periwinkle quilted velvet gradient
+    const bg = c.createLinearGradient(0, 0, 512, 512);
+    bg.addColorStop(0, "#7b86e8");
+    bg.addColorStop(0.5, "#9c7ee8");
+    bg.addColorStop(1, "#e288cf");
+    c.fillStyle = bg;
+    c.fillRect(0, 0, 512, 512);
+
+    // Subtle quilted diamond stitch lines
+    c.strokeStyle = "rgba(255, 245, 255, 0.28)";
+    c.lineWidth = 2.5;
+    for (let i = -512; i <= 1024; i += 64) {
+      c.beginPath(); c.moveTo(i, 0); c.lineTo(i + 512, 512); c.stroke();
+      c.beginPath(); c.moveTo(i, 512); c.lineTo(i + 512, 0); c.stroke();
+    }
+
+    // Embroidered golden four-point stars & adorable pastel sakura cat paws!
+    const drawStar = (x, y, r, col) => {
+      c.fillStyle = col;
+      c.beginPath();
+      for (let i = 0; i < 8; i++) {
+        const a = (i * Math.PI) / 4;
+        const rr = i % 2 ? r * 0.36 : r;
+        const px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr;
+        i === 0 ? c.moveTo(px, py) : c.lineTo(px, py);
+      }
+      c.closePath(); c.fill();
+    };
+    const drawPaw = (x, y, s) => {
+      c.fillStyle = "rgba(255, 224, 244, 0.82)";
+      c.beginPath(); c.ellipse(x, y + s * 0.16, s * 0.42, s * 0.34, 0, 0, Math.PI * 2); c.fill();
+      for (const [dx, dy] of [[-0.36, -0.22], [-0.12, -0.38], [0.14, -0.38], [0.36, -0.22]]) {
+        c.beginPath(); c.arc(x + dx * s, y + dy * s, s * 0.14, 0, Math.PI * 2); c.fill();
+      }
+    };
+    for (let gx = 48; gx < 512; gx += 96) {
+      for (let gy = 48; gy < 512; gy += 96) {
+        if (((gx + gy) / 96) % 2 === 0) drawPaw(gx, gy, 24);
+        else drawStar(gx, gy, 18, "#ffe992");
+      }
+    }
+
+    // Plush cream-pink scalloped lace border along top neck fold (+X edge = right side of UV!)
+    c.fillStyle = "#ffe5f4";
+    c.fillRect(450, 0, 62, 512);
+    c.fillStyle = "#ffd37a";
+    c.fillRect(444, 0, 8, 512);
+
+    const tex = new T.CanvasTexture(cv);
+    tex.colorSpace = T.SRGBColorSpace;
+    tex.anisotropy = 4;
+    return tex;
+  }
+
+  _buildSleepQuilt() {
+    const T = this.THREE;
+    const qg = new T.Group();
+
+    // Sculpted pillowy curved duvet draping smoothly over her curled sleeping torso & legs (zero clipping!)
+    const w = 1.00, d = 0.90;
+    const geo = new T.PlaneGeometry(w, d, 20, 18);
+    geo.rotateX(-Math.PI / 2);
+    const pos = geo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i); // -w/2 .. +w/2
+      const z = pos.getZ(i); // -d/2 .. +d/2
+      const u = (x + w / 2) / w; // 0 (feet) -> 1 (shoulders/chin)
+      const v = (z + d / 2) / d; // 0 (back) -> 1 (front knees)
+      const archX = Math.pow(Math.max(0, Math.sin(u * Math.PI)), 0.56);
+      const archZ = Math.pow(Math.max(0, Math.sin(v * Math.PI)), 0.52);
+      // Soft pillowy loft cleanly clearing curled hips/knees (~0.40m above blanket base = 0.67m deckY)
+      const puff = 0.37 * archX * archZ + 0.045 * Math.sin(u * Math.PI) * Math.sin(v * Math.PI);
+      const ripple = 0.012 * Math.sin(u * 14) * Math.sin(v * 10) * archX * archZ;
+      pos.setY(i, Math.max(0.005, puff + ripple));
+    }
+    geo.computeVertexNormals();
+
+    const quiltMat = this.wrapMat(new T.MeshStandardMaterial({
+      map: this._makeQuiltTex(),
+      roughness: 0.72,
+      metalness: 0.04,
+      emissive: new T.Color(0.24, 0.18, 0.42),
+      emissiveIntensity: 0.18,
+      side: T.DoubleSide
+    }), { key: "plain" });
+    const duvet = new T.Mesh(geo, quiltMat);
+    duvet.receiveShadow = true;
+    qg.add(duvet);
+
+    // Plush rolled sakura-pink folded duvet collar along the neck edge (+X = +0.46) with tiny golden stars!
+    const collarPts = [];
+    for (let k = 0; k <= 12; k++) {
+      const v = k / 12;
+      const z = (v - 0.5) * (d * 0.86);
+      const arch = Math.pow(Math.max(0, Math.sin(v * Math.PI)), 0.55);
+      collarPts.push(new T.Vector3(w * 0.44, 0.03 + 0.25 * arch, z));
+    }
+    const collarMesh = this.mesh(
+      new T.TubeGeometry(new T.CatmullRomCurve3(collarPts), 18, 0.055, 10, false),
+      this.m.sakura
+    );
+    qg.add(collarMesh);
+    return qg;
+  }
+
+  _initDreamCloudTextures() {
+    const T = this.THREE;
+    this.denBed.dreamTextures = SLEEP_DREAMS.map((dream) => {
+      const cv = document.createElement("canvas");
+      cv.width = cv.height = 512;
+      const tex = new T.CanvasTexture(cv);
+      tex.colorSpace = T.SRGBColorSpace;
+
+      const drawCloudFrame = (img) => {
+        const c = cv.getContext("2d");
+        c.clearRect(0, 0, 512, 512);
+
+        // Soft scalloped thought-cloud clip path centered at (256, 224)
+        const traceCloud = (scale = 1) => {
+          c.beginPath();
+          const puffs = [
+            [256, 118, 108], [156, 152, 92], [356, 152, 92],
+            [118, 240, 88], [394, 240, 88],
+            [168, 326, 86], [344, 326, 86], [256, 344, 96]
+          ];
+          for (const [px, py, pr] of puffs) {
+            c.moveTo(256 + (px - 256) * scale + pr * scale, 226 + (py - 226) * scale);
+            c.arc(256 + (px - 256) * scale, 226 + (py - 226) * scale, pr * scale, 0, Math.PI * 2);
+          }
+        };
+
+        // Dreamy glowing white-lavender outer cloud halo
+        c.save();
+        c.shadowColor = "rgba(148, 224, 255, 0.85)";
+        c.shadowBlur = 24;
+        c.fillStyle = "rgba(255, 250, 255, 0.96)";
+        traceCloud(1.03);
+        c.fill();
+        c.restore();
+
+        // Clipped storybook dream illustration inside the cloud!
+        if (img) {
+          c.save();
+          traceCloud(0.92);
+          c.clip();
+          c.drawImage(img, 46, 22, 420, 420);
+          // Delicate pastel inner vignette blending illustration smoothly into cloud border
+          const vig = c.createRadialGradient(256, 226, 130, 256, 226, 225);
+          vig.addColorStop(0, "rgba(255,255,255,0)");
+          vig.addColorStop(0.82, "rgba(255,244,255,0.12)");
+          vig.addColorStop(1, "rgba(255,248,255,0.72)");
+          c.fillStyle = vig;
+          c.fillRect(0, 0, 512, 512);
+          c.restore();
+        }
+
+        // Cute trailing thought-cloud bubbles floating down toward Gemini's sleeping head!
+        for (const [bx, by, br] of [[248, 444, 22], [232, 480, 13], [220, 502, 7]]) {
+          c.fillStyle = "rgba(255, 250, 255, 0.94)";
+          c.beginPath(); c.arc(bx, by, br, 0, Math.PI * 2); c.fill();
+          c.strokeStyle = "rgba(182, 168, 240, 0.55)";
+          c.lineWidth = 2;
+          c.stroke();
+        }
+        tex.needsUpdate = true;
+      };
+
+      drawCloudFrame(null);
+      const im = new Image();
+      im.onload = () => drawCloudFrame(im);
+      im.src = dream.img + "?v=11241135";
+      return tex;
+    });
+  }
+
+  _ensureSleepUI() {
+    if (this.denBed.barEl) return;
+    const hud = document.getElementById("hud") || document.body;
+
+    const dreamHud = document.createElement("div");
+    dreamHud.id = "dreamHud";
+    dreamHud.innerHTML = `<img class="d-thumb" alt="梦境画面"><div class="d-body"><div class="d-title"></div><div class="d-text"></div></div>`;
+
+    const bar = document.createElement("div");
+    bar.id = "sleepBar";
+    bar.innerHTML = `
+      <button type="button" data-act="tuck"><kbd>1</kbd><span>🛏 盖被子</span></button>
+      <button type="button" data-act="pet"><kbd>2</kbd><span>🐾 摸摸猫头</span></button>
+      <button type="button" data-act="dream"><kbd>3</kbd><span>💭 换个美梦</span></button>
+      <button type="button" data-act="lullaby"><kbd>4</kbd><span>🎵 摇篮曲</span></button>
+      <button type="button" class="wake" data-act="wake"><kbd>E</kbd><span>叫醒起床</span></button>
+    `;
+    bar.addEventListener("click", (ev) => {
+      const btn = ev.target.closest("button[data-act]");
+      if (!btn) return;
+      ev.stopPropagation();
+      const act = btn.dataset.act;
+      if (act === "tuck") this.toggleDenQuilt();
+      else if (act === "pet") this.petSleepingCat();
+      else if (act === "dream") this.nextDream(true);
+      else if (act === "lullaby") this.toggleLullaby();
+      else if (act === "wake") this.leaveDenBed();
+    });
+
+    hud.appendChild(dreamHud);
+    hud.appendChild(bar);
+    this.denBed.hudEl = dreamHud;
+    this.denBed.barEl = bar;
+  }
+
+  _updateSleepUI(customTitle, customText) {
+    const db = this.denBed;
+    const dream = SLEEP_DREAMS[db.dreamIdx % SLEEP_DREAMS.length];
+    if (db.hudEl) {
+      const imgEl = db.hudEl.querySelector(".d-thumb");
+      const titleEl = db.hudEl.querySelector(".d-title");
+      const textEl = db.hudEl.querySelector(".d-text");
+      if (imgEl && imgEl.dataset.src !== dream.img) {
+        imgEl.dataset.src = dream.img;
+        imgEl.src = dream.img + "?v=11241135";
+      }
+      if (titleEl) titleEl.textContent = customTitle || dream.title;
+      if (textEl) textEl.textContent = customText || dream.lines[db.dreamSub % dream.lines.length];
+    }
+    if (db.barEl) {
+      const btnTuck = db.barEl.querySelector('button[data-act="tuck"]');
+      if (btnTuck) {
+        btnTuck.classList.toggle("on", db.tucked);
+        btnTuck.querySelector("span").textContent = db.tucked ? "🛏 掀开被子" : "🛏 盖被子";
+      }
+      const btnLul = db.barEl.querySelector('button[data-act="lullaby"]');
+      if (btnLul) {
+        btnLul.classList.toggle("on", db.lullabyOn);
+        btnLul.querySelector("span").textContent = db.lullabyOn ? "🎵 停摇篮曲" : "🎵 摇篮曲";
+      }
+    }
+    if (db.dreamSprite && db.dreamTextures[db.dreamIdx % db.dreamTextures.length]) {
+      db.dreamSprite.material.map = db.dreamTextures[db.dreamIdx % db.dreamTextures.length];
+      db.dreamSprite.material.needsUpdate = true;
+    }
+  }
+
+  _playClothRustle() {
+    const audio = this.game.audio;
+    if (!audio || audio.muted || !audio.ctx || !audio.brown) return;
+    const ctx = audio.ctx;
+    const now = ctx.currentTime;
+    const src = ctx.createBufferSource();
+    src.buffer = audio.brown;
+    const flt = ctx.createBiquadFilter();
+    flt.type = "bandpass";
+    flt.frequency.setValueAtTime(340, now);
+    flt.frequency.exponentialRampToValueAtTime(760, now + 0.16);
+    flt.frequency.exponentialRampToValueAtTime(260, now + 0.34);
+    flt.Q.value = 0.7;
+    const gn = ctx.createGain();
+    gn.gain.setValueAtTime(1e-4, now);
+    gn.gain.linearRampToValueAtTime(0.075, now + 0.08);
+    gn.gain.exponentialRampToValueAtTime(1e-4, now + 0.36);
+    src.connect(flt).connect(gn).connect(audio.master || ctx.destination);
+    src.start(now, Math.random());
+    src.stop(now + 0.4);
+  }
+
+  _playSoftPurr() {
+    const audio = this.game.audio;
+    if (!audio || audio.muted || !audio.ctx) return;
+    const ctx = audio.ctx;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(520, now);
+    osc.frequency.exponentialRampToValueAtTime(740, now + 0.09);
+    osc.frequency.exponentialRampToValueAtTime(610, now + 0.22);
+    const lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.value = 1400;
+    const gn = ctx.createGain();
+    gn.gain.setValueAtTime(1e-4, now);
+    gn.gain.linearRampToValueAtTime(0.032, now + 0.04);
+    gn.gain.exponentialRampToValueAtTime(1e-4, now + 0.26);
+    osc.connect(lp).connect(gn).connect(audio.master || ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.3);
+  }
+
+  toggleDenQuilt() {
+    const db = this.denBed;
+    if (!db.riding) return;
+    db.tucked = !db.tucked;
+    db.petPulse = Math.max(db.petPulse, 0.75);
+    db.dreamTimer = 0;
+    this._playClothRustle();
+    if (db.tucked) {
+      this.chime([523.25, 659.25, 783.99], 0.09, 0.09);
+      this.game.cold && (this.game.cold.w = 100, this.game.cold.wet = 0);
+      const line = TUCK_LINES[Math.floor(Math.random() * TUCK_LINES.length)];
+      this._updateSleepUI("✦ 盖好星光软被 · 暖呼呼", line);
+      this.spawnStarBurst(db.focus.x, db.focus.y + 0.25, db.focus.z, 12, 1.4);
+    } else {
+      this.chime([783.99, 659.25], 0.08, 0.07);
+      const line = UNTUCK_LINES[Math.floor(Math.random() * UNTUCK_LINES.length)];
+      this._updateSleepUI("✦ 掀开星光软被", line);
+    }
+    if (this.game.player && this.game.player.seat) {
+      this.game.player.seat.tucked = db.tucked;
+      this.game.player.seat.petPulse = db.petPulse;
+    }
+  }
+
+  petSleepingCat() {
+    const db = this.denBed;
+    if (!db.riding) return;
+    db.petPulse = 1.0;
+    db.dreamTimer = 0;
+    this._playSoftPurr();
+    this.chime([659.25, 880, 1046.5], 0.07, 0.075);
+    const line = PET_LINES[Math.floor(Math.random() * PET_LINES.length)];
+    this._updateSleepUI("✦ 摸摸熟睡猫猫头 · 呼噜噜", line);
+    this.spawnStarBurst(db.zzzOrigin.x, db.zzzOrigin.y + 0.05, db.zzzOrigin.z, 16, 1.5);
+    if (this.game.player && this.game.player.seat) {
+      this.game.player.seat.petPulse = 1.0;
+    }
+  }
+
+  nextDream(manual = false) {
+    const db = this.denBed;
+    if (!db.riding) return;
+    db.dreamIdx = (db.dreamIdx + 1) % SLEEP_DREAMS.length;
+    db.dreamSub = (db.dreamSub + 1) % 2;
+    db.dreamTimer = 0;
+    this._updateSleepUI();
+    if (manual) {
+      this.chime([587.33, 783.99, 1174.66], 0.08, 0.075);
+      this.spawnStarBurst(db.dreamOrigin.x, db.dreamOrigin.y, db.dreamOrigin.z, 10, 1.2);
+    }
+  }
+
+  toggleLullaby() {
+    const db = this.denBed;
+    if (!db.riding) return;
+    db.lullabyOn = !db.lullabyOn;
+    db.lullabyT = 0.05;
+    db.lullabyStep = 0;
+    this._updateSleepUI();
+    if (db.lullabyOn) {
+      this.game.ui && this.game.ui.toast("🎵 已开启星光八音盒摇篮曲，伴猫猫做个甜甜的梦喵～", 3.5);
+    }
+  }
+
   enterDenBed(viewYaw) {
-    const g = this.game, p = g.player;
-    this.denBed.riding = true;
-    this.denBed.sparkT = 0;
-    this.chime([523.25, 659.25, 783.99, 987.77], 0.11, 0.12);
+    const g = this.game, p = g.player, db = this.denBed;
+    db.riding = true;
+    db.sparkT = 0;
+    db.tucked = false;
+    db.quiltK = 0;
+    db.petPulse = 0;
+    db.dreamTimer = 0;
+    db.dreamIdx = this.denIdx % SLEEP_DREAMS.length;
+    db.dreamSub = this.denIdx % 2;
+    this.denIdx++;
+    this.chime([523.25, 659.25, 783.99, 987.77], 0.11, 0.11);
     g.cold && (g.cold.w = Math.min(100, g.cold.w + 45), g.cold.wet = 0);
+
     p.seat = {
-      pos: this.denBed.eye,
+      pos: db.eye,
       tp: true,
       sleep: true,
-      focus: this.denBed.focus,
-      dist: 2.55,
-      bedPos: this.denBed.bedPos,
-      bedYaw: this.denBed.bedYaw,
-      spot: this.denBed.spot,
+      tucked: false,
+      petPulse: 0,
+      focus: db.focus,
+      dist: 2.65,
+      bedPos: db.bedPos,
+      bedYaw: db.bedYaw,
+      spot: db.spot,
+      onKey: (code) => {
+        if (code === "Digit1" || code === "Numpad1") this.toggleDenQuilt();
+        else if (code === "Digit2" || code === "Numpad2") this.petSleepingCat();
+        else if (code === "Digit3" || code === "Numpad3") this.nextDream(true);
+        else if (code === "Digit4" || code === "Numpad4") this.toggleLullaby();
+      },
       exit: () => this.leaveDenBed()
     };
-    // Position cozy 3rd-person camera right inside the open dome doorway looking gently down at our sleeping cat!
-    p.yaw = viewYaw + 0.24;
-    p.pitch = -0.32;
+
+    // Position cozy 3rd-person camera right inside the open dome doorway showing both the sleeping cat & floating dream cloud!
+    p.yaw = viewYaw + 0.20;
+    p.pitch = -0.24;
     g.character?.stop(0.1);
-    g.ui.toast(DEN_LINES[this.denIdx++ % DEN_LINES.length] + "（拖鼠标可 360° 看猫猫睡觉，按 E 或空格起床）", 6);
+
+    document.body.classList.add("sleeping");
+    this._updateSleepUI();
+    db.hudEl && db.hudEl.classList.add("show");
+    db.barEl && db.barEl.classList.add("show");
   }
 
   leaveDenBed() {
-    if (!this.denBed.riding) return;
+    const db = this.denBed;
+    if (!db.riding) return;
     const g = this.game, p = g.player;
-    this.denBed.riding = false;
-    for (const z of this.denBed.zzz) {
+    db.riding = false;
+    db.tucked = false;
+    db.lullabyOn = false;
+    db.petPulse = 0;
+    if (db.quilt) db.quilt.visible = false;
+    if (db.dreamSprite) {
+      db.dreamSprite.visible = false;
+      db.dreamSprite.material.opacity = 0;
+    }
+    for (const z of db.zzz) {
       z.sp.visible = false;
       z.sp.material.opacity = 0;
     }
+    document.body.classList.remove("sleeping");
+    db.hudEl && db.hudEl.classList.remove("show");
+    db.barEl && db.barEl.classList.remove("show");
+
     p.seat = null;
-    p.pos.set(this.denBed.exitPos.x, 0, this.denBed.exitPos.z);
+    p.pos.set(db.exitPos.x, 0, db.exitPos.z);
     p.vel.set(0, 0);
-    p.yaw = this.denBed.exitYaw + Math.PI;
+    p.yaw = db.exitYaw + Math.PI;
     p.pitch = -0.08;
     g.audio?.pick && g.audio.pick();
     g.character?.play("happy");
@@ -1747,34 +2242,93 @@ export class CatHome {
       }
     }
 
-    // 6. Den bed cozy lounging sparkles & floating glowing "Z / z / ✦" dream sprites!
-    if (this.denBed.riding) {
-      const o = this.denBed.zzzOrigin;
-      for (const item of this.denBed.zzz) {
+    // 6. Den bed cozy lounging sparkles, 3D quilt animation, dream-cloud picture & music-box lullaby!
+    const db = this.denBed;
+    if (db.riding) {
+      // Smoothly unfold / fold 3D starlight quilt over her curled body with gentle breathing rise!
+      db.quiltK += ((db.tucked ? 1 : 0) - db.quiltK) * (1 - Math.exp(-7 * dt));
+      if (db.quilt) {
+        const qk = db.quiltK;
+        db.quilt.visible = qk > 0.02;
+        if (db.quilt.visible) {
+          const breathe = 1 + 0.024 * Math.sin(time * 2.3);
+          db.quilt.scale.set(0.24 + 0.76 * qk, (0.28 + 0.72 * qk) * breathe, 0.80 + 0.20 * qk);
+          db.quilt.position.x = -0.52 + 0.34 * qk;
+        }
+      }
+
+      // Decay happy pet/tuck reaction smoothly & sync to player.seat for character.update!
+      if (db.petPulse > 0) {
+        db.petPulse = Math.max(0, db.petPulse - dt * 0.45);
+        if (p && p.seat) p.seat.petPulse = db.petPulse;
+      }
+
+      // Auto-drift into a new dream scene & murmur every ~10 seconds!
+      db.dreamTimer += dt;
+      if (db.dreamTimer >= 10.5) {
+        this.nextDream(false);
+      }
+
+      // Floating 3D Storybook Dream-Cloud Picture Sprite bobbing above her sleeping head!
+      if (db.dreamSprite) {
+        const dO = db.dreamOrigin;
+        db.dreamSprite.visible = true;
+        db.dreamSprite.position.set(
+          dO.x + Math.sin(time * 0.85) * 0.05,
+          dO.y + Math.sin(time * 1.45) * 0.06,
+          dO.z
+        );
+        const targetOp = 0.96;
+        db.dreamSprite.material.opacity += (targetOp - db.dreamSprite.material.opacity) * (1 - Math.exp(-5 * dt));
+        const sc = 0.94 + 0.025 * Math.sin(time * 1.8);
+        db.dreamSprite.scale.set(sc, sc, 1);
+      }
+
+      // Gentle winter celesta music-box lullaby while toggled on!
+      if (db.lullabyOn) {
+        db.lullabyT -= dt;
+        if (db.lullabyT <= 0) {
+          db.lullabyT = 0.62;
+          const note = LULLABY_NOTES[db.lullabyStep % LULLABY_NOTES.length];
+          db.lullabyStep++;
+          if (note > 0) this.chime([note], 0, 0.055);
+        }
+      }
+
+      // Floating glowing "Z / z / ✦" dream sprites
+      const o = db.zzzOrigin;
+      for (const item of db.zzz) {
         const u = (time * 0.36 + item.ph) % 1;
         item.sp.visible = true;
         item.sp.position.set(
           o.x + Math.sin(u * Math.PI * 2 + item.ph * 6) * 0.16,
-          o.y + u * 0.82,
+          o.y + u * 0.68,
           o.z + Math.cos(u * Math.PI * 2 + item.ph * 6) * 0.10
         );
         const fade = Math.sin(u * Math.PI);
         item.sp.material.opacity = fade * 0.92;
       }
-      if ((this.denBed.sparkT -= dt) <= 0) {
-        this.denBed.sparkT = 0.55;
+      if ((db.sparkT -= dt) <= 0) {
+        db.sparkT = 0.55;
         const pk = Math.random() > 0.5;
         g.puffs.spawn(
-          this.denBed.focus.x + (Math.random() - 0.5) * 1.4,
-          this.denBed.focus.y + 0.15,
-          this.denBed.focus.z + (Math.random() - 0.5) * 1.4,
+          db.focus.x + (Math.random() - 0.5) * 1.4,
+          db.focus.y + 0.15,
+          db.focus.z + (Math.random() - 0.5) * 1.4,
           0, 0.42, 0, 0.05, 0.85, 0.8, pk ? 1 : 0.3, pk ? 0.55 : 0.9, pk ? 0.9 : 1, -0.1, 0.8
         );
       }
-    } else if (this.denBed.zzz.length && this.denBed.zzz[0].sp.visible) {
-      for (const item of this.denBed.zzz) {
-        item.sp.visible = false;
-        item.sp.material.opacity = 0;
+    } else {
+      if (db.quilt && db.quilt.visible) db.quilt.visible = false;
+      if (db.dreamSprite && db.dreamSprite.visible) {
+        db.dreamSprite.visible = false;
+        db.dreamSprite.material.opacity = 0;
+      }
+      if (db.zzz.length && db.zzz[0].sp.visible) {
+        for (const item of db.zzz) {
+          item.sp.visible = false;
+          item.sp.material.opacity = 0;
+        }
       }
     }
 

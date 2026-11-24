@@ -418,6 +418,137 @@ html, body { overscroll-behavior: none; }
   #track.show { transform: none; }
   #toast { top: 96px; }
 }
+
+/* ------------------------------------------------------------------ Cat Den Sleeping Interactions & Dream Cloud HUD */
+body.sleeping #actbar,
+body.sleeping #toolbar,
+body.sleeping #prompt { opacity: 0 !important; pointer-events: none !important; }
+body.sleeping #toast { top: auto; bottom: 80px; }
+
+#dreamHud {
+  position: absolute;
+  left: 50%;
+  top: 14px;
+  transform: translateX(-50%) translateY(-8px) scale(.96);
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  max-width: min(470px, calc(100vw - 380px));
+  padding: 8px 15px 8px 10px;
+  border-radius: 20px;
+  background: rgba(252, 248, 255, .92);
+  border: 1.5px solid rgba(255, 192, 232, .75);
+  box-shadow: 0 10px 28px rgba(42, 34, 86, .18), 0 0 22px rgba(154, 224, 255, .28);
+  color: #252042;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 28;
+  transition: opacity .35s ease, transform .35s cubic-bezier(.2, .9, .25, 1.1);
+}
+#dreamHud.show { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+#dreamHud .d-thumb {
+  flex: none;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px rgba(140, 214, 255, .75), 0 4px 12px rgba(64, 46, 118, .22);
+  background: #eae4f8;
+}
+#dreamHud .d-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+#dreamHud .d-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: #6b4ea8;
+}
+#dreamHud .d-text {
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: #231e3c;
+  font-weight: 500;
+}
+
+#sleepBar {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%) translateY(14px);
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 7px;
+  padding: 7px 9px;
+  border-radius: 18px;
+  background: rgba(250, 248, 255, .88);
+  border: 1.5px solid rgba(255, 255, 255, .94);
+  box-shadow: 0 10px 28px rgba(32, 28, 72, .22);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 29;
+  transition: opacity .3s ease, transform .3s ease;
+  width: max-content;
+  max-width: calc(100vw - 24px);
+}
+#sleepBar.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+#sleepBar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 11px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(110, 102, 168, .22);
+  background: rgba(255, 255, 255, .88);
+  color: #262144;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform .14s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+#sleepBar button:hover {
+  background: #fff;
+  border-color: #ff86d2;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 128, 206, .24);
+}
+#sleepBar button.on {
+  background: linear-gradient(135deg, #fff0fa, #eef9ff);
+  border-color: #ff78cd;
+  color: #6b2478;
+  box-shadow: 0 3px 12px rgba(118, 208, 255, .32);
+}
+#sleepBar button.wake {
+  background: linear-gradient(135deg, #ff7eb8, #8c7bff);
+  border-color: transparent;
+  color: #fff;
+}
+#sleepBar button.wake:hover {
+  box-shadow: 0 4px 14px rgba(140, 123, 255, .38);
+}
+#sleepBar kbd {
+  min-width: 18px;
+  margin: 0;
+  padding: 0 5px;
+  font-size: 11px;
+  line-height: 17px;
+  border-radius: 5px;
+  background: rgba(96, 86, 152, .12);
+  color: inherit;
+  border: 1px solid rgba(96, 86, 152, .22);
+}
+#sleepBar button.wake kbd {
+  background: rgba(255, 255, 255, .24);
+  border-color: rgba(255, 255, 255, .4);
+}
+@media (max-width: 720px) {
+  #dreamHud { top: 52px; max-width: calc(100vw - 24px); padding: 7px 11px 7px 8px; gap: 9px; }
+  #dreamHud .d-thumb { width: 46px; height: 46px; }
+  #dreamHud .d-text { font-size: 12px; }
+  #sleepBar { bottom: 10px; flex-wrap: wrap; gap: 5px; padding: 6px 7px; }
+  #sleepBar button { padding: 5px 8px; font-size: 11.5px; }
+}
 @media (max-width: 660px) {
   /* (the action bar is two rows here: the prompt and the gesture panel stand clear of it) */
   #prompt { bottom: 126px; }
