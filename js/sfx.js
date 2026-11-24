@@ -347,25 +347,245 @@ export function buildPhysicalBankPCM(sr = 44100) {
     return masterBuffer(out, 2800, 1.08, 0.76);
   }
 
-  // 7) Pneumatic Snow-Cannon "PTHOOM!" & Hardwood Candy-Cane Bonk
+  // 7) Pneumatic Snow-Cannon "PTHOOM!" (tighter bolt snap + deeper chest thump!) & Hardwood Candy-Cane Bonk
   function synthSnowCannon() {
-    const dur = 0.24;
+    const dur = 0.25;
     const n = Math.floor(sr * dur);
     const out = new Float32Array(n);
     const pink = makePink();
     const fAir = makeSVF();
     const fValve = makeSVF();
-    let ph = 0;
+    let ph = 0, bodyPh = 0;
     for (let i = 0; i < n; i++) {
       const t = i / sr;
-      const f = 195 * Math.exp(-t * 28) + 46;
+      const f = 215 * Math.exp(-t * 30) + 42;
       ph += (2 * Math.PI * f) / sr;
-      const punch = Math.sin(ph) * Math.exp(-t * 20) * 0.85;
-      const puff = fAir(pink(), 1850 * Math.exp(-t * 14) + 340, 0.95).band * Math.exp(-t * 16) * 0.95;
-      const valve = fValve(rand(), 2400, 2.5).band * Math.exp(-t * 260) * 0.55;
-      out[i] = punch + puff + valve;
+      const bf = 420 * Math.exp(-t * 48) + 110;
+      bodyPh += (2 * Math.PI * bf) / sr;
+      const punch = Math.sin(ph) * Math.exp(-t * 17) * 0.96;
+      const crack = Math.sin(bodyPh) * Math.exp(-t * 62) * 0.42;
+      const puff = fAir(pink(), 2100 * Math.exp(-t * 15) + 360, 1.05).band * Math.exp(-t * 15) * 0.92;
+      const valve = fValve(rand(), 2700, 2.6).band * Math.exp(-t * 280) * 0.68;
+      out[i] = punch + crack + puff + valve;
     }
-    return masterBuffer(out, 3100, 1.08, 0.78);
+    return masterBuffer(out, 3400, 1.12, 0.80);
+  }
+
+  // 10) Studio Physical-Modeling 118 Og Element Cannon & Tactile Hitmarker / Props Bank!
+  function synthChemH() {
+    // 1 H Hydrogen Rapid Micro-Pulse: pressurized pneumatic pop + brisk bubbly air-burst!
+    const dur = 0.22;
+    const n = Math.floor(sr * dur);
+    const out = new Float32Array(n);
+    const pink = makePink();
+    const fPop = makeSVF();
+    const fFizz = makeSVF();
+    let ph1 = 0, ph2 = 0;
+    for (let i = 0; i < n; i++) {
+      const t = i / sr;
+      const f1 = 280 * Math.exp(-t * 36) + 68;
+      const f2 = 640 * Math.exp(-t * 22) + 980 * (1 - Math.exp(-t * 26));
+      ph1 += (2 * Math.PI * f1) / sr;
+      ph2 += (2 * Math.PI * f2) / sr;
+      const thump = Math.sin(ph1) * Math.exp(-t * 28) * 0.85;
+      const bubble = Math.sin(ph2) * Math.exp(-t * 22) * 0.34;
+      const air = fPop(pink(), 2200 * Math.exp(-t * 18) + 460, 1.4).band * Math.exp(-t * 20) * 0.82;
+      const snap = fFizz(rand(), 3100, 2.2).band * Math.exp(-t * 240) * 0.55;
+      out[i] = thump + bubble + air + snap;
+    }
+    return masterBuffer(out, 3600, 1.12, 0.80);
+  }
+
+  function synthChemC() {
+    // 6 C Diamond Rail-Slug: heavy sub-bass coil-gun kick + tempered crystal ping + supersonic air crack!
+    const dur = 0.34;
+    const n = Math.floor(sr * dur);
+    const out = new Float32Array(n);
+    const pink = makePink();
+    const fAir = makeSVF();
+    const fCrack = makeSVF();
+    let subPh = 0;
+    for (let i = 0; i < n; i++) {
+      const t = i / sr;
+      const sf = 178 * Math.exp(-t * 22) + 38;
+      subPh += (2 * Math.PI * sf) / sr;
+      const sub = Math.sin(subPh) * Math.exp(-t * 11.5) * 1.05;
+      const crack = fCrack(rand() * 0.9 + pink() * 0.4, 2400 * Math.exp(-t * 16) + 520, 1.6).band * Math.exp(-t * 28) * 0.92;
+      const air = fAir(pink(), 920 * Math.exp(-t * 10) + 260, 1.0).band * Math.exp(-t * 13) * 0.72;
+      // Crisp crystalline diamond harmonic cluster (1174 / 1760 / 2637 Hz, fast decay, silky)
+      const cEnv = Math.exp(-t * 14);
+      const crys = (Math.sin(2 * Math.PI * 1174.66 * t) * 0.24 + Math.sin(2 * Math.PI * 1760 * t) * 0.16 + Math.sin(2 * Math.PI * 2637 * t) * 0.08) * cEnv;
+      out[i] = sub + crack + air + crys;
+    }
+    return masterBuffer(out, 3700, 1.14, 0.82);
+  }
+
+  function synthChemNe() {
+    // 10 Ne Neon Thermal Plasma Ring: deep pressurized valve-whoosh + warm harmonic combustion bloom!
+    const dur = 0.36;
+    const n = Math.floor(sr * dur);
+    const out = new Float32Array(n);
+    const pink = makePink();
+    const fFlame = makeSVF();
+    const fCore = makeSVF();
+    let brown = 0, subPh = 0, hPh = 0;
+    for (let i = 0; i < n; i++) {
+      const t = i / sr;
+      const p = pink();
+      brown = brown * 0.955 + rand() * 0.045;
+      const sf = 148 * Math.exp(-t * 16) + 46;
+      subPh += (2 * Math.PI * sf) / sr;
+      const punch = Math.sin(subPh) * Math.exp(-t * 12) * 0.92;
+      const hf = 290 + 240 * Math.exp(-t * 8.5);
+      hPh += (2 * Math.PI * hf) / sr;
+      const warmRing = Math.sin(hPh) * Math.exp(-t * 11) * 0.32;
+      const env = Math.pow(Math.min(1, t / 0.018), 0.9) * Math.exp(-t * 7.8);
+      const flame = fFlame(p, 580 + 1750 * Math.exp(-t * 9.0), 1.35).band * env * 1.05;
+      const core = fCore(brown * 2.5 + p * 0.3, 190 + 340 * Math.exp(-t * 8), 0.95).band * env * 0.90;
+      out[i] = punch + warmRing + flame + core;
+    }
+    return masterBuffer(out, 3200, 1.12, 0.80);
+  }
+
+  function synthChemAr() {
+    // 18 Ar Argon Electromagnetic Arc Bolt: tight capacitor discharge snap + crisp Tesla crackle + sub kick!
+    const dur = 0.32;
+    const n = Math.floor(sr * dur);
+    const out = new Float32Array(n);
+    const pink = makePink();
+    const fZap = makeSVF();
+    const fTail = makeSVF();
+    let subPh = 0, modPh = 0;
+    for (let i = 0; i < n; i++) {
+      const t = i / sr;
+      const p = pink();
+      const sf = 210 * Math.exp(-t * 30) + 52;
+      subPh += (2 * Math.PI * sf) / sr;
+      const kick = Math.sin(subPh) * Math.exp(-t * 18) * 0.90;
+      // Granular Tesla arc micro-pulses (modulated bandpassed spark, warm lowpassed -> zero shrill hiss!)
+      modPh += (2 * Math.PI * (62 + 95 * Math.exp(-t * 14))) / sr;
+      const arcGate = 0.5 + 0.5 * Math.sin(modPh);
+      const zapEnv = Math.exp(-t * 16);
+      const zap = fZap((rand() * 0.85 + p * 0.45) * arcGate, 1450 + 1900 * Math.exp(-t * 18), 2.1).band * zapEnv * 1.15;
+      const tail = fTail(p, 640 * Math.exp(-t * 7) + 280, 1.3).band * Math.exp(-t * 10) * 0.55;
+      out[i] = kick + zap + tail;
+    }
+    return masterBuffer(out, 3600, 1.15, 0.80);
+  }
+
+  function synthChemOg() {
+    // 118 Og Supernova Heavy Collider Launch: monumental chest-thumping charge-fire roar!
+    const dur = 0.52;
+    const n = Math.floor(sr * dur);
+    const out = new Float32Array(n);
+    const pink = makePink();
+    const fRoar = makeSVF();
+    const fAir = makeSVF();
+    let brown = 0, subPh = 0, chordPh1 = 0, chordPh2 = 0;
+    for (let i = 0; i < n; i++) {
+      const t = i / sr;
+      const p = pink();
+      brown = brown * 0.96 + rand() * 0.04;
+      const sf = 152 * Math.exp(-t * 14) + 34;
+      subPh += (2 * Math.PI * sf) / sr;
+      const sub = Math.sin(subPh) * Math.exp(-t * 6.8) * 1.15;
+      const c1 = 261.63 * (1 + 0.5 * Math.exp(-t * 16));
+      const c2 = 392.00 * (1 + 0.5 * Math.exp(-t * 14));
+      chordPh1 += (2 * Math.PI * c1) / sr;
+      chordPh2 += (2 * Math.PI * c2) / sr;
+      const harm = (Math.sin(chordPh1) * 0.28 + Math.sin(chordPh2) * 0.22) * Math.exp(-t * 7.2);
+      const env = Math.pow(Math.min(1, t / 0.015), 0.85) * Math.exp(-t * 5.8);
+      const roar = fRoar(brown * 2.8 + p * 0.6, 160 + 620 * Math.exp(-t * 6.5), 1.0).band * env * 1.10;
+      const air = fAir(p, 1950 * Math.exp(-t * 9) + 420, 1.5).band * env * 0.82;
+      out[i] = sub + harm + roar + air;
+    }
+    return masterBuffer(out, 3400, 1.14, 0.82);
+  }
+
+  function synthHitMarker() {
+    // Ultra-crisp AAA FPS/TPS tactile wooden-click + crisp transient tick ("TKK!")
+    const dur = 0.075;
+    const n = Math.floor(sr * dur);
+    const out = new Float32Array(n);
+    const fClick = makeSVF();
+    for (let i = 0; i < n; i++) {
+      const t = i / sr;
+      const body = Math.sin(2 * Math.PI * 1480 * t) * Math.exp(-t * 115) * 0.72
+                 + Math.sin(2 * Math.PI * 2420 * t) * Math.exp(-t * 145) * 0.48;
+      const tick = fClick(rand(), 2950, 2.0).band * Math.exp(-t * 240) * 0.95;
+      out[i] = body + tick;
+    }
+    return masterBuffer(out, 4200, 1.05, 0.78);
+  }
+
+  function synthGlassBreak() {
+    // Sparkling glass alchemy-bottle shatter (multi-grain modal glass clinks + crisp burst!)
+    const dur = 0.36;
+    const n = Math.floor(sr * dur);
+    const out = new Float32Array(n);
+    const pink = makePink();
+    const fBurst = makeSVF();
+    const freqs = [1680, 2140, 2590, 3120, 3580, 1920, 2840];
+    const delays = [0, 0.012, 0.025, 0.044, 0.068, 0.095, 0.135];
+    for (let i = 0; i < n; i++) {
+      const t = i / sr;
+      const snap = fBurst(rand() * 0.8 + pink() * 0.4, 2800, 1.6).band * Math.exp(-t * 85) * 0.88;
+      let shards = 0;
+      for (let k = 0; k < freqs.length; k++) {
+        const dt = t - delays[k];
+        if (dt > 0) {
+          shards += Math.sin(2 * Math.PI * freqs[k] * dt) * Math.exp(-dt * (26 + k * 4)) * (0.28 - k * 0.02);
+        }
+      }
+      out[i] = snap + shards;
+    }
+    return masterBuffer(out, 4200, 1.04, 0.76);
+  }
+
+  function synthBrassGong() {
+    // Warm resonant golden bullseye / lighthouse gong (6-mode metallic shimmer + deep chest resonance)
+    const dur = 0.95;
+    const n = Math.floor(sr * dur);
+    const out = new Float32Array(n);
+    const pink = makePink();
+    const fHit = makeSVF();
+    const ratios = [[1.0, 0.95, 2.2], [1.48, 0.58, 3.1], [2.04, 0.44, 3.8], [2.76, 0.30, 5.2], [3.52, 0.18, 6.8]];
+    for (let i = 0; i < n; i++) {
+      const t = i / sr;
+      const mallet = fHit(pink(), 680 * Math.exp(-t * 16) + 180, 1.2).band * Math.exp(-t * 36) * 0.85;
+      let bell = 0;
+      for (const [r, g, dec] of ratios) {
+        bell += Math.sin(2 * Math.PI * (246.94 * r) * t) * Math.exp(-t * dec) * g;
+      }
+      out[i] = mallet + bell * 0.55;
+    }
+    return masterBuffer(out, 3200, 1.08, 0.80);
+  }
+
+  function synthFogHorn() {
+    // Warm cozy Starlight Lighthouse maritime brass horn (harmonious fifth C3 + G3 swell!)
+    const dur = 1.45;
+    const n = Math.floor(sr * dur);
+    const out = new Float32Array(n);
+    const pink = makePink();
+    const fAir = makeSVF();
+    for (let i = 0; i < n; i++) {
+      const t = i / sr;
+      const env = Math.pow(Math.min(1, t / 0.18), 1.2) * Math.exp(-Math.max(0, t - 0.58) * 3.1);
+      const vib = 1 + 0.004 * Math.sin(2 * Math.PI * 4.5 * t);
+      const f0 = 130.81 * vib;
+      const f5 = 196.00 * vib;
+      const brass = (
+        Math.sin(2 * Math.PI * f0 * t) * 0.65 +
+        Math.sin(2 * Math.PI * f0 * 2 * t) * 0.34 +
+        Math.sin(2 * Math.PI * f0 * 3 * t) * 0.16 +
+        Math.sin(2 * Math.PI * f5 * t) * 0.42 +
+        Math.sin(2 * Math.PI * f5 * 2 * t) * 0.18
+      ) * env;
+      const breath = fAir(pink(), 420, 1.3).band * env * 0.25;
+      out[i] = brass + breath;
+    }
+    return masterBuffer(out, 2200, 1.12, 0.78);
   }
 
   function synthWoodBonk() {
@@ -479,7 +699,16 @@ export function buildPhysicalBankPCM(sr = 44100) {
     snowCannon: synthSnowCannon(),
     woodBonk: synthWoodBonk(),
     missileLaunch: synthMissileLaunch(),
-    missileBoom: synthMissileBoom()
+    missileBoom: synthMissileBoom(),
+    chemH: synthChemH(),
+    chemC: synthChemC(),
+    chemNe: synthChemNe(),
+    chemAr: synthChemAr(),
+    chemOg: synthChemOg(),
+    hitMarker: synthHitMarker(),
+    glassBreak: synthGlassBreak(),
+    brassGong: synthBrassGong(),
+    fogHorn: synthFogHorn()
   };
 }
 
@@ -734,6 +963,11 @@ export function enhanceAudio(audio, game) {
       if (gem) starArp([784, 1046, 1318], 0.028, 0.75, 0.20);
       return;
     }
+    if (toolId === "chemgun") {
+      playBuf("chemH", { gain: 0.34, rate: 1.38 * p, lp: 2800, rev: 0.20 });
+      realBell(5, 0.14, 1.25 * p, 0.04);
+      return;
+    }
     if (toolId === "net") {
       playBuf("swordSlash2", { gain: 0.28, rate: 1.28 * p, lp: 2600 });
       if (gem) {
@@ -817,13 +1051,106 @@ export function enhanceAudio(audio, game) {
     }
   };
 
-  audio.gunHit = function (big = false) {
+  audio.gunHit = function (big = false, combo = 1) {
     if (!this.ctx) return;
-    if (realBell(big ? 5 : 3, big ? 0.28 : 0.20, big ? 1.15 : 1.0, 0)) {
-      if (big) realBell(5, 0.20, 1.5, 0.07);
+    const climb = Math.min(1.42, 0.96 + Math.min(8, Math.max(0, combo - 1)) * 0.055);
+    // Tactile crisp FPS hitmarker click layered beneath ascending musical chime!
+    playBuf("hitMarker", { gain: big ? 0.64 : 0.48, rate: (big ? 1.12 : 1.0) * climb, rev: 0.10 });
+    if (realBell(big ? 5 : 3, big ? 0.28 : 0.18, (big ? 1.12 : 0.98) * climb, 0.015)) {
+      if (big) realBell(5, 0.20, 1.45 * climb, 0.075);
       return;
     }
-    starArp(big ? [1046, 1318, 1568] : [1046, 1318], 0.032, big ? 0.95 : 0.75, 0.22);
+    starArp(big ? [1046 * climb, 1318 * climb, 1568 * climb] : [1046 * climb, 1318 * climb], 0.028, big ? 0.95 : 0.72, 0.20);
+  };
+
+  // =========================================================================
+  // 3A. STUDIO PHYSICAL-MODELING 118 Og ELEMENT CANNON & HARBOR PROP SFX!
+  // =========================================================================
+  audio.chemShot = function (kind, overclock = false) {
+    if (!this.ctx) return;
+    const p = 0.96 + Math.random() * 0.08;
+    const boost = overclock ? 1.14 : 1.0;
+    if (kind === "h_triple") {
+      playBuf("chemH", { gain: 0.56 * boost, rate: 1.00 * p, pan: -0.14, rev: 0.20 });
+      playBuf("chemH", { delay: 0.042, gain: 0.44 * boost, rate: 1.14 * p, pan: 0.14, rev: 0.22 });
+      realBell(3, 0.11, 1.24 * p, 0.03);
+    } else if (kind === "c_diamond") {
+      playBuf("chemC", { gain: 0.72 * boost, rate: 0.98 * p, rev: 0.28 });
+      realBell(5, 0.16, 1.38 * p, 0.02);
+    } else if (kind === "ne_ring") {
+      playBuf("chemNe", { gain: 0.68 * boost, rate: 1.00 * p, rev: 0.26 });
+      if (overclock) starArp([587.33, 880, 1174.66], 0.024, 0.52, 0.22);
+    } else if (kind === "ar_bolt") {
+      playBuf("chemAr", { gain: 0.68 * boost, rate: 1.02 * p, rev: 0.24 });
+      playBuf("hitMarker", { delay: 0.012, gain: 0.30, rate: 1.48 * p });
+    } else if (kind === "og_nova") {
+      playBuf("chemOg", { gain: 0.80, rate: 0.98 * p, rev: 0.36 });
+      realBell(4, 0.20, 1.15 * p, 0.03);
+      realBell(5, 0.22, 1.45 * p, 0.09);
+      starArp([523.25, 659.25, 783.99, 1046.5, 1318.5], 0.032, 0.72, 0.32);
+    } else {
+      playBuf("chemH", { gain: 0.54, rate: p, rev: 0.20 });
+    }
+  };
+
+  audio.chemImpact = function (kind, distScale = 1.0) {
+    if (!this.ctx) return;
+    const p = 0.94 + Math.random() * 0.12;
+    const v = Math.max(0.25, Math.min(1.0, distScale));
+    if (kind === "og_nova" || kind === "og_boom") {
+      playBuf("missileBoom", { gain: 0.72 * v, rate: 0.95 * p, rev: 0.36 });
+      playBuf("brassGong", { delay: 0.015, gain: 0.38 * v, rate: 1.35 * p, lp: 3200, rev: 0.42 });
+      realBell(3, 0.24 * v, 1.0, 0.03);
+      realBell(5, 0.24 * v, 1.35, 0.09);
+      starArp([783.99, 1046.5, 1318.5, 1567.98], 0.030, 0.78 * v, 0.34);
+    } else if (kind === "c_diamond") {
+      playBuf("glassBreak", { gain: 0.56 * v, rate: 0.96 * p, rev: 0.26 });
+      playBuf("hammerSlam", { gain: 0.32 * v, rate: 1.35 * p, lp: 2600 });
+    } else if (kind === "ar_bolt") {
+      playBuf("chemAr", { gain: 0.46 * v, rate: 1.24 * p, rev: 0.24 });
+    } else if (kind === "ne_ring") {
+      playBuf("missileBoom", { gain: 0.42 * v, rate: 1.26 * p, lp: 2400, rev: 0.24 });
+    } else {
+      playBuf("arrowStick", { gain: 0.40 * v, rate: 1.18 * p, rev: 0.18 });
+      realBell(2, 0.12 * v, 1.28 * p, 0.01);
+    }
+  };
+
+  audio.chemSwitch = function (idx = 0) {
+    if (!this.ctx) return;
+    const rate = 0.92 + (idx % 6) * 0.08;
+    playBuf("hitMarker", { gain: 0.46, rate: rate * 1.15, rev: 0.12 });
+    realBell(idx % 6, 0.14, rate, 0.015);
+  };
+
+  audio.glassBreak = function (distScale = 1.0) {
+    if (!this.ctx) return;
+    const v = Math.max(0.25, Math.min(1.0, distScale));
+    playBuf("glassBreak", { gain: 0.66 * v, rate: 0.94 + Math.random() * 0.16, rev: 0.28 });
+  };
+
+  audio.brassGong = function (distScale = 1.0) {
+    if (!this.ctx) return;
+    const v = Math.max(0.28, Math.min(1.0, distScale));
+    playBuf("brassGong", { gain: 0.74 * v, rate: 0.97 + Math.random() * 0.06, rev: 0.44 });
+    realBell(4, 0.22 * v, 1.0, 0.04);
+  };
+
+  audio.fogHorn = function () {
+    if (!this.ctx) return;
+    playBuf("fogHorn", { gain: 0.68, rate: 1.0, rev: 0.52 });
+  };
+
+  audio.chimeChord = function (seed = 0) {
+    if (!this.ctx) return;
+    const scales = [
+      [523.25, 659.25, 783.99, 1046.5],
+      [587.33, 739.99, 880.0, 1174.66],
+      [659.25, 783.99, 987.77, 1318.51]
+    ];
+    const notes = scales[Math.abs(seed) % scales.length];
+    starArp(notes, 0.045, 0.85, 0.36);
+    realBell(seed % 6, 0.18, 1.1, 0.02);
   };
 
   audio.gunPack = function () {

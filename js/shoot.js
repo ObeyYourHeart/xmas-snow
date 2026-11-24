@@ -13,6 +13,158 @@ export function installShootingSystem(gun, tools, game, helpers) {
   const UP = new T.Vector3(0, 1, 0);
   const FWD = new T.Vector3(0, 0, 1);
 
+  // Global Shootable Target Registry (shared across SnowGun, Starlight Bow & 118 Og ChemGun!)
+  if (!game.shootTargets) game.shootTargets = [];
+
+  // Smooth spring-damped Camera Recoil + Dynamic Colored Muzzle Flash Light + Floating Hit-Combo Badge!
+  const recoil = { p: 0, vp: 0, y: 0, vy: 0, fov: 0 };
+  const muzzleLight = new T.PointLight(0x88f4ff, 0, 8.5, 1.8);
+  muzzleLight.visible = false;
+  game.scene.add(muzzleLight);
+  let muzzleLightT = 0;
+
+  // Floating Hit-Combo HUD Pill right above crosshair
+  let comboEl = document.getElementById("shootCombo");
+  if (!comboEl) {
+    comboEl = document.createElement("div");
+    comboEl.id = "shootCombo";
+    (document.getElementById("hud") || document.body).appendChild(comboEl);
+  }
+  gun.combo = 0;
+  gun.comboT = 0;
+  gun.comboShowT = 0;
+  gun.overdriveT = 0; // Bonus rapid-fire starlight overdrive buff from Harbor Workshop!
+
+  gun.kickCamera = function (pitchKick = 0.018, yawKick = 0.008, fovKick = 0.025, flashHex = null, flashPos = null) {
+    recoil.vp += pitchKick * 18;
+    recoil.vy += (Math.random() - 0.5) * 2 * yawKick * 16;
+    recoil.fov = Math.min(0.08, recoil.fov + fovKick);
+    if (flashHex !== null && flashPos) {
+      muzzleLight.color.setHex(flashHex);
+      muzzleLight.position.copy(flashPos);
+      muzzleLight.intensity = 6.5;
+      muzzleLight.visible = true;
+      muzzleLightT = 0.075;
+    }
+  };
+
+  gun.registerHit = function (crit = false, label = "") {
+    gun.combo = gun.comboT > 0 ? Math.min(99, gun.combo + 1) : 1;
+    gun.comboT = 3.6;
+    gun.comboShowT = 1.45;
+    gun.hitT = crit ? 0.34 : 0.26;
+    gun.hitBig = !!crit;
+    if (gun.ui && gun.ui.el) {
+      gun.ui.el.classList.toggle("hit-crit", !!crit);
+    }
+    if (game.audio && game.audio.gunHit) {
+      game.audio.gunHit(crit, gun.combo);
+    }
+    if (comboEl) {
+      const txt = label
+        ? (gun.combo > 1 ? `${label} · 连击 ×${gun.combo}` : label)
+        : (crit ? `✦ 精准暴击 ×${gun.combo}` : `✦ 命中 ×${gun.combo}`);
+      comboEl.textContent = txt;
+      comboEl.classList.toggle("crit", !!crit || gun.combo >= 4);
+      comboEl.classList.remove("show");
+      void comboEl.offsetWidth;
+      comboEl.classList.add("show");
+    }
+  };
+
+  // Expose unified `chemActive` state for player.gunOut & ADS!
+  Object.defineProperty(gun, "chemActive", {
+    configurable: true,
+    get() {
+      const ch = game.character;
+      return tools.held === "chemgun" && tools.usable && game.player.enabled && !!ch && ch.ready && !ch.rooted;
+    }
+  });
+
+  // Wrap player.apply() to layer silky spring-damped recoil pitch/yaw & subtle FOV punch (zero drift!)
+  if (game.player && !game.player._recoilWrapped) {
+    game.player._recoilWrapped = true;
+    const origApply = game.player.apply.bind(game.player);
+    game.player.apply = function () {
+      origApply();
+      if (Math.abs(recoil.p) > 1e-4 || Math.abs(recoil.y) > 1e-4) {
+        this.cam.rotation.x += recoil.p;
+        this.cam.rotation.y += recoil.y;
+      }
+      if (recoil.fov > 1e-4 && !this.scope) {
+        this.cam.zoom = Math.max(0.85, this.cam.zoom - recoil.fov);
+        this.cam.updateProjectionMatrix();
+      }
+    };
+  }
+
+  // Upgrade gun.probe() so SnowGun, Starlight Bow & ChemGun ALL detect airborne balloons & game.shootTargets!
+  const origProbe = gun.probe.bind(gun);
+  gun.probe = function (pos) {
+    // 1. Check airborne Gift Balloons first (snipeable by ALL 3 ranged weapons!)
+    if (game.heli && game.heli.balloons) {
+      for (const b of game.heli.balloons) {
+        if (b.got) continue;
+        const by = b.grp ? b.grp.position.y : b.y;
+        if (Math.hypot(pos.x - b.x, pos.y - by, pos.z - b.z) < 1.38) {
+          this._hit.kind = "balloon";
+          this._hit.ref = b;
+          return this._hit;
+        }
+      }
+    }
+    // 2. Check global interactive shootable props & Harbor Shooting Gallery targets!
+    if (game.shootTargets && game.shootTargets.length) {
+      for (const tg of game.shootTargets) {
+        if (tg.alive && !tg.alive()) continue;
+        const tp = tg.pos;
+        const dx = pos.x - tp.x, dy = pos.y - tp.y, dz = pos.z - tp.z;
+        const rr = tg.r || 0.72;
+        if (dx * dx + dy * dy + dz * dz < rr * rr) {
+          this._hit.kind = "shootTarget";
+          this._hit.ref = tg;
+          return this._hit;
+        }
+      }
+    }
+    return origProbe(pos);
+  };
+
+  // Upgrade Claude's SnowGun land() so snowballs also pop balloons & trigger shootTargets + hitmarker!
+  const origLand = gun.land.bind(gun);
+  gun.land = function (shot, hit) {
+    if (hit && hit.kind === "balloon" && hit.ref && !hit.ref.got) {
+      const b = hit.ref;
+      b.got = true;
+      b.pop = 0;
+      game.heli.popped++;
+      const l = game.heli.popped, c = game.heli.balloons.length;
+      game.logic.count("balloons", l, c);
+      if (l >= c) { game.logic.complete("balloons"); game.ui.toast("八个礼物气球全被击落啦！雪境神枪手！", 6); }
+      else game.ui.toast(`击落礼物气球！（${l} / ${c}）`, 3.2);
+      gun.registerHit(true, "🎈 击落礼物气球");
+      game.puffs.burst(shot.p, 16, 2.2, 0.14, 0.5, 0.8);
+      game.sparks && game.sparks.spawn(shot.p.x, shot.p.y, shot.p.z, 0, 0, 0, 0.7, 0.95, 0.16, 3.6, 2.6, 1.4, 0, 0);
+      gun.landed++;
+      return;
+    }
+    if (hit && hit.kind === "shootTarget" && hit.ref) {
+      const res = hit.ref.onHit({ pos: shot.p.clone(), dir: shot.d.clone(), weapon: "snow", element: null, heavy: false });
+      gun.registerHit(!!(res && res.crit), (res && res.label) || "✦ 命中目标");
+      game.puffs.burst(shot.p, 10, 1.5, 0.10, 0.35, 0.6);
+      gun.landed++;
+      return;
+    }
+    const prevHitT = this.hitT;
+    origLand(shot, hit);
+    if (hit && (hit.kind === "friend" || hit.kind === "folk" || hit.kind === "pet" || hit.kind === "thing")) {
+      const isCrit = hit.kind === "thing" && hit.ref && hit.ref.target;
+      if (this.hitT >= prevHitT) {
+        gun.registerHit(isCrit, isCrit ? "🎯 靶心命中" : "");
+      }
+    }
+  };
+
   const DRAW_TIME = 0.68;      // Seconds to reach 100% draw
   const FULL_THRESHOLD = 0.85; // Full-draw piercing threshold
   const ARROW_POOL = 18;
@@ -256,6 +408,7 @@ export function installShootingSystem(gun, tools, game, helpers) {
 
     if (game.audio.bowRelease) game.audio.bowRelease(charge);
     else if (game.audio.gunShot) game.audio.gunShot();
+    gun.kickCamera(0.010 + charge * 0.016, 0.004, 0.012 + charge * 0.018, isFull ? 0xffe46b : (ar.pink ? 0xff7ae0 : 0x52f2ff), muzzle);
     return true;
   }
 
@@ -290,6 +443,10 @@ export function installShootingSystem(gun, tools, game, helpers) {
       if (l >= c) { game.logic.complete("balloons"); game.ui.toast("八个礼物气球都射收齐啦！神箭猫猫！", 6); }
       else game.ui.toast(`一箭射落礼物气球！（${l} / ${c}）`, 3.5);
       confirm = 2;
+    } else if (kind === "shootTarget" && ref) {
+      const res = ref.onHit({ pos: pos.clone(), dir: dir.clone(), weapon: "bow", element: null, heavy: ar.full });
+      confirm = (res && res.crit) || ar.full ? 2 : 1;
+      ar._hitLabel = (res && res.label) || "🏹 箭矢命中";
     } else if (kind === "thing") {
       confirm = ref && ref.target ? 2 : 1;
       game.explore.ballHit(pos);
@@ -355,9 +512,9 @@ export function installShootingSystem(gun, tools, game, helpers) {
     else if (game.audio.gunSplat) game.audio.gunSplat(distGain, kind === "wall" || kind === "trunk");
 
     if (confirm) {
-      gun.hitT = 0.28;
-      gun.hitBig = confirm > 1 || ar.full;
-      if (game.audio.gunHit) game.audio.gunHit(gun.hitBig);
+      const lbl = kind === "balloon" ? "🎈 一箭穿云" : (ar._hitLabel || (confirm > 1 ? "✦ 满弦贯穿" : ""));
+      ar._hitLabel = "";
+      gun.registerHit(confirm > 1 || ar.full, lbl);
     }
 
     // Stick the glowing 3D arrow upright into solid surfaces (snow, ground, walls, tree trunks)!
@@ -484,7 +641,15 @@ export function installShootingSystem(gun, tools, game, helpers) {
   };
 
   gun.fire = function () {
-    if (!this.isGemini) return origFire();
+    if (!this.isGemini) {
+      const fired = origFire();
+      if (fired && this.cool > 0.05) {
+        const mz = this.muzzle(_m);
+        gun.kickCamera(0.015, 0.006, 0.016, 0x8ad8ff, mz);
+        if (gun.overdriveT > 0) this.cool *= 0.62;
+      }
+      return fired;
+    }
     if (!this.active) return false;
     if (bow.cool > 0 || bow.justLoosed > 0) return true;
     if (bow.drawing) return true;
@@ -495,9 +660,73 @@ export function installShootingSystem(gun, tools, game, helpers) {
   };
 
   gun.update = function (dt) {
+    // 1. Update silky spring-damped camera recoil, muzzle flash light & combo HUD!
+    const kSpring = 135, damp = 17;
+    recoil.vp += (-kSpring * recoil.p - damp * recoil.vp) * dt;
+    recoil.p += recoil.vp * dt;
+    recoil.vy += (-kSpring * recoil.y - damp * recoil.vy) * dt;
+    recoil.y += recoil.vy * dt;
+    if (Math.abs(recoil.p) < 1e-4 && Math.abs(recoil.vp) < 1e-4) { recoil.p = 0; recoil.vp = 0; }
+    if (Math.abs(recoil.y) < 1e-4 && Math.abs(recoil.vy) < 1e-4) { recoil.y = 0; recoil.vy = 0; }
+    if (recoil.fov > 0) recoil.fov = Math.max(0, recoil.fov - dt * 0.24);
+    if (muzzleLightT > 0) {
+      muzzleLightT -= dt;
+      muzzleLight.intensity = Math.max(0, 6.5 * (muzzleLightT / 0.075));
+      if (muzzleLightT <= 0) muzzleLight.visible = false;
+    }
+    if (gun.overdriveT > 0) gun.overdriveT = Math.max(0, gun.overdriveT - dt);
+    if (gun.comboT > 0) {
+      gun.comboT -= dt;
+      if (gun.comboT <= 0) gun.combo = 0;
+    }
+    if (gun.comboShowT > 0) {
+      gun.comboShowT -= dt;
+      if (gun.comboShowT <= 0 && comboEl) comboEl.classList.remove("show");
+    }
+
     bow.cool = Math.max(0, bow.cool - dt);
     bow.justLoosed = Math.max(0, bow.justLoosed - dt);
     updateArrows(dt);
+
+    // 2. UNIFIED 118 Og CHEMGUN SHOOTING & CROSSHAIR LOOP!
+    if (this.chemActive) {
+      const player = game.player;
+      this.hitT -= dt;
+      this.tick++;
+      const wantAds = !player.frontLock && !!(player.aiming || player.aimLock || this.btnR);
+      this.ads += ((wantAds ? 1 : 0) - this.ads) * (1 - Math.exp(-14 * dt));
+      this.out += (1 - this.out) * (1 - Math.exp(-10 * dt));
+      if (this.ads < 0.002) this.ads = 0;
+      player.ads = this.ads;
+      player.gunK = this.out;
+
+      const moving = Math.min(1, player.speed / 3.9);
+      const baseSpread = 0.010 + 0.006 * moving + (tools.kick || 0) * 0.012;
+      this.spread = baseSpread * (1 - this.ads * 0.72);
+
+      if ((this.treeT -= dt) < 0) {
+        this.treeT = 0.5;
+        const px = player.pos.x, pz = player.pos.z, rad = 82;
+        this.trees = game.forest.trees.filter((m) => m.near && Math.abs(m.x - px) < rad && Math.abs(m.z - pz) < rad);
+      }
+      if (this.tick & 1) this.sightLine();
+
+      // Continuous hold-to-fire support (J, ADS+LMB, or Pointer-Lock LMB — never misfires on unlocked camera drag!)
+      const holdingFire = player.keys.has("KeyJ") || (this.btnL && (this.btnR || document.pointerLockElement === dom));
+      if (holdingFire && tools._useChemGun) {
+        tools._useChemGun();
+      }
+
+      this.updateShots(dt);
+      this.updateDents(dt);
+      updateChemSight();
+      return;
+    } else if (this.ui && this.ui.el && this.ui.el.classList.contains("chemgun")) {
+      this.ui.el.classList.remove("chemgun", "og-ready");
+      this.ui.text = "";
+      this.ui.frac = -1;
+      this.ui.gap = -1;
+    }
 
     if (!this.isGemini) {
       if (bow.drawing) { bow.drawing = false; bow.drawT = 0; bow.full = false; }
@@ -587,7 +816,7 @@ export function installShootingSystem(gun, tools, game, helpers) {
     ui.el.classList.add("bow");
     if (!active) return;
 
-    const hot = !!({ friend: 1, folk: 1, pet: 1, thing: 1 }[gun.aimOn]);
+    const hot = !!({ friend: 1, folk: 1, pet: 1, thing: 1, balloon: 1, shootTarget: 1 }[gun.aimOn]);
     if (hot !== ui.hot) {
       ui.hot = hot;
       ui.el.classList.toggle("hot", hot);
@@ -625,6 +854,56 @@ export function installShootingSystem(gun, tools, game, helpers) {
     if (txt !== ui.text) {
       ui.text = txt;
       ui.label.textContent = txt;
+    }
+  }
+
+  function updateChemSight() {
+    const ui = gun.ui;
+    if (!ui || !ui.el) return;
+    if (!ui.on) {
+      ui.on = true;
+      ui.el.classList.add("on");
+      document.body.classList.add("gunning");
+    }
+    ui.el.classList.remove("bow", "full", "packing");
+    ui.el.classList.add("chemgun");
+
+    const info = tools._getChemSightState ? tools._getChemSightState() : { css: "#4cf4ff", label: "1 H", chargeFrac: 0.2, ogReady: false };
+    ui.el.style.setProperty("--chem-col", info.css);
+    ui.el.classList.toggle("og-ready", !!info.ogReady);
+
+    const hot = !!({ friend: 1, folk: 1, pet: 1, thing: 1, balloon: 1, shootTarget: 1 }[gun.aimOn]);
+    if (hot !== ui.hot) {
+      ui.hot = hot;
+      ui.el.classList.toggle("hot", hot);
+    }
+
+    const gap = Math.round(Math.max(4, Math.min(34, 15 - gun.ads * 9 + (tools.kick || 0) * 10)));
+    if (gap !== ui.gap) {
+      ui.gap = gap;
+      const [a0, a1, a2, a3] = ui.arms;
+      a0.style.top = -gap - 11 + "px";
+      a1.style.top = gap + "px";
+      a2.style.left = -gap - 11 + "px";
+      a3.style.left = gap + "px";
+    }
+
+    const hitOn = gun.hitT > 0;
+    if (hitOn || ui.hitOn) {
+      ui.hitOn = hitOn;
+      const k = Math.max(0, Math.min(1, gun.hitT / 0.30));
+      ui.hit.style.opacity = hitOn ? Math.min(1, k * 2.4).toFixed(2) : "0";
+      ui.hit.style.transform = `scale(${(gun.hitBig ? 1.34 : 1.04) * (1 + 0.45 * k)})`;
+    }
+
+    const frac = Math.round(Math.max(0.08, Math.min(1, info.chargeFrac)) * 48) / 48;
+    if (frac !== ui.frac) {
+      ui.frac = frac;
+      ui.fg.setAttribute("stroke-dasharray", `${(frac * 59.7).toFixed(1)} 400`);
+    }
+    if (info.label !== ui.text) {
+      ui.text = info.label;
+      ui.label.textContent = info.label;
     }
   }
 

@@ -405,8 +405,46 @@ html, body { overscroll-behavior: none; }
 #gunsight .tank .fg { stroke: #fff; stroke-width: 3.5; }
 #gunsight.packing .tank .fg { stroke: var(--sight-pack); }
 #gunsight em { position: absolute; left: -22px; top: 47px; width: 44px; box-sizing: border-box; text-align: center; font-style: normal; font-size: 12px; font-weight: 700; line-height: 17px; color: var(--ink); background: rgba(255, 255, 255, .8); border: 1px solid var(--line); border-radius: 9px; }
+#gunsight.chemgun { --c: var(--chem-col, #4cf4ff); --sight-hot: #ffe46b; --sight-hit: var(--chem-col, #4cf4ff); --sight-pack: #ff62d8; }
+#gunsight.chemgun i { border-radius: 99px; background: var(--chem-col, #4cf4ff); box-shadow: 0 0 8px var(--chem-col, #4cf4ff); }
+#gunsight.chemgun u { width: 7px; height: 7px; left: -3.5px; top: -3.5px; background: #fff; box-shadow: 0 0 9px var(--chem-col, #4cf4ff); }
+#gunsight.chemgun .tank .fg { stroke: var(--chem-col, #4cf4ff); filter: drop-shadow(0 0 5px var(--chem-col, #4cf4ff)); }
+#gunsight.chemgun em { left: -36px; width: 72px; background: rgba(16, 22, 48, .86); color: #fff; border-color: var(--chem-col, #4cf4ff); box-shadow: 0 2px 10px rgba(0, 0, 0, .28); }
+#gunsight.chemgun.og-ready em { background: linear-gradient(135deg, rgba(64, 232, 255, .92), rgba(255, 114, 218, .92)); color: #161834; border-color: #ffe46b; }
+#gunsight.hit-crit .hit .c { stroke: #ffe46b; stroke-width: 3.4; filter: drop-shadow(0 0 6px #ff8a3c); }
+#shootCombo {
+  position: absolute; left: 50%; top: calc(50% - 62px); transform: translate(-50%, 6px) scale(.92);
+  padding: 4px 12px; border-radius: 99px; font-size: 13px; font-weight: 800; letter-spacing: .04em;
+  color: #fff; background: rgba(16, 24, 52, .82); border: 1.5px solid rgba(116, 244, 255, .75);
+  box-shadow: 0 4px 16px rgba(10, 20, 50, .35), 0 0 14px rgba(116, 244, 255, .32);
+  opacity: 0; pointer-events: none; z-index: 27; white-space: nowrap;
+  transition: opacity .18s ease, transform .18s cubic-bezier(.2, 1.2, .3, 1);
+}
+#shootCombo.show { opacity: 1; transform: translate(-50%, 0) scale(1); }
+#shootCombo.crit {
+  background: linear-gradient(135deg, rgba(255, 114, 56, .92), rgba(240, 74, 186, .92));
+  border-color: #ffe87a; color: #fffdf2;
+  box-shadow: 0 4px 18px rgba(255, 100, 120, .42), 0 0 16px rgba(255, 224, 102, .5);
+}
+#chemBar {
+  position: absolute; right: 76px; bottom: 72px; display: none; flex-direction: column; gap: 5px;
+  padding: 7px 9px; border-radius: 14px; background: rgba(16, 22, 50, .82);
+  border: 1.5px solid rgba(126, 232, 255, .45); box-shadow: 0 8px 24px rgba(10, 14, 38, .35);
+  z-index: 27; pointer-events: auto; backdrop-filter: blur(8px);
+}
+#chemBar.show { display: flex; }
+#chemBar .cb-hd { font-size: 11px; font-weight: 700; color: #bfefff; letter-spacing: .04em; display: flex; justify-content: space-between; gap: 8px; }
+#chemBar .cb-row { display: flex; gap: 4px; }
+#chemBar button {
+  padding: 4px 7px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, .24);
+  background: rgba(255, 255, 255, .10); color: #eef8ff; font-size: 11.5px; font-weight: 700;
+  cursor: pointer; transition: transform .12s ease, background .15s ease, border-color .15s ease;
+}
+#chemBar button:hover { background: rgba(255, 255, 255, .22); transform: translateY(-1px); }
+#chemBar button.on { background: var(--bcol, #4cf4ff); color: #121832; border-color: #fff; box-shadow: 0 0 10px var(--bcol, #4cf4ff); }
 .gunning #reticle { opacity: 0 !important; }
-.scoping #gunsight { display: none; }
+.scoping #gunsight, .scoping #chemBar, .scoping #shootCombo { display: none !important; }
+@media (max-width: 720px) { #chemBar { right: 10px; bottom: 138px; } }
 
 /* the tool bar on a low window: five tools and the empty hand have to fit between the top bar and the bottom one */
 @media (max-height: 640px) { #toolbar { gap: 4px; padding: 6px 5px; } #toolbar button[data-tool] { width: 36px; height: 36px; border-radius: 8px; } }

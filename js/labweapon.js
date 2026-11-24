@@ -9,8 +9,8 @@ export const CHEM_GUN_DEF = {
   id: "chemgun",
   name: "118 Og 元素炮",
   verb: "元素发射",
-  tip: "化学实验室隐藏神秘武器！每发按 1 H(氢极速泡泡) → 6 C(碳金刚石) → 10 Ne(氖霓虹) → 18 Ar(氩电光) → 118 Og(鿫终极超新星烟花!) 循环发射",
-  how: "按 J、鼠标左/右键发射周期表元素弹；第 5 发必出「118 Og 鿫元素彩虹超新星」大招！"
+  tip: "全自动准星瞄准 · 按住右键/F 开镜聚焦 · 按 X 或 1~5 切换元素（自动循环 / 1 H 氢三连 / 6 C 碳金刚 / 10 Ne 氖火环 / 18 Ar 氩连锁雷 / 118 Og 鿫超新星！）",
+  how: "左键/J 射击（支持长按连发），右键/F 开镜精准瞄准，按 X 或点右下元素条切弹种！"
 };
 
 export const CHEM_GUN_POSE = [0.22, 0.44, 0.88, 0, 0, 0, 0.45];
@@ -21,70 +21,100 @@ const GUN_KEY = "xmas_hajimi_chemgun_v1";
 const ELEMENT_SHOTS = [
   {
     id: "H",
-    label: "1 H · 氢极速三连星弹",
+    short: "1 H 氢",
+    label: "1 H · 氢脉冲三连",
+    css: "#4cf4ff",
     hex: 0x4cf4ff,
     rgb: [0.28, 0.94, 1.0],
-    speed: 22,
-    range: 24,
+    speed: 46,
+    range: 58,
     spread: 3,
+    cool: 0.21,
+    recoil: 0.013,
     kind: "h_triple"
   },
   {
     id: "C",
-    label: "6 C · 碳旗舰金刚石巨晶",
+    short: "6 C 碳",
+    label: "6 C · 碳金刚穿甲",
+    css: "#ffda5c",
     hex: 0xffda5c,
     rgb: [1.0, 0.86, 0.34],
-    speed: 17,
-    range: 24,
+    speed: 58,
+    range: 68,
     spread: 1,
+    cool: 0.24,
+    recoil: 0.022,
     kind: "c_diamond"
   },
   {
     id: "Ne",
-    label: "10 Ne · 氖霓虹等离子环",
+    short: "10 Ne 氖",
+    label: "10 Ne · 氖等离子环",
+    css: "#ff7242",
     hex: 0xff683b,
-    rgb: [1.0, 0.40, 0.22],
-    speed: 18.5,
-    range: 25,
+    rgb: [1.0, 0.42, 0.22],
+    speed: 44,
+    range: 62,
     spread: 1,
+    cool: 0.25,
+    recoil: 0.020,
     kind: "ne_ring"
   },
   {
     id: "Ar",
-    label: "18 Ar · 氩电光紫雷弹",
+    short: "18 Ar 氩",
+    label: "18 Ar · 氩雷电连锁",
+    css: "#b482ff",
     hex: 0xa674ff,
-    rgb: [0.64, 0.44, 1.0],
-    speed: 20,
-    range: 25,
+    rgb: [0.68, 0.46, 1.0],
+    speed: 68,
+    range: 74,
     spread: 1,
+    cool: 0.26,
+    recoil: 0.024,
     kind: "ar_bolt"
   },
   {
     id: "Og",
-    label: "118 Og · 鿫周期表超新星!!",
+    short: "118 Og ✦",
+    label: "118 Og · 鿫超新星",
+    css: "#ff66dc",
     hex: 0xff62d8,
     rgb: [1.0, 0.42, 0.88],
-    speed: 15.5,
-    range: 23,
+    speed: 38,
+    range: 64,
     spread: 1,
+    cool: 0.48,
+    recoil: 0.036,
     kind: "og_nova"
   }
 ];
 
-function playElementSynth(audio, kind) {
+function playElementSynth(audio, kind, extra = 1.0) {
   if (!audio || audio.muted || !audio.ctx) return;
+  // Route through our 44.1 kHz studio physical-modeling DSP bank in sfx.js!
+  if (kind === "og_boom") {
+    if (audio.chemImpact) { audio.chemImpact("og_boom", typeof extra === "number" ? extra : 1.0); return; }
+  } else if (kind === "impact") {
+    if (audio.chemImpact) { audio.chemImpact(typeof extra === "string" ? extra : "h_triple", 1.0); return; }
+  } else if (kind === "switch") {
+    if (audio.chemSwitch) { audio.chemSwitch(typeof extra === "number" ? extra : 0); return; }
+  } else if (kind === "h_triple" || kind === "c_diamond" || kind === "ne_ring" || kind === "ar_bolt" || kind === "og_nova") {
+    if (audio.chemShot) { audio.chemShot(kind, !!extra); return; }
+  }
+  // Gentle fallback for gear wardrobe chime (or if sfx.js isn't attached)
   const ctx = audio.ctx;
   const now = ctx.currentTime;
   const master = audio.master || ctx.destination;
-
-  const tone = (f0, f1, delay, dur, gain = 0.044, type = "sine", rev = 0.32) => {
+  const tone = (f0, f1, delay, dur, gain = 0.036, type = "sine", rev = 0.36) => {
     const osc = ctx.createOscillator();
     osc.type = type;
     osc.frequency.setValueAtTime(f0, now + delay);
     if (f1 && f1 !== f0) osc.frequency.exponentialRampToValueAtTime(Math.max(40, f1), now + delay + dur);
     const lp = ctx.createBiquadFilter();
     lp.type = "lowpass";
-    lp.frequency.value = 3000;
+    lp.frequency.value = 2800;
     const g = ctx.createGain();
     g.gain.setValueAtTime(1e-4, now + delay);
     g.gain.linearRampToValueAtTime(gain, now + delay + 0.012);
@@ -98,40 +128,9 @@ function playElementSynth(audio, kind) {
     osc.start(now + delay);
     osc.stop(now + delay + dur + 0.05);
   };
-
-  if (kind === "h_triple") {
-    tone(980, 1520, 0, 0.11, 0.036, "sine", 0.36);
-    tone(1180, 1760, 0.045, 0.11, 0.032, "sine", 0.36);
-    tone(1420, 2100, 0.09, 0.13, 0.030, "triangle", 0.40);
-  } else if (kind === "c_diamond") {
-    tone(660, 1320, 0, 0.17, 0.040, "triangle", 0.42);
-    tone(990, 1980, 0.03, 0.24, 0.034, "sine", 0.46);
-    tone(1480, 2220, 0.05, 0.20, 0.018, "sine", 0.48);
-  } else if (kind === "ne_ring") {
-    // Silky warm neon plasma discharge (dual detuned triangle+sine, zero harsh sawtooth buzz!)
-    tone(392, 784, 0, 0.19, 0.042, "triangle", 0.38);
-    tone(396, 792, 0.008, 0.19, 0.032, "sine", 0.40);
-    tone(880, 1320, 0.04, 0.22, 0.028, "sine", 0.44);
-  } else if (kind === "ar_bolt") {
-    tone(740, 310, 0, 0.15, 0.040, "triangle", 0.36);
-    tone(1174.66, 1760, 0.025, 0.17, 0.036, "sine", 0.42);
-    tone(1567.98, 987.77, 0.06, 0.18, 0.028, "triangle", 0.44);
-  } else if (kind === "og_nova") {
-    const notes = [523.25, 659.25, 783.99, 1046.5, 1318.5, 1567.98];
-    notes.forEach((n, i) => tone(n, n * 1.10, i * 0.034, 0.38, 0.038, i % 2 ? "triangle" : "sine", 0.50));
-  } else if (kind === "og_boom") {
-    tone(220, 68, 0, 0.42, 0.068, "sine", 0.45);
-    tone(523.25, 1046.5, 0.02, 0.46, 0.042, "triangle", 0.52);
-    tone(783.99, 1567.98, 0.07, 0.50, 0.036, "sine", 0.54);
-    tone(1174.66, 2093.0, 0.12, 0.54, 0.030, "sine", 0.56);
-  } else if (kind === "impact") {
-    tone(740, 1180, 0, 0.13, 0.032, "sine", 0.35);
-    tone(1120, 1580, 0.04, 0.16, 0.025, "triangle", 0.38);
-  } else if (kind === "gear") {
-    tone(587.33, 587.33, 0, 0.15, 0.036, "sine", 0.38);
-    tone(880, 880, 0.06, 0.18, 0.036, "sine", 0.40);
-    tone(1174.66, 1318.5, 0.12, 0.28, 0.038, "triangle", 0.44);
-  }
+  tone(587.33, 587.33, 0, 0.14, 0.032, "sine", 0.38);
+  tone(880, 880, 0.06, 0.16, 0.032, "sine", 0.40);
+  tone(1174.66, 1318.5, 0.12, 0.24, 0.034, "triangle", 0.44);
 }
 
 // =============================================================================
@@ -553,32 +552,68 @@ export function installChemGun(tools, game, helpers, ymRef) {
   tools.items.chemgun = item;
   tools.chemGunUnlocked = false;
 
-  // Projectile, Shockwave Ring & Floating Element Bubble Pools
+  // Projectile, Shockwave Ring, 3D Argon Chain-Lightning Arc & Floating Element Bubble Pools
   const shots = [];
   const rings = [];
   const bubbles = [];
+  const arcs = [];
 
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < 20; i++) {
     const g = new T.Group();
     const mat = plain(new T.MeshStandardMaterial({
-      color: 0x4cf4ff, emissive: new T.Color(0x4cf4ff), emissiveIntensity: 1.5, roughness: 0.08
+      color: 0x4cf4ff, emissive: new T.Color(0x4cf4ff), emissiveIntensity: 1.75, roughness: 0.08
     }));
-    const orb = new T.Mesh(new T.OctahedronGeometry(0.14, 1), mat);
-    const halo = new T.Mesh(new T.TorusGeometry(0.22, 0.022, 6, 20), mat);
-    g.add(orb, halo);
+    const core = new T.Mesh(new T.OctahedronGeometry(0.14, 1), mat);
+    const spear = new T.Mesh(new T.CylinderGeometry(0.035, 0.085, 0.85, 8).rotateX(Math.PI / 2), mat);
+    spear.position.z = -0.22;
+    const halo = new T.Mesh(new T.TorusGeometry(0.24, 0.028, 8, 22), mat);
+    g.add(core, spear, halo);
     g.visible = false;
     g.frustumCulled = false;
     game.scene.add(g);
     shots.push({
-      on: false, g, orb, halo, mat,
+      on: false, g, orb: core, spear, halo, mat,
       pos: new T.Vector3(), dir: new T.Vector3(),
-      el: ELEMENT_SHOTS[0], speed: 18, dist: 0, maxDist: 24, t: 0, trail: 0, seen: new Set()
+      el: ELEMENT_SHOTS[0], speed: 46, dist: 0, maxDist: 60, t: 0, trail: 0, free: 0, seen: new Set()
     });
+  }
+
+  // 3D Jagged Electric Lightning Arc Pool (for 18 Ar Argon Chain-Lightning!)
+  for (let i = 0; i < 8; i++) {
+    const posArr = new Float32Array(7 * 3);
+    const geo = new T.BufferGeometry();
+    geo.setAttribute("position", new T.BufferAttribute(posArr, 3));
+    const mat = new T.LineBasicMaterial({ color: 0xd0a8ff, transparent: true, opacity: 0, fog: false });
+    const line = new T.Line(geo, mat);
+    line.visible = false;
+    line.frustumCulled = false;
+    line.renderOrder = 7;
+    game.scene.add(line);
+    arcs.push({ on: false, line, geo, mat, t: 0, dur: 0.24 });
+  }
+
+  function spawnLightningArc(p0, p1) {
+    const a = arcs.find((x) => !x.on) || arcs[0];
+    a.on = true; a.t = 0; a.dur = 0.24;
+    const attr = a.geo.attributes.position;
+    for (let k = 0; k < 7; k++) {
+      const f = k / 6;
+      const jit = (k === 0 || k === 6) ? 0 : 0.36;
+      attr.setXYZ(
+        k,
+        p0.x + (p1.x - p0.x) * f + (Math.random() - 0.5) * jit,
+        p0.y + (p1.y - p0.y) * f + (Math.random() - 0.5) * jit + Math.sin(f * Math.PI) * 0.22,
+        p0.z + (p1.z - p0.z) * f + (Math.random() - 0.5) * jit
+      );
+    }
+    attr.needsUpdate = true;
+    a.mat.opacity = 1.0;
+    a.line.visible = true;
   }
 
   const ringGeo = new T.RingGeometry(0.68, 1.0, 28);
   ringGeo.rotateX(-Math.PI / 2);
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 14; i++) {
     const m = new T.Mesh(ringGeo, new T.MeshBasicMaterial({
       color: 0x56f0ff, transparent: true, opacity: 0, side: T.DoubleSide, depthWrite: false, fog: false
     }));
@@ -590,7 +625,7 @@ export function installChemGun(tools, game, helpers, ymRef) {
   }
 
   const bubGeo = new T.SphereGeometry(0.15, 12, 10);
-  for (let i = 0; i < 18; i++) {
+  for (let i = 0; i < 22; i++) {
     const bm = plain(new T.MeshStandardMaterial({
       color: i % 2 ? 0x7ef6ff : 0xff94e6,
       emissive: new T.Color(i % 2 ? 0x26d8ff : 0xff54cc),
@@ -630,50 +665,221 @@ export function installChemGun(tools, game, helpers, ymRef) {
   }
 
   let shotCycle = 0;
+  let lockedMode = -1; // -1 = Auto-Cycle (1H->6C->10Ne->18Ar->118Og), 0..4 = Locked Element!
   let cool = 0;
   const _fwd = new T.Vector3();
+  const _mz = new T.Vector3();
+  const _toAim = new T.Vector3();
+  const _u = new T.Vector3();
+  const _w = new T.Vector3();
+  const _tmpP = new T.Vector3();
+  const UP = new T.Vector3(0, 1, 0);
+  const FWD = new T.Vector3(0, 0, 1);
+
+  function getActiveElement() {
+    const idx = lockedMode >= 0 ? lockedMode : (shotCycle % ELEMENT_SHOTS.length);
+    return ELEMENT_SHOTS[idx];
+  }
+
+  // Sleek Compact Bottom-Right Element Mode Bar (#chemBar) + X / 1-5 Hotkeys!
+  let chemBar = document.getElementById("chemBar");
+  if (!chemBar) {
+    chemBar = document.createElement("div");
+    chemBar.id = "chemBar";
+    chemBar.innerHTML = `
+      <div class="cb-hd"><span>⚗️ 元素弹仓</span><span>按 X 切换 · 右键开镜</span></div>
+      <div class="cb-row">
+        <button type="button" data-mode="-1" style="--bcol:#7ef6ff" class="on">自动</button>
+        <button type="button" data-mode="0" style="--bcol:#4cf4ff">1 H</button>
+        <button type="button" data-mode="1" style="--bcol:#ffda5c">6 C</button>
+        <button type="button" data-mode="2" style="--bcol:#ff7242">10 Ne</button>
+        <button type="button" data-mode="3" style="--bcol:#b482ff">18 Ar</button>
+        <button type="button" data-mode="4" style="--bcol:#ff66dc">118 Og</button>
+      </div>`;
+    (document.getElementById("hud") || document.body).appendChild(chemBar);
+    chemBar.addEventListener("click", (ev) => {
+      const btn = ev.target.closest("button[data-mode]");
+      if (!btn) return;
+      ev.stopPropagation();
+      setElementMode(parseInt(btn.dataset.mode, 10));
+    });
+  }
+
+  function syncBarUI() {
+    if (!chemBar) return;
+    chemBar.querySelectorAll("button[data-mode]").forEach((b) => {
+      b.classList.toggle("on", parseInt(b.dataset.mode, 10) === lockedMode);
+    });
+  }
+
+  function setElementMode(mode, announce = true) {
+    lockedMode = mode;
+    syncChamberColor();
+    syncBarUI();
+    playElementSynth(game.audio, "switch", mode + 2);
+    if (announce && game.ui) {
+      const name = mode < 0 ? "自动五元素循环（第 5 发必出 118 Og 超新星！）" : `${ELEMENT_SHOTS[mode].label}（锁定模式）`;
+      game.ui.toast(`⚗️ 元素炮已切换：${name}`, 2.6);
+    }
+  }
+
+  addEventListener("keydown", (ev) => {
+    if (ev.repeat || !game.started || !game.player || !game.player.enabled) return;
+    if (game.player.seat || game.player.riding) return;
+    if (tools.held !== "chemgun") return;
+    if (ev.code === "KeyX") {
+      const next = lockedMode >= 4 ? -1 : lockedMode + 1;
+      setElementMode(next, true);
+    } else if (/^Digit[1-5]$/.test(ev.code)) {
+      setElementMode(parseInt(ev.code.slice(5), 10) - 1, true);
+    } else if (ev.code === "Digit0") {
+      setElementMode(-1, true);
+    }
+  });
 
   function syncChamberColor() {
-    const nextEl = ELEMENT_SHOTS[shotCycle % ELEMENT_SHOTS.length];
+    const nextEl = getActiveElement();
     item.coreMat.color.setHex(nextEl.hex);
     item.coreMat.emissive.setHex(nextEl.hex);
   }
   syncChamberColor();
 
-  function detonate(s, hitObj = false) {
+  tools._getChemSightState = function () {
+    const el = getActiveElement();
+    const isAuto = lockedMode < 0;
+    const step = isAuto ? (shotCycle % ELEMENT_SHOTS.length) : lockedMode;
+    const ogReady = el.kind === "og_nova";
+    return {
+      css: el.css,
+      label: isAuto ? `${el.short}` : `🔒${el.short}`,
+      chargeFrac: ogReady ? 1.0 : Math.max(0.2, (step + 1) / ELEMENT_SHOTS.length),
+      ogReady
+    };
+  };
+
+  function detonate(s, hitObj = false, hitKind = "", hitRef = null) {
     const p = s.pos;
     const el = s.el;
     const isLab = !!(game.chemlab && game.chemlab.inside);
     const floorY = isLab ? 1500.06 : Math.max(game.world.groundAt(p.x, p.z) + 0.08, p.y - 0.35);
+    const camPos = game.camera ? game.camera.position : p;
+    const distScale = Math.min(1, 20 / (4 + p.distanceTo(camPos)));
+    const gun = tools.gun;
 
+    // 1. Trigger unified target hit logic!
+    let hitLabel = "";
+    let hitCrit = false;
+    if (hitKind === "balloon" && hitRef && !hitRef.got) {
+      hitRef.got = true;
+      hitRef.pop = 0;
+      game.heli.popped++;
+      const l = game.heli.popped, c = game.heli.balloons.length;
+      game.logic.count("balloons", l, c);
+      if (l >= c) { game.logic.complete("balloons"); game.ui.toast("八个礼物气球全被元素炮轰落啦！化学神枪猫！", 6); }
+      else game.ui.toast(`元素炮精准击落礼物气球！（${l} / ${c}）`, 3.2);
+      hitLabel = "🎈 击落气球";
+      hitCrit = true;
+    } else if (hitKind === "shootTarget" && hitRef) {
+      const res = hitRef.onHit({
+        pos: p.clone(),
+        dir: s.dir.clone(),
+        weapon: "chemgun",
+        element: el.id,
+        heavy: el.kind === "og_nova" || el.kind === "c_diamond"
+      });
+      hitLabel = (res && res.label) || `⚗️ ${el.short} 命中`;
+      hitCrit = !!(res && res.crit) || el.kind === "og_nova";
+    } else if (hitKind === "thing") {
+      game.explore && game.explore.ballHit(p);
+      hitLabel = hitRef && hitRef.target ? "🎯 靶心命中" : "✦ 命中";
+      hitCrit = !!(hitRef && hitRef.target);
+    } else if (hitKind === "folk" && hitRef) {
+      game.folk && game.folk.hit(hitRef, el.kind === "c_diamond" || el.kind === "og_nova" ? "kick" : "ball", s.dir.x, s.dir.z);
+      hitLabel = `⚗️ ${el.short} 命中`;
+    } else if (hitKind === "pet") {
+      game.pets && game.pets.strike(p.x, p.z, 1.0, "cane", s.dir.x, s.dir.z);
+      hitLabel = "✨ 击飞小龙虾";
+    } else if (hitKind === "friend" && hitRef) {
+      game.friends && game.friends.hopNow(hitRef, 0.55, 0.6);
+      if (hitRef.cool <= 0) {
+        game.friends.say(hitRef, `哇！是 ${el.id} 号元素光弹，超炫酷的！`, 3.2);
+        hitRef.cool = 2.8;
+      }
+      hitLabel = `✨ ${el.short} 彩蛋`;
+    }
+
+    // 2. Unique 18 Ar Argon CHAIN-LIGHTNING ARC to up to 2 nearby targets within 7.5m!
+    if (el.kind === "ar_bolt" && !isLab) {
+      let chained = 0;
+      if (game.shootTargets && game.shootTargets.length) {
+        for (const tg of game.shootTargets) {
+          if (chained >= 2) break;
+          if (tg === hitRef || (tg.alive && !tg.alive())) continue;
+          if (p.distanceTo(tg.pos) < 7.5) {
+            spawnLightningArc(p, tg.pos);
+            tg.onHit({ pos: tg.pos.clone(), dir: s.dir.clone(), weapon: "chemgun", element: "Ar", heavy: true });
+            chained++;
+          }
+        }
+      }
+      if (chained < 2 && game.folk) {
+        for (const fk of game.folk.around(p.x, p.z, 6.5)) {
+          if (chained >= 2 || fk === hitRef) continue;
+          const m = fk.clawd || fk.snowman;
+          if (m) {
+            const tp = _tmpP.set(m.x, game.world.groundAt(m.x, m.z) + 0.7, m.z);
+            spawnLightningArc(p, tp);
+            game.folk.hit(fk, "kick", m.x - p.x, m.z - p.z);
+            chained++;
+          }
+        }
+      }
+      if (chained > 0) {
+        hitLabel = `⚡ 氩雷连锁 ×${chained + 1}`;
+        hitCrit = true;
+      }
+    }
+
+    if (hitLabel && gun && gun.registerHit) {
+      gun.registerHit(hitCrit, hitLabel);
+    }
+
+    // 3. Visual & Studio DSP Detonation FX by Element!
     if (el.kind === "og_nova") {
       // 118 Og GRAND RAINBOW PERIODIC-TABLE SUPERNOVA!
-      spawnRing(p.x, floorY, p.z, 0.35, 4.4, 0.72, 0x4cf4ff);
-      spawnRing(p.x, floorY + 0.14, p.z, 0.25, 3.6, 0.65, 0xffd85a);
-      spawnRing(p.x, floorY + 0.28, p.z, 0.20, 2.8, 0.58, 0xff62d8);
+      spawnRing(p.x, floorY, p.z, 0.35, 5.2, 0.74, 0x4cf4ff);
+      spawnRing(p.x, floorY + 0.16, p.z, 0.25, 4.2, 0.66, 0xffd85a);
+      spawnRing(p.x, floorY + 0.32, p.z, 0.20, 3.3, 0.58, 0xff62d8);
       const pals = [[0.28, 0.94, 1.0], [1.0, 0.86, 0.34], [1.0, 0.40, 0.22], [0.64, 0.44, 1.0], [1.0, 0.42, 0.88]];
-      for (let k = 0; k < 42; k++) {
+      for (let k = 0; k < 44; k++) {
         const a = Math.random() * Math.PI * 2;
-        const elev = (Math.random() - 0.2) * 4.4;
-        const sp = 1.8 + Math.random() * 4.6;
+        const elev = (Math.random() - 0.15) * 4.8;
+        const sp = 2.0 + Math.random() * 5.0;
         const c = pals[k % pals.length];
         game.puffs.spawn(
           p.x, p.y, p.z,
           Math.cos(a) * sp, 1.4 + elev, Math.sin(a) * sp,
-          0.10 + Math.random() * 0.09, 0.90, 0.65 + Math.random() * 0.45,
+          0.11 + Math.random() * 0.09, 0.90, 0.65 + Math.random() * 0.45,
           c[0], c[1], c[2], 3.4, 1.5
         );
       }
-      for (let b = 0; b < 6; b++) {
-        spawnBubble(p.x + (Math.random() - 0.5) * 0.7, p.y + 0.15, p.z + (Math.random() - 0.5) * 0.7, ELEMENT_SHOTS[b % 5].hex);
+      for (let b = 0; b < 7; b++) {
+        spawnBubble(p.x + (Math.random() - 0.5) * 0.9, p.y + 0.15, p.z + (Math.random() - 0.5) * 0.9, ELEMENT_SHOTS[b % 5].hex);
       }
-      game.sparks && game.sparks.spawn(p.x, p.y, p.z, 0, 0, 0, 1.15, 0.96, 0.22, 3.8, 2.6, 3.6, 0, 0);
-      playElementSynth(game.audio, "og_boom");
+      game.sparks && game.sparks.spawn(p.x, p.y, p.z, 0, 0, 0, 1.3, 0.96, 0.24, 3.8, 2.6, 3.6, 0, 0);
+      playElementSynth(game.audio, "og_boom", distScale);
 
-      // Joyful area bounce for nearby friends, snowmen & wild Clawds!
+      // AoE trigger for nearby shootable targets & joyful bounce!
+      if (!isLab && game.shootTargets) {
+        for (const tg of game.shootTargets) {
+          if (tg !== hitRef && (!tg.alive || tg.alive()) && p.distanceTo(tg.pos) < 5.2) {
+            tg.onHit({ pos: tg.pos.clone(), dir: s.dir.clone(), weapon: "chemgun", element: "Og", heavy: true });
+          }
+        }
+      }
       if (game.friends && game.friends.list) {
         for (const fr of game.friends.list) {
-          if (Math.hypot(fr.x - p.x, fr.z - p.z) < 5.0) {
+          if (Math.hypot(fr.x - p.x, fr.z - p.z) < 5.2) {
             game.friends.hopNow(fr, 0.58, 0.68);
             if (fr.cool <= 0) {
               game.friends.say(fr, "哇！！118 号 Og 元素超新星烟花太炫啦！！", 3.8);
@@ -682,26 +888,26 @@ export function installChemGun(tools, game, helpers, ymRef) {
           }
         }
       }
-      if (!isLab && game.pets) game.pets.shock(p.x, p.z, 4.5);
+      if (!isLab && game.pets) game.pets.shock(p.x, p.z, 4.8);
       if (!isLab && game.folk) {
-        for (const fk of game.folk.around(p.x, p.z, 4.2)) {
+        for (const fk of game.folk.around(p.x, p.z, 4.6)) {
           const m = fk.clawd || fk.snowman;
           if (m) game.folk.hit(fk, "punch", m.x - p.x, m.z - p.z);
         }
       }
     } else {
-      spawnRing(p.x, floorY, p.z, 0.20, el.kind === "c_diamond" ? 2.4 : 1.75, 0.44, el.hex);
+      spawnRing(p.x, floorY, p.z, 0.22, el.kind === "c_diamond" ? 2.7 : 2.0, 0.44, el.hex);
       if (el.kind === "ar_bolt") {
-        spawnRing(p.x, floorY + 0.12, p.z, 0.15, 2.6, 0.50, 0x52f2ff);
+        spawnRing(p.x, floorY + 0.14, p.z, 0.16, 2.9, 0.50, 0x52f2ff);
       }
-      const cnt = el.kind === "c_diamond" ? 20 : 14;
+      const cnt = el.kind === "c_diamond" ? 24 : 16;
       for (let k = 0; k < cnt; k++) {
         const a = Math.random() * Math.PI * 2;
-        const sp = 1.4 + Math.random() * 3.0;
+        const sp = 1.6 + Math.random() * 3.4;
         game.puffs.spawn(
           p.x, p.y, p.z,
-          Math.cos(a) * sp, 0.9 + Math.random() * 2.2, Math.sin(a) * sp,
-          0.07 + Math.random() * 0.06, 0.88, 0.36 + Math.random() * 0.28,
+          Math.cos(a) * sp, 0.9 + Math.random() * 2.4, Math.sin(a) * sp,
+          0.075 + Math.random() * 0.06, 0.88, 0.36 + Math.random() * 0.28,
           el.rgb[0], el.rgb[1], el.rgb[2], 3.8, 1.4
         );
       }
@@ -712,8 +918,8 @@ export function installChemGun(tools, game, helpers, ymRef) {
       if (el.kind === "ne_ring") {
         game.cold && (game.cold.w = Math.min(100, game.cold.w + 8));
       }
-      game.sparks && game.sparks.spawn(p.x, p.y, p.z, 0, 0, 0, 0.58, 0.95, 0.13, el.rgb[0] * 3.2, el.rgb[1] * 3.2, el.rgb[2] * 3.2, 0, 0);
-      if (hitObj) playElementSynth(game.audio, "impact");
+      game.sparks && game.sparks.spawn(p.x, p.y, p.z, 0, 0, 0, 0.65, 0.95, 0.14, el.rgb[0] * 3.2, el.rgb[1] * 3.2, el.rgb[2] * 3.2, 0, 0);
+      if (hitObj) playElementSynth(game.audio, "impact", el.kind);
     }
 
     s.on = false;
@@ -724,60 +930,118 @@ export function installChemGun(tools, game, helpers, ymRef) {
     if (cool > 0) return true;
     const pl = game.player;
     const ch = game.character;
+    const gun = this.gun;
     if (!pl.enabled || !ch) return false;
 
-    const el = ELEMENT_SHOTS[shotCycle % ELEMENT_SHOTS.length];
-    shotCycle++;
-    cool = el.kind === "og_nova" ? 0.45 : 0.25;
-    this.aimT = 1.35;
-    this.aimView = true;
-    this.kick = Math.min(1.5, (this.kick || 0) + (el.kind === "og_nova" ? 1.25 : 0.72));
+    const el = getActiveElement();
+    const isAuto = lockedMode < 0;
+    if (isAuto) shotCycle++;
+    const odScale = gun && gun.overdriveT > 0 ? 0.65 : 1.0;
+    cool = ((el.kind === "og_nova" && !isAuto) ? 1.15 : el.cool) * odScale;
 
-    // Aim direction: camera forward in 1st-person, character facing forward in 3rd-person!
-    if (pl.view !== "tp") {
-      game.camera.getWorldDirection(_fwd).normalize();
+    this.aimT = 1.25;
+    this.aimView = true;
+    this.kick = Math.min(1.5, (this.kick || 0) + (el.kind === "og_nova" ? 1.35 : 0.78));
+    if (ch.emote) ch.stop(0.08);
+
+    // 1. Compute EXACT 3D barrel muzzle world position!
+    item.root.updateMatrixWorld(true);
+    if (item.root.visible && (pl.view !== "tp" || this.k > 0.7)) {
+      item.muzzleSpin.getWorldPosition(_mz);
     } else {
-      const yaw = ch.yaw;
-      _fwd.set(-Math.sin(yaw), Math.max(-0.25, Math.min(0.35, pl.pitch * 0.45)), -Math.cos(yaw)).normalize();
+      const r = pl.yaw;
+      const baseY = pl.y - pl.eye + pl.air - pl.wade + 0.92 + Math.sin(pl.pitch) * 0.45;
+      _mz.set(pl.pos.x + Math.cos(r) * 0.18 - Math.sin(r) * 0.62, baseY, pl.pos.z - Math.sin(r) * 0.18 - Math.cos(r) * 0.62);
     }
 
-    const baseY = pl.view !== "tp" ? game.camera.position.y - 0.12 : (pl.y - pl.eye + 0.88);
-    const ox = pl.view !== "tp" ? game.camera.position.x + _fwd.x * 0.55 : pl.pos.x + _fwd.x * 0.72;
-    const oz = pl.view !== "tp" ? game.camera.position.z + _fwd.z * 0.55 : pl.pos.z + _fwd.z * 0.72;
+    // 2. Compute EXACT 3D target aim direction via unified gun.sightLine()!
+    if (pl.frontLock && ch) {
+      const cy = ch.yaw;
+      _toAim.set(-Math.sin(cy), 0.04, -Math.cos(cy)).normalize();
+    } else if (gun) {
+      gun.sightLine();
+      game.camera.getWorldDirection(_fwd);
+      _toAim.copy(gun.aim).sub(_mz);
+      const dist = _toAim.length();
+      if (dist < 1.5 || _toAim.dot(_fwd) < dist * 0.25) {
+        _toAim.copy(_fwd).normalize();
+      } else {
+        _toAim.multiplyScalar(1 / dist);
+      }
+    } else {
+      game.camera.getWorldDirection(_toAim).normalize();
+    }
+
+    // Slight ADS-tightened accuracy spread
+    const spRad = gun ? gun.spread * 0.75 : 0.005;
+    if (spRad > 0.001) {
+      const ra = Math.random() * Math.PI * 2;
+      const rr = Math.tan(spRad) * Math.sqrt(Math.random());
+      _u.crossVectors(_toAim, UP);
+      if (_u.lengthSq() < 1e-4) _u.set(1, 0, 0);
+      _u.normalize();
+      _w.crossVectors(_u, _toAim);
+      _toAim.addScaledVector(_u, Math.cos(ra) * rr).addScaledVector(_w, Math.sin(ra) * rr).normalize();
+    }
 
     const nShots = el.spread || 1;
+    const fanHalf = (gun && gun.ads > 0.5) ? 0.038 : 0.068;
+    _u.crossVectors(_toAim, UP);
+    if (_u.lengthSq() < 1e-4) _u.set(1, 0, 0);
+    _u.normalize();
+
     for (let k = 0; k < nShots; k++) {
       const slot = shots.find((s) => !s.on) || shots[0];
-      const ang = nShots > 1 ? (k - 1) * 0.095 : 0;
-      const dx = _fwd.x * Math.cos(ang) - _fwd.z * Math.sin(ang);
-      const dz = _fwd.x * Math.sin(ang) + _fwd.z * Math.cos(ang);
+      const off = nShots > 1 ? (k - 1) * fanHalf : 0;
 
       slot.on = true;
       slot.t = 0;
       slot.dist = 0;
       slot.trail = 0;
+      slot.free = 0;
       slot.seen.clear();
       slot.el = el;
-      slot.speed = el.speed;
+      slot.speed = el.speed * (gun && gun.ads > 0.5 ? 1.12 : 1.0);
       slot.maxDist = el.range;
-      slot.pos.set(ox, baseY, oz);
-      slot.dir.set(dx, _fwd.y, dz).normalize();
+      slot.pos.copy(_mz);
+      slot.dir.copy(_toAim).addScaledVector(_u, off).normalize();
       slot.mat.color.setHex(el.hex);
       slot.mat.emissive.setHex(el.hex);
 
-      const sc = el.kind === "og_nova" ? 1.65 : el.kind === "c_diamond" ? 1.35 : el.kind === "h_triple" ? 0.72 : 1.05;
+      // Avoid immediate wall clipping right next to muzzle
+      if (gun && !(game.chemlab && game.chemlab.inside)) {
+        for (let m = 0.25; m < 1.9; m += 0.25) {
+          const h = gun.probe(_tmpP.copy(_mz).addScaledVector(slot.dir, m));
+          if (h) { if (h.kind === "wall") slot.free = 2.1; break; }
+        }
+      }
+
+      const sc = el.kind === "og_nova" ? 1.65 : el.kind === "c_diamond" ? 1.30 : el.kind === "h_triple" ? 0.78 : 1.08;
       slot.g.scale.setScalar(sc);
+      slot.spear.visible = el.kind === "c_diamond" || el.kind === "ar_bolt" || el.kind === "h_triple";
       slot.halo.visible = el.kind === "ne_ring" || el.kind === "og_nova" || el.kind === "ar_bolt";
       slot.g.position.copy(slot.pos);
+      slot.g.quaternion.setFromUnitVectors(FWD, slot.dir);
       slot.g.visible = true;
     }
 
-    // Muzzle flash burst!
-    game.sparks && game.sparks.spawn(ox, baseY, oz, 0, 0, 0, 0.45, 0.95, 0.10, el.rgb[0] * 3.5, el.rgb[1] * 3.5, el.rgb[2] * 3.5, 0, 0);
-    playElementSynth(game.audio, el.kind);
-    if (el.kind === "og_nova") {
-      game.ui && game.ui.toast("💥 118 Og (Oganesson 鿫) 终极周期表超新星发射！！", 3.0);
+    // Crisp Muzzle Flash Burst + Dynamic Light + Spring Camera Recoil + Studio Physical DSP Audio!
+    game.sparks && game.sparks.spawn(_mz.x, _mz.y, _mz.z, 0, 0, 0, 0.52, 0.95, 0.11, el.rgb[0] * 3.6, el.rgb[1] * 3.6, el.rgb[2] * 3.6, 0, 0);
+    for (let m = 0; m < 6; m++) {
+      const sp = 4 + Math.random() * 7;
+      game.puffs && game.puffs.spawn(
+        _mz.x, _mz.y, _mz.z,
+        _toAim.x * sp + (Math.random() - 0.5) * 1.1,
+        _toAim.y * sp + (Math.random() - 0.5) * 1.1,
+        _toAim.z * sp + (Math.random() - 0.5) * 1.1,
+        0.055 + Math.random() * 0.04, 0.72, 0.18, el.rgb[0], el.rgb[1], el.rgb[2], 0.4, 5
+      );
     }
+    if (gun && gun.kickCamera) {
+      const adsDamp = 1 - (gun.ads || 0) * 0.35;
+      gun.kickCamera(el.recoil * adsDamp, el.recoil * 0.38 * adsDamp, el.recoil * 1.15, el.hex, _mz);
+    }
+    playElementSynth(game.audio, el.kind, !!(gun && (gun.ads > 0.5 || gun.overdriveT > 0)));
     syncChamberColor();
     return true;
   };
@@ -785,114 +1049,104 @@ export function installChemGun(tools, game, helpers, ymRef) {
   tools._updateChemGun = function (dt, time) {
     if (cool > 0) cool = Math.max(0, cool - dt);
     if (this.kick > 0 && this.held === "chemgun") {
-      this.kick = Math.max(0, this.kick - dt * 4.5);
+      this.kick = Math.max(0, this.kick - dt * 5.2);
     }
 
-    // Animate held 118 Og Element Cannon muzzle & core orb
+    const active = !!(this.gun && this.gun.chemActive);
+    if (chemBar) chemBar.classList.toggle("show", active);
+
+    // Animate held 118 Og Element Cannon muzzle & core orb (spins faster when ADS / overdrive!)
     if (this.held === "chemgun" && item.root.visible) {
-      const spinSpd = 2.6 + (this.kick || 0) * 14.0;
+      const adsBoost = this.gun ? (this.gun.ads || 0) * 6.5 : 0;
+      const spinSpd = 2.8 + adsBoost + (this.kick || 0) * 16.0;
       item.muzzleSpin.rotation.z += dt * spinSpd;
       item.ringB.rotation.y += dt * (spinSpd * 0.85);
-      item.coreOrb.rotation.y = time * 3.2;
-      item.coreOrb.rotation.x = time * 1.9;
+      item.coreOrb.rotation.y = time * 3.6;
+      item.coreOrb.rotation.x = time * 2.1;
       // Rainbow pulse when 118 Og Supernova is chambered next!
-      if ((shotCycle % ELEMENT_SHOTS.length) === 4) {
-        const hue = (time * 0.85) % 1;
+      if (getActiveElement().kind === "og_nova") {
+        const hue = (time * 0.95) % 1;
         item.coreMat.color.setHSL(hue, 0.95, 0.65);
         item.coreMat.emissive.setHSL(hue, 0.95, 0.55);
       }
     }
 
     const isLab = !!(game.chemlab && game.chemlab.inside);
+    const gun = this.gun;
 
-    // Simulate active elemental projectiles
+    // Simulate active high-velocity elemental projectiles with crisp sub-stepped collision!
     for (const s of shots) {
       if (!s.on) continue;
       s.t += dt;
-      const step = s.speed * dt;
-      s.dist += step;
-      s.pos.addScaledVector(s.dir, step);
+      let left = s.speed * dt;
+      let hit = null;
+
+      while (left > 1e-4 && !hit) {
+        const seg = Math.min(0.35, left);
+        s.pos.addScaledVector(s.dir, seg);
+        left -= seg;
+        s.dist += seg;
+        s.trail += seg;
+
+        if (s.trail > (s.el.kind === "og_nova" ? 0.45 : 0.65)) {
+          s.trail = 0;
+          const c = s.el.rgb;
+          game.puffs && game.puffs.spawn(
+            s.pos.x, s.pos.y, s.pos.z,
+            (Math.random() - 0.5) * 0.4, 0.15 + Math.random() * 0.3, (Math.random() - 0.5) * 0.4,
+            s.el.kind === "og_nova" ? 0.11 : 0.068, 0.84, 0.28, c[0], c[1], c[2], 0.9, 1.8
+          );
+        }
+
+        if (isLab) {
+          if (Math.abs(s.pos.x - 1500) > 7.4 || Math.abs(s.pos.z - 1500) > 6.4 || s.pos.y < 1500.12 || s.pos.y > 1505.2) {
+            hit = { kind: "wall", ref: null };
+          }
+        } else if (gun) {
+          const h = gun.probe(s.pos);
+          if (h && !(h.kind === "wall" && s.dist < s.free)) {
+            hit = h;
+          }
+        }
+      }
+
+      if (hit) {
+        if (hit.kind === "tree" || hit.kind === "trunk") {
+          if (hit.ref && game.time - (hit.ref.shotT || 0) > 0.5) {
+            hit.ref.shotT = game.time;
+            game.player.dumpSnow(hit.ref, s.pos.x, s.pos.y + 0.5, s.pos.z, 85);
+          }
+        }
+        detonate(s, true, hit.kind, hit.ref);
+        continue;
+      }
+
+      if (!isLab && game.player.allowed && !game.player.allowed(s.pos.x, s.pos.z)) {
+        detonate(s, false, "", null);
+        continue;
+      }
+      if (s.dist >= s.maxDist) {
+        detonate(s, true, "", null);
+        continue;
+      }
+
       s.g.position.copy(s.pos);
-      s.g.rotation.set(s.t * 6, s.t * 10, s.t * 4);
+      s.g.quaternion.setFromUnitVectors(FWD, s.dir);
+      s.orb.rotation.z = s.t * 14;
+      s.halo.rotation.z = -s.t * 10;
       if (s.el.kind === "og_nova") {
-        const hue = (time * 1.8 + s.t * 2) % 1;
+        const hue = (time * 1.9 + s.t * 2.2) % 1;
         s.mat.color.setHSL(hue, 0.95, 0.66);
         s.mat.emissive.setHSL(hue, 0.95, 0.56);
       }
+    }
 
-      if ((s.trail += step) > 0.42) {
-        s.trail = 0;
-        const c = s.el.rgb;
-        game.puffs && game.puffs.spawn(
-          s.pos.x, s.pos.y, s.pos.z,
-          (Math.random() - 0.5) * 0.5, 0.25 + Math.random() * 0.4, (Math.random() - 0.5) * 0.5,
-          s.el.kind === "og_nova" ? 0.11 : 0.065, 0.86, 0.32, c[0], c[1], c[2], 1.2, 1.3
-        );
-      }
-
-      // Ground / Indoor wall impact check
-      if (isLab) {
-        if (Math.abs(s.pos.x - 1500) > 7.4 || Math.abs(s.pos.z - 1500) > 6.4 || s.pos.y < 1500.12 || s.pos.y > 1505.2) {
-          detonate(s, true);
-          continue;
-        }
-      } else {
-        const gy = game.world.groundAt(s.pos.x, s.pos.z);
-        if (s.pos.y <= gy + 0.14) {
-          detonate(s, true);
-          continue;
-        }
-        // Interactive world targets outdoors
-        const rHit = s.el.kind === "og_nova" ? 1.15 : 0.82;
-        if (game.pets && game.pets.strike(s.pos.x, s.pos.z, rHit, "cane", s.dir.x, s.dir.z)) {
-          detonate(s, true);
-          continue;
-        }
-        const fk = game.folk && game.folk.target(s.pos.x, s.pos.z, rHit);
-        if (fk && !s.seen.has(fk)) {
-          s.seen.add(fk);
-          game.folk.hit(fk, "kick", s.dir.x, s.dir.z);
-          detonate(s, true);
-          continue;
-        }
-        const fr = game.friends && game.friends.near(s.pos.x, s.pos.z, rHit);
-        if (fr && !s.seen.has(fr)) {
-          s.seen.add(fr);
-          game.friends.hopNow(fr, 0.55, 0.6);
-          if (fr.cool <= 0) {
-            game.friends.say(fr, `哇！是 ${s.el.id} 号元素光弹，闪闪发光好好玩！`, 3.2);
-            fr.cool = 2.8;
-          }
-          detonate(s, true);
-          continue;
-        }
-        if (game.explore && (game.explore.strike(s.pos.x, s.pos.z, rHit) || game.explore.ballHit(s.pos))) {
-          detonate(s, true);
-          continue;
-        }
-        let hitTree = false;
-        if (game.forest && game.forest.trees) {
-          for (const tr of game.forest.trees) {
-            if (!tr.near || s.seen.has(tr)) continue;
-            if (Math.hypot(s.pos.x - tr.x, s.pos.z - tr.z) < tr.r + 0.52) {
-              s.seen.add(tr);
-              game.player.dumpSnow(tr, s.pos.x, s.pos.y + 0.7, s.pos.z, 95);
-              hitTree = true;
-              break;
-            }
-          }
-        }
-        if (hitTree) {
-          detonate(s, true);
-          continue;
-        }
-        if (game.player.allowed && !game.player.allowed(s.pos.x, s.pos.z)) {
-          detonate(s, false);
-          continue;
-        }
-      }
-
-      if (s.dist >= s.maxDist) detonate(s, true);
+    // Fade 3D Argon Chain-Lightning Arcs
+    for (const a of arcs) {
+      if (!a.on) continue;
+      a.t += dt;
+      if (a.t >= a.dur) { a.on = false; a.line.visible = false; continue; }
+      a.mat.opacity = 1 - a.t / a.dur;
     }
 
     // Expand shockwave rings
