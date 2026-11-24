@@ -77,52 +77,60 @@ function playElementSynth(audio, kind) {
   const now = ctx.currentTime;
   const master = audio.master || ctx.destination;
 
-  const tone = (f0, f1, delay, dur, gain = 0.048, type = "sine") => {
+  const tone = (f0, f1, delay, dur, gain = 0.044, type = "sine", rev = 0.32) => {
     const osc = ctx.createOscillator();
     osc.type = type;
     osc.frequency.setValueAtTime(f0, now + delay);
     if (f1 && f1 !== f0) osc.frequency.exponentialRampToValueAtTime(Math.max(40, f1), now + delay + dur);
     const lp = ctx.createBiquadFilter();
     lp.type = "lowpass";
-    lp.frequency.value = 3400;
+    lp.frequency.value = 3000;
     const g = ctx.createGain();
     g.gain.setValueAtTime(1e-4, now + delay);
     g.gain.linearRampToValueAtTime(gain, now + delay + 0.012);
     g.gain.exponentialRampToValueAtTime(1e-4, now + delay + dur);
     osc.connect(lp).connect(g).connect(master);
+    if (rev > 0 && audio.rev) {
+      const rg = ctx.createGain();
+      rg.gain.value = rev;
+      g.connect(rg).connect(audio.rev);
+    }
     osc.start(now + delay);
-    osc.stop(now + delay + dur + 0.04);
+    osc.stop(now + delay + dur + 0.05);
   };
 
   if (kind === "h_triple") {
-    tone(980, 1520, 0, 0.11, 0.042, "sine");
-    tone(1180, 1760, 0.045, 0.11, 0.036, "sine");
-    tone(1420, 2100, 0.09, 0.13, 0.034, "triangle");
+    tone(980, 1520, 0, 0.11, 0.036, "sine", 0.36);
+    tone(1180, 1760, 0.045, 0.11, 0.032, "sine", 0.36);
+    tone(1420, 2100, 0.09, 0.13, 0.030, "triangle", 0.40);
   } else if (kind === "c_diamond") {
-    tone(660, 1320, 0, 0.16, 0.046, "triangle");
-    tone(990, 1980, 0.03, 0.22, 0.038, "sine");
+    tone(660, 1320, 0, 0.17, 0.040, "triangle", 0.42);
+    tone(990, 1980, 0.03, 0.24, 0.034, "sine", 0.46);
+    tone(1480, 2220, 0.05, 0.20, 0.018, "sine", 0.48);
   } else if (kind === "ne_ring") {
-    tone(420, 880, 0, 0.18, 0.048, "sawtooth");
-    tone(840, 1260, 0.04, 0.20, 0.036, "sine");
+    // Silky warm neon plasma discharge (dual detuned triangle+sine, zero harsh sawtooth buzz!)
+    tone(392, 784, 0, 0.19, 0.042, "triangle", 0.38);
+    tone(396, 792, 0.008, 0.19, 0.032, "sine", 0.40);
+    tone(880, 1320, 0.04, 0.22, 0.028, "sine", 0.44);
   } else if (kind === "ar_bolt") {
-    tone(780, 320, 0, 0.14, 0.045, "triangle");
-    tone(1240, 1860, 0.025, 0.16, 0.040, "sine");
-    tone(1620, 960, 0.06, 0.16, 0.032, "triangle");
+    tone(740, 310, 0, 0.15, 0.040, "triangle", 0.36);
+    tone(1174.66, 1760, 0.025, 0.17, 0.036, "sine", 0.42);
+    tone(1567.98, 987.77, 0.06, 0.18, 0.028, "triangle", 0.44);
   } else if (kind === "og_nova") {
     const notes = [523.25, 659.25, 783.99, 1046.5, 1318.5, 1567.98];
-    notes.forEach((n, i) => tone(n, n * 1.12, i * 0.035, 0.34, 0.042, i % 2 ? "triangle" : "sine"));
+    notes.forEach((n, i) => tone(n, n * 1.10, i * 0.034, 0.38, 0.038, i % 2 ? "triangle" : "sine", 0.50));
   } else if (kind === "og_boom") {
-    tone(260, 82, 0, 0.38, 0.055, "sine");
-    tone(523.25, 1046.5, 0.02, 0.42, 0.045, "triangle");
-    tone(783.99, 1567.98, 0.07, 0.46, 0.040, "sine");
-    tone(1174.66, 2093.0, 0.12, 0.50, 0.034, "sine");
+    tone(220, 68, 0, 0.42, 0.068, "sine", 0.45);
+    tone(523.25, 1046.5, 0.02, 0.46, 0.042, "triangle", 0.52);
+    tone(783.99, 1567.98, 0.07, 0.50, 0.036, "sine", 0.54);
+    tone(1174.66, 2093.0, 0.12, 0.54, 0.030, "sine", 0.56);
   } else if (kind === "impact") {
-    tone(740, 1180, 0, 0.12, 0.036, "sine");
-    tone(1120, 1580, 0.04, 0.15, 0.028, "triangle");
+    tone(740, 1180, 0, 0.13, 0.032, "sine", 0.35);
+    tone(1120, 1580, 0.04, 0.16, 0.025, "triangle", 0.38);
   } else if (kind === "gear") {
-    tone(587.33, 587.33, 0, 0.14, 0.04, "sine");
-    tone(880, 880, 0.06, 0.16, 0.04, "sine");
-    tone(1174.66, 1318.5, 0.12, 0.24, 0.042, "triangle");
+    tone(587.33, 587.33, 0, 0.15, 0.036, "sine", 0.38);
+    tone(880, 880, 0.06, 0.18, 0.036, "sine", 0.40);
+    tone(1174.66, 1318.5, 0.12, 0.28, 0.038, "triangle", 0.44);
   }
 }
 
@@ -389,12 +397,17 @@ export class LabGear {
       this.torsoGroup.quaternion.copy(this._quat);
     }
 
-    // Gentle sci-fi magnetic hover bobbing on the twin 10 Ne / 18 Ar pods
+    // Gentle sci-fi magnetic hover bobbing on the twin 10 Ne / 18 Ar pods (tucked away cleanly when sleeping in CatHome bed!)
     if (this.podL && this.podR) {
-      this.podL.position.y = 0.075 + Math.sin(time * 3.2) * 0.026;
-      this.podR.position.y = 0.075 + Math.sin(time * 3.2 + Math.PI) * 0.026;
-      this.podRingL.rotation.z = time * 2.8;
-      this.podRingR.rotation.z = -time * 2.8;
+      const sleeping = !!(g.cathome && g.cathome.denBed && g.cathome.denBed.riding);
+      this.podL.visible = !sleeping;
+      this.podR.visible = !sleeping;
+      if (!sleeping) {
+        this.podL.position.y = 0.075 + Math.sin(time * 3.2) * 0.026;
+        this.podR.position.y = 0.075 + Math.sin(time * 3.2 + Math.PI) * 0.026;
+        this.podRingL.rotation.z = time * 2.8;
+        this.podRingR.rotation.z = -time * 2.8;
+      }
     }
 
     // Tier-2 Orbiting Element Bohr Halo rotation

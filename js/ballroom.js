@@ -503,11 +503,14 @@ export class WinterBallroom {
       const o = ctx.createOscillator();
       o.type = type;
       o.frequency.setValueAtTime(freq, t0);
+      const lp = ctx.createBiquadFilter();
+      lp.type = "lowpass";
+      lp.frequency.value = type === "triangle" ? 1600 : 2800;
       const gn = ctx.createGain();
       gn.gain.setValueAtTime(1e-4, t0);
-      gn.gain.linearRampToValueAtTime(gainVal * vol, t0 + 0.008);
+      gn.gain.linearRampToValueAtTime(gainVal * vol, t0 + 0.010);
       gn.gain.exponentialRampToValueAtTime(1e-4, t0 + dur);
-      o.connect(gn).connect(audio.master);
+      o.connect(lp).connect(gn).connect(audio.master);
       if (revVal > 0 && audio.rev) {
         const rg = ctx.createGain();
         rg.gain.value = revVal;
@@ -557,7 +560,7 @@ export class WinterBallroom {
     if (!this.group) return;
     const g = this.game;
     const pl = g.player;
-    const inside = !!(g.cabin && g.cabin.inside);
+    const inside = !!((g.cabin && g.cabin.inside) || (g.chemlab && g.chemlab.inside));
     const dist = pl && !inside ? Math.hypot(pl.pos.x - this.cx, pl.pos.z - this.cz) : 999;
 
     // 1) Beat clock & spatial dance music!

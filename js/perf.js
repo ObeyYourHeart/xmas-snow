@@ -40,6 +40,10 @@ export class PerfOptimizer {
     this.perfEl = null;
     this.perfTimer = 0;
     this._bufVec = new this.THREE.Vector2();
+    this._frustum = new this.THREE.Frustum();
+    this._projScreen = new this.THREE.Matrix4();
+    this._sphere = new this.THREE.Sphere();
+    this._wasInside = false;
   }
 
   // Inject lightweight stylesheet that disables expensive per-frame CSS backdrop-filter blur over WebGL on medium/low/mobile
@@ -236,7 +240,13 @@ export class PerfOptimizer {
 
     const skipRoots = new Set(roots);
     const protectedSet = new Set();
-    if (owner) this._collectProtected(owner, skipRoots, protectedSet);
+    if (Array.isArray(owner)) {
+      for (let i = 0; i < owner.length; i++) {
+        if (owner[i]) this._collectProtected(owner[i], skipRoots, protectedSet);
+      }
+    } else if (owner) {
+      this._collectProtected(owner, skipRoots, protectedSet);
+    }
 
     const cellSize = opts.cellSize || 56;
     const buckets = new Map();
@@ -391,9 +401,9 @@ export class PerfOptimizer {
     }
     this.stats.physDowngraded = downgraded;
 
-    // 3) Tune directional shadow map refresh cadence
+    // 3) Tune directional shadow map refresh cadence (eliminates 1s periodic shadow hitches)
     if (g.env) {
-      g.env.shadowInterval = g.touch ? 3200 : q === "low" ? 2600 : q === "medium" ? 1800 : 1100;
+      g.env.shadowInterval = g.touch ? 3600 : q === "low" ? 3200 : q === "medium" ? 2400 : 1600;
     }
   }
 
@@ -404,7 +414,19 @@ export class PerfOptimizer {
     this._installLifecycleHooks();
     this._registerAssetCache();
 
-    // 1) Batch static architectural meshes across all heavy extension modules
+    // 1) Batch static architectural meshes across core clearing + all heavy extension modules!
+    if (extRoots.world && extRoots.world.length) {
+      this._batchZone("core_world", [g.world, g.logic, g.cabin, g.castle, g.explore], extRoots.world, { cellSize: 48 });
+    }
+    if (extRoots.places && extRoots.places.length) {
+      this._batchZone("core_places", [g.places, g.explore, g.worldPlus], extRoots.places, { cellSize: 48 });
+    }
+    if (extRoots.wonders && extRoots.wonders.length) {
+      this._batchZone("core_wonders", [g.wonders], extRoots.wonders, { cellSize: 48 });
+    }
+    if (extRoots.explore && extRoots.explore.length) {
+      this._batchZone("core_explore", [g.explore, g.ferris, g.worldPlus], extRoots.explore, { cellSize: 48 });
+    }
     if (g.castle && g.castle.ext) {
       this._batchZone("castle_ext", g.castle, [g.castle.ext], { singleCell: true, skyline: true });
     }
@@ -448,11 +470,12 @@ export class PerfOptimizer {
     this.stats.drawCallsSaved = Math.max(0, this.stats.mergedSourceMeshes - this.stats.mergedOutputMeshes);
     this.stats.totalCells = this.batchCells.length;
 
-    // 2) Register large dynamic outer landmark groups for indoor/outdoor & distance culling
+    // 2) Register large dynamic outer landmark groups for indoor/outdoor, distance & frustum culling
     this.outerDynamicGroups = [];
-    if (g.ballroom && g.ballroom.group) this.outerDynamicGroups.push({ obj: g.ballroom.group, x: g.ballroom.cx || -98, z: g.ballroom.cz || 72, maxD: 190 });
-    if (g.parkour && g.parkour.group) this.outerDynamicGroups.push({ obj: g.parkour.group, x: g.parkour.cx || -76, z: g.parkour.cz || -86, maxD: 190 });
-    if (g.pondFx && g.pondFx.group) this.outerDynamicGroups.push({ obj: g.pondFx.group, x: 5, z: -28, maxD: 175 });
+    if (g.ballroom && g.ballroom.group) this.outerDynamicGroups.push({ obj: g.ballroom.group, x: g.ballroom.cx || -98, z: g.ballroom.cz || 72, r: 16, maxD: 195 });
+    if (g.parkour && g.parkour.group) this.outerDynamicGroups.push({ obj: g.parkour.group, x: g.parkour.cx || -76, z: g.parkour.cz || -86, r: 28, maxD: 195 });
+    if (g.pondFx && g.pondFx.group) this.outerDynamicGroups.push({ obj: g.pondFx.group, x: 5, z: -28, r: 28, maxD: 185 });
+    if (g.chemlab && g.chemlab.ext) this.outerDynamicGroups.push({ obj: g.chemlab.ext, x: g.chemlab.cx || 76, z: g.chemlab.cz || 102, r: 14, maxD: 205 });
 
     // 3) Collect & tune MeshPhysicalMaterials + CSS compositor + shadow cadence
     this._collectPhysicalMaterials();
@@ -479,9 +502,9 @@ export class PerfOptimizer {
     const pre = document.createElement("pre");
     pre.id = "perfProfile";
     pre.style.cssText =
-      "position:fixed;left:12px;bottom:76px;z-index:9999;margin:0;padding:8px 10px;border-radius:8px;" +
-      "background:rgba(10,14,26,.84);color:#9ff4ff;font:11px/1.38 monospace;pointer-events:none;" +
-      "border:1px solid rgba(116,228,255,.45);max-width:440px;white-space:pre-wrap;";
+      "position:fixed;right:74px;top:58px;z-index:9999;margin:0;padding:8px 10px;border-radius:8px;" +
+      "background:rgba(10,14,26,.84);color:#9ff4ff;font:11px/1.36 monospace;pointer-events:none;" +
+      "border:1px solid rgba(116,228,255,.45);max-width:340px;white-space:pre-wrap;";
     document.body.appendChild(pre);
     this.perfEl = pre;
   }
@@ -538,6 +561,12 @@ export class PerfOptimizer {
     const cz = cam.position.z;
     let culled = 0;
 
+    // Update camera frustum once per culling pass for accurate behind-camera culling!
+    cam.updateMatrixWorld();
+    this._projScreen.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse);
+    this._frustum.setFromProjectionMatrix(this._projScreen);
+    const sph = this._sphere;
+
     for (let i = 0; i < this.batchCells.length; i++) {
       const c = this.batchCells[i];
       if (c.indoor) {
@@ -554,7 +583,14 @@ export class PerfOptimizer {
       const maxD = c.skyline ? (g.touch ? 240 : 340) : baseCull + c.r;
       const dx = c.x - cx;
       const dz = c.z - cz;
-      const vis = dx * dx + dz * dz <= maxD * maxD;
+      const d2 = dx * dx + dz * dz;
+      let vis = d2 <= maxD * maxD;
+      // Keep cells within 52m shadow caster zone always eligible, frustum-cull farther cells cleanly!
+      if (vis && d2 > 2704) {
+        sph.center.set(c.x, c.y, c.z);
+        sph.radius = c.r + 14;
+        vis = this._frustum.intersectsSphere(sph);
+      }
       c.obj.visible = vis;
       if (!vis) culled++;
     }
@@ -568,7 +604,14 @@ export class PerfOptimizer {
       const lim = g.touch ? d.maxD * 0.7 : q === "low" ? d.maxD * 0.8 : q === "high" ? 310 : d.maxD;
       const dx = d.x - cx;
       const dz = d.z - cz;
-      d.obj.visible = dx * dx + dz * dz <= lim * lim;
+      const d2 = dx * dx + dz * dz;
+      let vis = d2 <= lim * lim;
+      if (vis && d2 > 2704) {
+        sph.center.set(d.x, 4, d.z);
+        sph.radius = (d.r || 22) + 18;
+        vis = this._frustum.intersectsSphere(sph);
+      }
+      d.obj.visible = vis;
     }
 
     this.stats.culledCells = culled;
@@ -586,6 +629,15 @@ export class PerfOptimizer {
     this.frameCnt = 0;
 
     if (!g.started || document.visibilityState !== "visible" || g.stepping) return;
+    // Pause DRS while modal overlays (Map / Album / Settings) are open so brief UI repaints never trigger false downgrades
+    const modalOpen = !!(
+      document.querySelector(".overlay:not(.hidden)") ||
+      (g.ui && g.ui.mapOpen)
+    );
+    if (modalOpen) {
+      this.lowFpsSec = 0;
+      return;
+    }
 
     const targetLow = g.touch ? 28 : 36;
     if (fps < targetLow) {
@@ -659,7 +711,7 @@ export class PerfOptimizer {
   update(dt) {
     this._updateSnowDrawRange();
     this.cullTick++;
-    if (this.cullTick % 6 === 1) this._updateCulling();
+    if (this.cullTick % 2 === 1) this._updateCulling();
     this._updateAdaptivePerf(dt);
     if (this.perfMode) this._updatePerfHud(dt);
   }

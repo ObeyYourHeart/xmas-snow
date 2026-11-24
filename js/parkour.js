@@ -1091,7 +1091,7 @@ export class WinterTrialCourse {
   update(dt, time) {
     if (!this.group) return;
     const g = this.game, pl = g.player;
-    const inside = !!(g.cabin && g.cabin.inside);
+    const inside = !!((g.cabin && g.cabin.inside) || (g.chemlab && g.chemlab.inside));
     const dist = pl && !inside ? Math.hypot(pl.pos.x - this.cx, pl.pos.z - this.cz) : 999;
 
     // Fade score popup smoothly

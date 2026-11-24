@@ -1488,6 +1488,11 @@ export class CatHome {
     gn.gain.linearRampToValueAtTime(0.032, now + 0.04);
     gn.gain.exponentialRampToValueAtTime(1e-4, now + 0.26);
     osc.connect(lp).connect(gn).connect(audio.master || ctx.destination);
+    if (audio.rev) {
+      const rg = ctx.createGain();
+      rg.gain.value = 0.28;
+      gn.connect(rg).connect(audio.rev);
+    }
     osc.start(now);
     osc.stop(now + 0.3);
   }

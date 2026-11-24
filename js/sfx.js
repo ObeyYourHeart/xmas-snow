@@ -1374,9 +1374,42 @@ export function enhanceAudio(audio, game) {
     }
   };
 
+  // Studio Master Warmth Bus + Transparent Brickwall Limiter (velvety winter tone, 0% digital clipping!)
+  const origStart = audio.start.bind(audio);
+  audio.start = function () {
+    const first = !this.ctx;
+    origStart();
+    if (first && this.ctx && this.master && !this._studioMastered) {
+      this._studioMastered = true;
+      const ctx = this.ctx;
+      try {
+        this.master.disconnect();
+        const warmLow = ctx.createBiquadFilter();
+        warmLow.type = "lowshelf";
+        warmLow.frequency.value = 140;
+        warmLow.gain.value = 1.6;
+
+        const silkHigh = ctx.createBiquadFilter();
+        silkHigh.type = "highshelf";
+        silkHigh.frequency.value = 5200;
+        silkHigh.gain.value = -2.2;
+
+        const comp = ctx.createDynamicsCompressor();
+        comp.threshold.value = -12;
+        comp.knee.value = 12;
+        comp.ratio.value = 8;
+        comp.attack.value = 0.003;
+        comp.release.value = 0.16;
+
+        this.master.connect(warmLow).connect(silkHigh).connect(comp).connect(ctx.destination);
+      } catch {}
+    }
+  };
+
   // Spatial Ambient Soundscape hooked cleanly onto audio.update()
   const origUpdate = audio.update.bind(audio);
   let ambBubbleCd = 0;
+  let labBubbleCd = 0;
 
   audio.update = function (dt, fireDist, fireK, time, speed = 0, slip = 0) {
     origUpdate(dt, fireDist, fireK, time, speed, slip);
@@ -1386,7 +1419,17 @@ export function enhanceAudio(audio, game) {
     const now = ctx.currentTime;
     const px = game.player.pos.x;
     const pz = game.player.pos.z;
-    const inside = !!(game.cabin && game.cabin.inside);
+    const inCastle = !!(game.cabin && game.cabin.inside);
+    const inLab = !!(game.chemlab && game.chemlab.inside);
+    const inside = inCastle || inLab;
+
+    // Smoothly muffle howling outdoor winter wind when stepping inside Claude's Castle or Hajimi's Lab!
+    if (this.windGain && this.windBP) {
+      if (inside) {
+        this.windGain.gain.setTargetAtTime(0.022, now, 0.35);
+        this.windBP.frequency.setTargetAtTime(210, now, 0.40);
+      }
+    }
 
     if (!this._worldAmb) {
       const wSrc = ctx.createBufferSource();
@@ -1401,6 +1444,7 @@ export function enhanceAudio(audio, game) {
       wSrc.connect(wBp).connect(wGain).connect(this.master);
       wSrc.start();
 
+      // Aurora ethereal night harmonic pad
       const a1 = ctx.createOscillator(); a1.type = "sine"; a1.frequency.value = 329.63;
       const a2 = ctx.createOscillator(); a2.type = "sine"; a2.frequency.value = 493.88;
       const a3 = ctx.createOscillator(); a3.type = "sine"; a3.frequency.value = 659.25;
@@ -1415,14 +1459,31 @@ export function enhanceAudio(audio, game) {
       }
       a1.start(); a2.start(); a3.start();
 
-      this._worldAmb = { wBp, wGain, a1, a2, a3, aGain };
+      // Dreamy Indoor Chemistry Lab Alchemical Resonance (whisper-soft warm D4 + A4 crystal glass air!)
+      const l1 = ctx.createOscillator(); l1.type = "sine"; l1.frequency.value = 293.66;
+      const l2 = ctx.createOscillator(); l2.type = "sine"; l2.frequency.value = 440.0;
+      const lLp = ctx.createBiquadFilter();
+      lLp.type = "lowpass";
+      lLp.frequency.value = 920;
+      const lGain = ctx.createGain();
+      lGain.gain.value = 0;
+      l1.connect(lLp); l2.connect(lLp);
+      lLp.connect(lGain).connect(this.master);
+      if (this.rev) {
+        const lRev = ctx.createGain();
+        lRev.gain.value = 0.72;
+        lGain.connect(lRev).connect(this.rev);
+      }
+      l1.start(); l2.start();
+
+      this._worldAmb = { wBp, wGain, a1, a2, a3, aGain, lGain, l2 };
     }
 
     const amb = this._worldAmb;
     let waterProx = 0;
     if (!inside) {
       const dSpring = Math.hypot(px - (-34), pz - 0);
-      const dCatPool = Math.hypot(px - 62, pz - 70);
+      const dCatPool = Math.hypot(px - 44.2, pz - 57.2); // Exact CatHome milk hot-spring coordinates!
       const dIcefall = Math.hypot(px - 118, pz - (-124));
       let dLake = 999;
       if (game.cold && game.cold.water) {
@@ -1440,6 +1501,16 @@ export function enhanceAudio(audio, game) {
     }
     amb.wGain.gain.setTargetAtTime(0.055 * waterProx, now, 0.35);
     amb.wBp.frequency.setTargetAtTime(520 + 180 * Math.sin(time * 0.7), now, 0.4);
+
+    // Indoor Chemistry Lab gentle glass resonance & distant Erlenmeyer flask bubbling!
+    const labBreath = 0.72 + 0.28 * Math.sin(time * 0.42);
+    amb.lGain.gain.setTargetAtTime(inLab ? 0.0068 * labBreath : 0, now, 0.55);
+    amb.l2.frequency.setTargetAtTime(440 + Math.sin(time * 0.31) * 2.2, now, 0.5);
+    if (inLab && now > labBubbleCd) {
+      labBubbleCd = now + 1.3 + Math.random() * 2.1;
+      const bf = 520 + Math.random() * 440;
+      toneSweep({ f0: bf, f1: bf * 1.52, dur: 0.072, gain: 0.0075, lp: 2200, rev: 0.48, pan: (Math.random() - 0.5) * 1.1 });
+    }
 
     const aurora = !inside && game.env && game.env.state ? (game.env.state.aurora || 0) : 0;
     const aurBreath = 0.7 + 0.3 * Math.sin(time * 0.27);

@@ -398,7 +398,7 @@ export class GameplayPlus {
     if (this.dashCd > 0) this.dashCd = Math.max(0, this.dashCd - dt);
     if (this.dashT > 0) {
       this.dashT = Math.max(0, this.dashT - dt);
-      if (!pl.riding && !pl.seat && !pl.skiing && !(g.cabin && g.cabin.inside)) {
+      if (!pl.riding && !pl.seat && !pl.skiing && !(g.cabin && g.cabin.inside) && !(g.chemlab && g.chemlab.inside)) {
         const onIce = g.world && g.world.surfaceAt(pl.pos.x, pl.pos.z) === "ice";
         const spd = (onIce ? 12.8 : 9.2) * (0.35 + 0.65 * (this.dashT / 0.45));
         const nx = pl.pos.x + this.dashDirX * spd * dt;
@@ -431,7 +431,7 @@ export class GameplayPlus {
     const px = pl.riding && g.heli && g.heli.driven ? g.heli.x : pl.pos.x;
     const py = pl.riding && g.heli && g.heli.driven ? g.heli.y + 1.0 : (pl.y - pl.eye + 0.9);
     const pz = pl.riding && g.heli && g.heli.driven ? g.heli.z : pl.pos.z;
-    const inside = !!(g.cabin && g.cabin.inside);
+    const inside = !!((g.cabin && g.cabin.inside) || (g.chemlab && g.chemlab.inside));
 
     for (const s of this.shards) {
       if (s.got) continue;

@@ -719,7 +719,7 @@ export class GrandFerrisWheel {
   update(dt, time) {
     if (!this.root) return;
     const g = this.game, pl = g.player;
-    const inside = !!(g.cabin && g.cabin.inside);
+    const inside = !!((g.cabin && g.cabin.inside) || (g.chemlab && g.chemlab.inside));
 
     // 1) Rotate giant 44m wheel & move all 12 walkable cabins!
     this.updateCabins(dt);

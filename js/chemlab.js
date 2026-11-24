@@ -10,7 +10,7 @@
 //   5) West Giant Gemini 4 Periodic Table Wall + Microscope & Butterfly-Pea pH Color-Changing Elixir!
 //   6) East 3D Molecular & Atomic Holo-Pedestal (6 C Diamond Lattice, 10 Ne/18 Ar Bohr Shells, 1 H Ice Ring, Gemini Surfactant)!
 
-import { buildChemGunMesh } from "./labweapon.js?v=11241248";
+import { buildChemGunMesh } from "./labweapon.js?v=11241845";
 
 export const LAB_ORIGIN = { x: 1500, y: 1500, z: 1500 };
 
@@ -189,44 +189,53 @@ export class ChemLab {
     const now = ctx.currentTime;
     const master = audio.master || ctx.destination;
 
-    const note = (freq, delay, dur, gain = 0.045, type = "sine") => {
+    const note = (freq, delay, dur, gain = 0.045, type = "sine", rev = 0.34) => {
       const osc = ctx.createOscillator();
       osc.type = type;
       osc.frequency.setValueAtTime(freq, now + delay);
       const lp = ctx.createBiquadFilter();
       lp.type = "lowpass";
-      lp.frequency.value = 3000;
+      lp.frequency.value = 2800;
       const gn = ctx.createGain();
       gn.gain.setValueAtTime(1e-4, now + delay);
-      gn.gain.linearRampToValueAtTime(gain, now + delay + 0.015);
+      gn.gain.linearRampToValueAtTime(gain, now + delay + 0.014);
       gn.gain.exponentialRampToValueAtTime(1e-4, now + delay + dur);
       osc.connect(lp).connect(gn).connect(master);
+      if (rev > 0 && audio.rev) {
+        const rg = ctx.createGain();
+        rg.gain.value = rev;
+        gn.connect(rg).connect(audio.rev);
+      }
       osc.start(now + delay);
-      osc.stop(now + delay + dur + 0.05);
+      osc.stop(now + delay + dur + 0.06);
     };
 
     if (kind === "door") {
-      note(523.25, 0, 0.14, 0.04, "sine");
-      note(783.99, 0.06, 0.18, 0.04, "sine");
-      note(1046.5, 0.13, 0.25, 0.036, "triangle");
+      // Soft pneumatic conservatory airlock sigh + warm glass chime
+      note(523.25, 0, 0.18, 0.036, "sine", 0.42);
+      note(783.99, 0.055, 0.22, 0.036, "sine", 0.45);
+      note(1046.5, 0.12, 0.30, 0.030, "triangle", 0.48);
     } else if (kind === "charge") {
       const step = this.charged.size;
       const base = 440 * Math.pow(1.12246, step * 2);
-      note(base, 0, 0.18, 0.042, "triangle");
-      note(base * 1.25, 0.07, 0.22, 0.042, "sine");
-      note(base * 1.5, 0.14, 0.34, 0.045, "sine");
+      note(base, 0, 0.22, 0.038, "triangle", 0.40);
+      note(base * 1.25, 0.065, 0.26, 0.038, "sine", 0.44);
+      note(base * 1.5, 0.13, 0.38, 0.042, "sine", 0.50);
+      note(base * 2.0, 0.19, 0.42, 0.024, "sine", 0.52);
     } else if (kind === "synth") {
-      // Dramatic ascending collider synthesis arpeggio!
+      // Dramatic ascending collider celesta arpeggio with spacious hall bloom!
       const seq = [392, 493.88, 587.33, 783.99, 987.77, 1174.66, 1567.98];
-      seq.forEach((f, i) => note(f, i * 0.14, 0.45, 0.046, i % 2 ? "triangle" : "sine"));
+      seq.forEach((f, i) => note(f, i * 0.135, 0.52, 0.042, i % 2 ? "triangle" : "sine", 0.52));
     } else if (kind === "locked") {
-      note(340, 0, 0.12, 0.036, "triangle");
-      note(280, 0.10, 0.18, 0.036, "triangle");
+      note(340, 0, 0.12, 0.032, "triangle", 0.20);
+      note(270, 0.10, 0.18, 0.032, "triangle", 0.22);
     } else if (kind === "fizz") {
-      note(1480, 0, 0.14, 0.04);
-      note(1860, 0.05, 0.16, 0.035);
+      // Authentic borosilicate glass-flask clink + effervescent bubbling fizz!
+      note(1760, 0, 0.11, 0.030, "sine", 0.45);
+      note(2637, 0.01, 0.09, 0.018, "sine", 0.45);
+      note(1975.5, 0.055, 0.13, 0.026, "sine", 0.42);
       for (let i = 0; i < 6; i++) {
-        note(420 + i * 115 + Math.random() * 90, 0.08 + i * 0.055, 0.09, 0.025, "triangle");
+        note(440 + i * 115 + Math.random() * 90, 0.08 + i * 0.055, 0.095, 0.022, "sine", 0.36);
       }
       if (audio.brown) {
         const src = ctx.createBufferSource();
@@ -291,6 +300,7 @@ export class ChemLab {
 
     const tex = new T.CanvasTexture(cv);
     tex.colorSpace = T.SRGBColorSpace;
+    tex.anisotropy = Math.min(8, this.game.renderer?.capabilities?.getMaxAnisotropy?.() || 4);
     return tex;
   }
 
@@ -326,6 +336,7 @@ export class ChemLab {
 
     const tex = new T.CanvasTexture(cv);
     tex.colorSpace = T.SRGBColorSpace;
+    tex.anisotropy = Math.min(8, this.game.renderer?.capabilities?.getMaxAnisotropy?.() || 4);
     return tex;
   }
 
@@ -414,6 +425,7 @@ export class ChemLab {
 
     const tex = new T.CanvasTexture(cv);
     tex.colorSpace = T.SRGBColorSpace;
+    tex.anisotropy = Math.min(8, this.game.renderer?.capabilities?.getMaxAnisotropy?.() || 4);
     return tex;
   }
 
@@ -466,6 +478,7 @@ export class ChemLab {
 
     const tex = new T.CanvasTexture(cv);
     tex.colorSpace = T.SRGBColorSpace;
+    tex.anisotropy = Math.min(8, this.game.renderer?.capabilities?.getMaxAnisotropy?.() || 4);
     return tex;
   }
 
@@ -1379,6 +1392,7 @@ export class ChemLab {
       p.teleport(LAB_ORIGIN.x, LAB_ORIGIN.z + 5.2, 0, -0.05);
       this._seatFriends();
       if (t.perf) t.perf._updateCulling();
+      t.localLights && t.localLights.update();
     }, () => {
       if (!this.seenInside) {
         this.seenInside = true;
@@ -1398,6 +1412,7 @@ export class ChemLab {
       p.teleport(this.out.x, this.out.z, Math.PI, -0.08);
       t.friends && t.friends.regroup && t.friends.regroup();
       if (t.perf) t.perf._updateCulling();
+      t.localLights && t.localLights.update();
     }, () => {});
   }
 
