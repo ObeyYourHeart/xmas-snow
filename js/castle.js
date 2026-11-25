@@ -363,8 +363,8 @@ export class ClaudeCastle {
         emissive: new T.Color(0.55, 0.48, 0.38),
         emissiveIntensity: 0.42
       }),
-      flameOuter: plain(new T.MeshBasicMaterial({ color: 0xff6a1a, transparent: true, opacity: 0.88 })),
-      flameInner: plain(new T.MeshBasicMaterial({ color: 0xffe47a, transparent: true, opacity: 0.95 })),
+      flameOuter: plain(new T.MeshBasicMaterial({ color: 0xff6a1a, transparent: true, opacity: 0.88, depthWrite: false })),
+      flameInner: plain(new T.MeshBasicMaterial({ color: 0xffe47a, transparent: true, opacity: 0.95, depthWrite: false })),
       painting: plain(new T.MeshStandardMaterial({
         map: paintTex,
         roughness: 0.94,
@@ -1215,24 +1215,24 @@ export class ClaudeCastle {
     if (this.m.parquet && this.m.parquet.map) this.m.parquet.map.repeat.set(6, 5);
 
     // -------------------------------------------------------------------------
-    // 1. HONEY-OAK PARQUET FLOOR, MARBLE PERIMETER INLAY & ROYAL CARPETS
+    // 1. HONEY-OAK PARQUET FLOOR, MARBLE PERIMETER INLAY & ROYAL CARPETS (ZERO Z-FIGHTING!)
     // -------------------------------------------------------------------------
     g.add(
       this.mesh(new T.BoxGeometry(W + 1.2, 0.24, D + 1.2), this.m.parquet, 0, -0.12, 0),
-      // Wide cream-marble & gilded perimeter inlay border
-      this.mesh(new T.BoxGeometry(W + 0.2, 0.014, 0.62), im, 0, 0.007, -HD + 0.31),
-      this.mesh(new T.BoxGeometry(W + 0.2, 0.014, 0.62), im, 0, 0.007, HD - 0.31),
-      this.mesh(new T.BoxGeometry(0.62, 0.014, D - 1.2), im, -HW + 0.31, 0.007, 0),
-      this.mesh(new T.BoxGeometry(0.62, 0.014, D - 1.2), im, HW - 0.31, 0.007, 0),
-      // Grand Center Circular Royal Sunflower Medallion Carpet (r = 2.45m)
-      this.mesh(new T.CylinderGeometry(2.48, 2.52, 0.024, 44), this.m.carpet, -0.25, 0.012, 0.20),
-      this.mesh(new T.TorusGeometry(2.50, 0.028, 6, 48).rotateX(Math.PI / 2), this.m.gold, -0.25, 0.022, 0.20),
-      // Plush West Hearth Salon Velvet Rug + Gold Fringe
-      this.mesh(new T.BoxGeometry(4.4, 0.022, 4.4), this.m.velvet, -3.95, 0.011, 0),
-      this.mesh(new T.BoxGeometry(4.52, 0.016, 4.52), this.m.gold, -3.95, 0.008, 0),
-      // Crimson-Gold Entrance Carpet Runner from South Double Doors toward Center Medallion
-      this.mesh(new T.BoxGeometry(1.76, 0.020, 3.65), this.m.gold, -1.0, 0.010, 3.85),
-      this.mesh(new T.BoxGeometry(1.56, 0.024, 3.60), this.m.terracotta, -1.0, 0.012, 3.85)
+      // Wide cream-marble perimeter inlay border (non-overlapping corner miter lengths -> zero corner z-fighting!)
+      this.mesh(new T.BoxGeometry(W, 0.016, 0.62), im, 0, 0.008, -HD + 0.31),
+      this.mesh(new T.BoxGeometry(W, 0.016, 0.62), im, 0, 0.008, HD - 0.31),
+      this.mesh(new T.BoxGeometry(0.62, 0.016, D - 1.26), im, -HW + 0.31, 0.008, 0),
+      this.mesh(new T.BoxGeometry(0.62, 0.016, D - 1.26), im, HW - 0.31, 0.008, 0),
+      // Plush West Hearth Salon Velvet Rug + Gold Border (trimmed east edge cleanly clear of center carpet!)
+      this.mesh(new T.BoxGeometry(3.62, 0.022, 4.52), this.m.gold, -4.15, 0.011, 0),
+      this.mesh(new T.BoxGeometry(3.48, 0.036, 4.38), this.m.velvet, -4.15, 0.018, 0),
+      // Crimson-Gold Entrance Carpet Runner (trimmed cleanly at z=2.78 so it NEVER overlaps center medallion!)
+      this.mesh(new T.BoxGeometry(1.76, 0.022, 2.86), this.m.gold, -1.0, 0.011, 4.22),
+      this.mesh(new T.BoxGeometry(1.56, 0.036, 2.76), this.m.terracotta, -1.0, 0.018, 4.22),
+      // Grand Center Circular Royal Sunflower Medallion Carpet (elevated cleanly to y=0.052 -> zero z-fighting!)
+      this.mesh(new T.CylinderGeometry(2.38, 2.42, 0.052, 44), this.m.carpet, -0.18, 0.026, 0.25),
+      this.mesh(new T.TorusGeometry(2.41, 0.032, 6, 48).rotateX(Math.PI / 2), this.m.gold, -0.18, 0.036, 0.25)
     );
 
     // -------------------------------------------------------------------------
@@ -1245,94 +1245,101 @@ export class ClaudeCastle {
       wallSide(W + 1.2, H + 0.6, 0.56, 0, H / 2, HD + 0.28),
       wallSide(0.56, H + 0.6, D + 1.2, -HW - 0.28, H / 2, 0),
       wallSide(0.56, H + 0.6, D + 1.2, HW + 0.28, H / 2, 0),
-      // Carved travertine lower wainscoting dado around all 4 walls (h = 1.18m)
+      // Carved travertine lower wainscoting dado (trimmed at corners -> zero corner overlap z-fighting!)
       this.mesh(new T.BoxGeometry(W, 1.18, 0.10), im, 0, 0.59, -HD + 0.05),
       this.mesh(new T.BoxGeometry(W, 1.18, 0.10), im, 0, 0.59, HD - 0.05),
-      this.mesh(new T.BoxGeometry(0.10, 1.18, D), im, -HW + 0.05, 0.59, 0),
-      this.mesh(new T.BoxGeometry(0.10, 1.18, D), im, HW - 0.05, 0.59, 0),
-      // Golden chair rail (y = 1.20), mezzanine entablature (y = 3.85), and grand crown cornice (y = 6.08)
-      this.mesh(new T.BoxGeometry(W, 0.07, 0.14), this.m.gold, 0, 1.20, -HD + 0.07),
-      this.mesh(new T.BoxGeometry(W, 0.07, 0.14), this.m.gold, 0, 1.20, HD - 0.07),
-      this.mesh(new T.BoxGeometry(0.14, 0.07, D), this.m.gold, -HW + 0.07, 1.20, 0),
-      this.mesh(new T.BoxGeometry(0.14, 0.07, D), this.m.gold, HW - 0.07, 1.20, 0),
+      this.mesh(new T.BoxGeometry(0.10, 1.18, D - 0.22), im, -HW + 0.05, 0.59, 0),
+      this.mesh(new T.BoxGeometry(0.10, 1.18, D - 0.22), im, HW - 0.05, 0.59, 0),
+      // Golden chair rail (y = 1.22) and grand crown cornice (y = H - 0.12) — trimmed cleanly at all 4 corners!
+      this.mesh(new T.BoxGeometry(W, 0.07, 0.14), this.m.gold, 0, 1.22, -HD + 0.07),
+      this.mesh(new T.BoxGeometry(W, 0.07, 0.14), this.m.gold, 0, 1.22, HD - 0.07),
+      this.mesh(new T.BoxGeometry(0.14, 0.07, D - 0.30), this.m.gold, -HW + 0.07, 1.22, 0),
+      this.mesh(new T.BoxGeometry(0.14, 0.07, D - 0.30), this.m.gold, HW - 0.07, 1.22, 0),
       this.mesh(new T.BoxGeometry(W, 0.18, 0.22), this.m.gold, 0, H - 0.12, -HD + 0.11),
       this.mesh(new T.BoxGeometry(W, 0.18, 0.22), this.m.gold, 0, H - 0.12, HD - 0.11),
-      this.mesh(new T.BoxGeometry(0.22, 0.18, D), this.m.gold, -HW + 0.11, H - 0.12, 0),
-      this.mesh(new T.BoxGeometry(0.22, 0.18, D), this.m.gold, HW - 0.11, H - 0.12, 0)
+      this.mesh(new T.BoxGeometry(0.22, 0.18, D - 0.46), this.m.gold, -HW + 0.11, H - 0.12, 0),
+      this.mesh(new T.BoxGeometry(0.22, 0.18, D - 0.46), this.m.gold, HW - 0.11, H - 0.12, 0)
     );
 
-    // 14 Fluted Corinthian Marble Pilasters with Carved Plinths, Golden Capitals & Glowing Wall Sconces!
+    // 12 Fluted Corinthian Marble Pilasters offset cleanly forward of dado/wainscot (zero wall z-fighting!)
     const addPilaster = (x, z, rotY, hasSconce = true) => {
       const pg = new T.Group();
       pg.position.set(x, 0, z);
       pg.rotation.y = rotY;
       pg.add(
-        this.mesh(new T.BoxGeometry(0.42, 0.42, 0.24), this.m.plinth, 0, 0.21, 0),
-        this.mesh(new T.BoxGeometry(0.32, H - 0.65, 0.18), im, 0, H * 0.5, 0),
-        this.mesh(new T.BoxGeometry(0.40, 0.24, 0.26), this.m.gold, 0, H - 0.24, 0),
-        this.mesh(new T.BoxGeometry(0.38, 0.10, 0.24), this.m.gold, 0, 3.88, 0)
+        this.mesh(new T.BoxGeometry(0.42, 0.42, 0.22), this.m.plinth, 0, 0.21, 0.04),
+        this.mesh(new T.BoxGeometry(0.32, H - 0.84, 0.16), im, 0, H * 0.5 - 0.02, 0.05),
+        this.mesh(new T.BoxGeometry(0.40, 0.20, 0.24), this.m.gold, 0, H - 0.32, 0.05),
+        this.mesh(new T.BoxGeometry(0.38, 0.10, 0.22), this.m.gold, 0, 3.88, 0.05)
       );
       if (hasSconce) {
         pg.add(
-          this.mesh(new T.BoxGeometry(0.12, 0.24, 0.06), this.m.gold, 0, 2.55, 0.12),
-          this.mesh(new T.CylinderGeometry(0.018, 0.018, 0.18, 6).rotateX(Math.PI / 2), this.m.gold, 0, 2.52, 0.20),
-          this.mesh(new T.SphereGeometry(0.11, 10, 8), this.m.lantern, 0, 2.66, 0.26),
-          this.mesh(new T.TorusGeometry(0.11, 0.018, 6, 14).rotateX(Math.PI / 2), this.m.gold, 0, 2.56, 0.26)
+          this.mesh(new T.BoxGeometry(0.12, 0.24, 0.06), this.m.gold, 0, 2.55, 0.16),
+          this.mesh(new T.CylinderGeometry(0.018, 0.018, 0.18, 6).rotateX(Math.PI / 2), this.m.gold, 0, 2.52, 0.24),
+          this.mesh(new T.SphereGeometry(0.11, 10, 8), this.m.lantern, 0, 2.66, 0.30),
+          this.mesh(new T.TorusGeometry(0.11, 0.018, 6, 14).rotateX(Math.PI / 2), this.m.gold, 0, 2.56, 0.30)
         );
       }
       g.add(pg);
     };
     for (const px of [-5.8, -1.9, 1.9, 5.8]) {
-      addPilaster(px, -HD + 0.09, 0, true);
-      addPilaster(px, HD - 0.09, Math.PI, true);
+      addPilaster(px, -HD + 0.11, 0, true);
+      addPilaster(px, HD - 0.11, Math.PI, true);
     }
     for (const pz of [-3.6, 3.6]) {
-      addPilaster(-HW + 0.09, pz, Math.PI / 2, true);
-      addPilaster(HW - 0.09, pz, -Math.PI / 2, true);
+      addPilaster(-HW + 0.11, pz, Math.PI / 2, true);
+      addPilaster(HW - 0.11, pz, -Math.PI / 2, true);
     }
 
-    // Decorative Upper Mezzanine Gallery Cornice & Gilded Balcony Railings at y = 3.92m (East & West flanks!)
-    for (const side of [-1, 1]) {
-      const mx = side * (HW - 0.45);
+    // Decorative Upper Mezzanine Gallery Cornice & Balustrades at y = 3.92m (West split around chimney -> zero clipping!)
+    const addMezzSeg = (side, z0, z1) => {
+      const len = z1 - z0, zMid = (z0 + z1) * 0.5;
+      const mx = side * (HW - 0.48);
       g.add(
-        this.mesh(new T.BoxGeometry(0.92, 0.16, D - 0.8), im, mx, 3.92, 0),
-        this.mesh(new T.BoxGeometry(0.96, 0.06, D - 0.7), this.m.gold, mx, 4.02, 0),
-        this.mesh(new T.BoxGeometry(0.08, 0.08, D - 1.2), this.m.gold, side * (HW - 0.86), 4.82, 0)
+        this.mesh(new T.BoxGeometry(0.86, 0.16, len), im, mx, 3.92, zMid),
+        this.mesh(new T.BoxGeometry(0.90, 0.06, len + 0.06), this.m.gold, mx, 4.03, zMid),
+        this.mesh(new T.BoxGeometry(0.08, 0.08, len - 0.10), this.m.gold, side * (HW - 0.86), 4.82, zMid)
       );
-      for (let b = -4; b <= 4; b++) {
-        g.add(this.mesh(new T.CylinderGeometry(0.032, 0.04, 0.78, 8), im, side * (HW - 0.86), 4.42, b * 1.15));
+      const steps = Math.max(2, Math.round(len / 1.1));
+      for (let b = 0; b <= steps; b++) {
+        const bz = z0 + 0.2 + (len - 0.4) * (b / steps);
+        g.add(this.mesh(new T.CylinderGeometry(0.032, 0.04, 0.74, 8), im, side * (HW - 0.86), 4.43, bz));
       }
-    }
+    };
+    addMezzSeg(1, -HD + 0.45, HD - 0.45);  // East full-length gallery
+    addMezzSeg(-1, -HD + 0.45, -1.95);     // West North gallery wing (cleanly clear of fireplace chimney!)
+    addMezzSeg(-1, 1.95, HD - 0.45);       // West South gallery wing
 
     // -------------------------------------------------------------------------
-    // 3. SOARING COFFERED TWILIGHT-BLUE & GOLD VAULTED PALACE CEILING (y = 6.2m)
+    // 3. SOARING COFFERED TWILIGHT-BLUE & GOLD VAULTED PALACE CEILING (y = 6.2m, ZERO BEAM Z-FIGHTING!)
     // -------------------------------------------------------------------------
     g.add(
-      this.mesh(new T.BoxGeometry(W + 1.2, 0.30, D + 1.2), this.m.cofferBlue, 0, H + 0.14, 0),
+      this.mesh(new T.BoxGeometry(W + 1.2, 0.30, D + 1.2), this.m.cofferBlue, 0, H + 0.16, 0),
       // Central sculpted marble & gold ceiling rose medallion
       this.mesh(new T.CylinderGeometry(1.45, 1.65, 0.16, 28), im, 0, H - 0.08, -0.25),
-      this.mesh(new T.TorusGeometry(1.52, 0.06, 8, 32).rotateX(Math.PI / 2), this.m.gold, 0, H - 0.12, -0.25)
+      this.mesh(new T.TorusGeometry(1.52, 0.06, 8, 32).rotateX(Math.PI / 2), this.m.gold, 0, H - 0.14, -0.25)
     );
+    // Primary North-South beams drop slightly deeper than secondary East-West cross-beams -> ZERO intersection flicker!
     for (const rx of [-5.8, -1.9, 1.9, 5.8]) {
       g.add(
-        this.mesh(new T.BoxGeometry(0.28, 0.24, D), im, rx, H - 0.10, 0),
-        this.mesh(new T.BoxGeometry(0.32, 0.07, D), this.m.gold, rx, H - 0.22, 0)
+        this.mesh(new T.BoxGeometry(0.28, 0.26, D - 0.48), im, rx, H - 0.13, 0),
+        this.mesh(new T.BoxGeometry(0.32, 0.06, D - 0.46), this.m.gold, rx, H - 0.29, 0)
       );
     }
     for (const rz of [-3.6, 0, 3.6]) {
       g.add(
-        this.mesh(new T.BoxGeometry(W, 0.24, 0.26), im, 0, H - 0.10, rz),
-        this.mesh(new T.BoxGeometry(W, 0.07, 0.30), this.m.gold, 0, H - 0.22, rz)
+        this.mesh(new T.BoxGeometry(W - 0.48, 0.18, 0.26), im, 0, H - 0.09, rz),
+        this.mesh(new T.BoxGeometry(W - 0.46, 0.05, 0.30), this.m.gold, 0, H - 0.205, rz)
       );
     }
 
     // -------------------------------------------------------------------------
-    // 4. THREE SOARING CATHEDRAL GOTHIC WINDOWS ON NORTH WALL + CUSHIONED WINDOW SEATS!
+    // 4. THREE SOARING CATHEDRAL GOTHIC WINDOWS ON NORTH WALL + CUSHIONED WINDOW SEAT!
     // -------------------------------------------------------------------------
     for (const wx of [-3.85, 0.0, 3.85]) {
       const wg = new T.Group();
       wg.position.set(wx, 3.15, -HD + 0.12);
-      const pane = this.mesh(new T.PlaneGeometry(1.92, 3.30), this.m.nightPane || paneMat, 0, 0, 0.03);
+      const pane = this.mesh(new T.PlaneGeometry(1.92, 3.30), this.m.nightPane || paneMat, 0, 0, 0.02);
       pane.castShadow = false;
       wg.add(
         pane,
@@ -1342,12 +1349,12 @@ export class ClaudeCastle {
         this.mesh(new T.BoxGeometry(2.36, 0.16, 0.34), im, 0, -1.72, 0.12),
         this.mesh(new T.TorusGeometry(1.02, 0.09, 8, 28, Math.PI), this.m.gold, 0, 1.38, 0.08),
         this.mesh(new T.TorusGeometry(0.36, 0.04, 6, 20), this.m.gold, 0, 1.78, 0.09),
-        // Crisp wrought-iron cathedral mullions
-        this.mesh(new T.BoxGeometry(0.05, 3.32, 0.08), this.m.obsidian, 0, 0, 0.07),
-        this.mesh(new T.BoxGeometry(0.04, 3.32, 0.07), this.m.obsidian, -0.52, 0, 0.07),
-        this.mesh(new T.BoxGeometry(0.04, 3.32, 0.07), this.m.obsidian, 0.52, 0, 0.07),
-        this.mesh(new T.BoxGeometry(1.94, 0.05, 0.08), this.m.obsidian, 0, 0.55, 0.07),
-        this.mesh(new T.BoxGeometry(1.94, 0.05, 0.08), this.m.obsidian, 0, -0.55, 0.07),
+        // Staggered wrought-iron cathedral mullions (vertical z=0.075 vs horizontal z=0.050 -> zero cross z-fighting!)
+        this.mesh(new T.BoxGeometry(0.05, 3.32, 0.05), this.m.obsidian, 0, 0, 0.078),
+        this.mesh(new T.BoxGeometry(0.04, 3.32, 0.05), this.m.obsidian, -0.52, 0, 0.078),
+        this.mesh(new T.BoxGeometry(0.04, 3.32, 0.05), this.m.obsidian, 0.52, 0, 0.078),
+        this.mesh(new T.BoxGeometry(1.94, 0.05, 0.04), this.m.obsidian, 0, 0.55, 0.048),
+        this.mesh(new T.BoxGeometry(1.94, 0.05, 0.04), this.m.obsidian, 0, -0.55, 0.048),
         // Tailored French Hourglass Velvet Palace Drapes + Gilded Cornice Rod & Tiebacks!
         this.mesh(new T.CylinderGeometry(0.036, 0.036, 2.76, 10).rotateZ(Math.PI / 2), this.m.gold, 0, 2.18, 0.20),
         this.mesh(new T.SphereGeometry(0.068, 8, 6), this.m.gold, -1.40, 2.18, 0.20),
@@ -1609,11 +1616,11 @@ export class ClaudeCastle {
     // -------------------------------------------------------------------------
     const daisH = 0.18;
     const bedX = 4.15, bedZ = -3.35;
-    // Elevated carved marble & royal velvet sleeping dais (4.5m × 3.5m × 0.18m)
+    // Elevated carved marble & royal velvet sleeping dais (4.5m × 3.5m × 0.18m — cleanly staggered Y for zero z-fighting!)
     g.add(
       this.mesh(new T.BoxGeometry(4.56, daisH, 3.56), im, bedX, daisH * 0.5, bedZ),
-      this.mesh(new T.BoxGeometry(4.62, 0.04, 3.62), this.m.gold, bedX, daisH - 0.01, bedZ),
-      this.mesh(new T.BoxGeometry(4.12, 0.02, 3.12), this.m.carpet, bedX, daisH + 0.01, bedZ)
+      this.mesh(new T.BoxGeometry(4.64, 0.032, 3.64), this.m.gold, bedX, daisH - 0.022, bedZ),
+      this.mesh(new T.BoxGeometry(4.12, 0.026, 3.12), this.m.carpet, bedX, daisH + 0.015, bedZ)
     );
 
     const bed = new T.Group();
@@ -1764,7 +1771,7 @@ export class ClaudeCastle {
     const bkCols = [this.m.terracotta, this.m.pine, this.m.gold, this.m.obsidian, this.m.apricot, this.m.velvet];
     for (const bz of [0.35, 3.15]) {
       const shelf = new T.Group();
-      shelf.position.set(HW - 0.34, 0, bz);
+      shelf.position.set(HW - 0.38, 0, bz);
       shelf.add(
         this.mesh(new T.BoxGeometry(0.08, 4.05, 2.28), this.m.walnut, 0.20, 2.025, 0),
         this.mesh(new T.BoxGeometry(0.48, 4.05, 0.09), this.m.walnut, 0, 2.025, -1.10),
@@ -1799,9 +1806,9 @@ export class ClaudeCastle {
     const tree = new T.Group();
     tree.position.set(4.55, 0, 3.35);
     tree.add(
-      // Velvet & gold embroidered Christmas tree skirt rug
-      this.mesh(new T.CylinderGeometry(1.58, 1.62, 0.024, 28), this.m.velvet, 0, 0.014, 0),
-      this.mesh(new T.TorusGeometry(1.58, 0.03, 6, 30).rotateX(Math.PI / 2), this.m.gold, 0, 0.026, 0),
+      // Velvet & gold embroidered Christmas tree skirt rug (cleanly raised above parquet floor)
+      this.mesh(new T.CylinderGeometry(1.58, 1.62, 0.030, 28), this.m.velvet, 0, 0.020, 0),
+      this.mesh(new T.TorusGeometry(1.59, 0.032, 6, 30).rotateX(Math.PI / 2), this.m.gold, 0, 0.030, 0),
       this.mesh(new T.CylinderGeometry(0.46, 0.36, 0.52, 16), this.m.marble, 0, 0.26, 0),
       this.mesh(new T.TorusGeometry(0.48, 0.04, 8, 22).rotateX(Math.PI / 2), this.m.gold, 0, 0.50, 0),
       this.mesh(new T.ConeGeometry(1.28, 1.48, 16), this.m.pine, 0, 1.24, 0),
@@ -1846,10 +1853,10 @@ export class ClaudeCastle {
       box.rotation.y = ry;
       box.add(
         this.mesh(new T.BoxGeometry(gw, gh, gw), mat, 0, 0, 0),
-        this.mesh(new T.BoxGeometry(gw + 0.02, gh + 0.015, 0.06), this.m.gold, 0, 0, 0),
-        this.mesh(new T.BoxGeometry(0.06, gh + 0.015, gw + 0.02), this.m.gold, 0, 0, 0),
-        this.mesh(new T.TorusGeometry(0.065, 0.018, 6, 12), this.m.gold, -0.04, gh * 0.5 + 0.04, 0),
-        this.mesh(new T.TorusGeometry(0.065, 0.018, 6, 12), this.m.gold, 0.04, gh * 0.5 + 0.04, 0)
+        this.mesh(new T.BoxGeometry(gw + 0.022, gh + 0.012, 0.06), this.m.gold, 0, 0, 0),
+        this.mesh(new T.BoxGeometry(0.06, gh + 0.022, gw + 0.022), this.m.gold, 0, 0, 0),
+        this.mesh(new T.TorusGeometry(0.065, 0.018, 6, 12), this.m.gold, -0.04, gh * 0.5 + 0.045, 0),
+        this.mesh(new T.TorusGeometry(0.065, 0.018, 6, 12), this.m.gold, 0.04, gh * 0.5 + 0.045, 0)
       );
       tree.add(box);
     }
@@ -1858,9 +1865,9 @@ export class ClaudeCastle {
     // -------------------------------------------------------------------------
     // 10. SOUTH GRAND ENTRANCE PORTAL, ROSE WINDOW, GRAMOPHONE & GUESTBOOK!
     // -------------------------------------------------------------------------
-    // Grand Double Carved Walnut & Gold Exit Doors (-1.0, +5.68) + Twin 2.1m Golden Floor Candelabras!
+    // Grand Double Carved Walnut & Gold Exit Doors (-1.0, +5.62 — cleanly proud of south wainscot!) + Twin Floor Candelabras!
     const inDoor = new T.Group();
-    inDoor.position.set(-1.0, 0, HD - 0.08);
+    inDoor.position.set(-1.0, 0, HD - 0.13);
     inDoor.add(
       this.mesh(new T.BoxGeometry(2.26, 3.05, 0.16), im, 0, 1.525, 0),
       this.mesh(new T.BoxGeometry(1.86, 2.78, 0.12), this.m.walnut, 0, 1.39, -0.04),

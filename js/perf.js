@@ -997,15 +997,17 @@ export class PerfOptimizer {
         for (let i = 0; i < g.folk.clawds.length; i++) {
           const c = g.folk.clawds[i];
           if (!c || !c.obj) continue;
-          if (c.kind === "ride" && g.player && g.player.riding) { c.obj.visible = true; continue; }
+          // Ride Clawd lives in sled-local coordinates; inherit sled visibility cleanly
+          if (c.kind === "ride") { c.obj.visible = !inside; continue; }
           if (inside) { c.obj.visible = false; continue; }
-          const p = c.obj.position;
-          const dx = p.x - cx;
-          const dz = p.z - cz;
+          // Use true logical world coordinates (c.x, c.y, c.z) so distant mountain Clawds NEVER ghost at (0,0,0)!
+          const wx = c.x, wy = c.y || 0, wz = c.z;
+          const dx = wx - cx;
+          const dz = wz - cz;
           const d2 = dx * dx + dz * dz;
-          let vis = d2 <= kMax2;
+          let vis = d2 <= kMax2 && (c.dist === undefined || c.dist < 75);
           if (vis && d2 > 25) {
-            sph.center.set(p.x, p.y + 0.5, p.z);
+            sph.center.set(wx, wy + 0.5, wz);
             sph.radius = 2.0;
             vis = this._frustum.intersectsSphere(sph);
           }

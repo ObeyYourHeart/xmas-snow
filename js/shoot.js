@@ -195,17 +195,20 @@ export function installShootingSystem(gun, tools, game, helpers) {
         }
       }
     }
-    // 2b. Generous anti-tunnel hitbox for wild perched roof Clawds & floating balloon Clawds so ranged shots reliably knock them down!
+    // 2b. Generous anti-tunnel hitbox for wild perched roof Clawds, floating balloon Clawds (full body+string+balloon), & hidden snow/gift Clawds!
     if (game.pets && game.pets.all) {
       for (const pt of game.pets.all) {
-        if (!pt.root || !pt.root.visible || pt.tame || (pt.mode !== "perch" && pt.mode !== "float")) continue;
+        if (!pt.root || !pt.root.visible || pt.tame) continue;
+        if (pt.mode !== "perch" && pt.mode !== "float" && pt.mode !== "hide") continue;
         const dx = pos.x - pt.x;
-        if (dx > 0.72 || dx < -0.72) continue;
+        if (dx > 0.78 || dx < -0.78) continue;
         const dz = pos.z - pt.z;
-        if (dz > 0.72 || dz < -0.72) continue;
+        if (dz > 0.78 || dz < -0.78) continue;
         const py = pt.root.position.y;
-        if ((dx * dx + dz * dz < 0.48 && pos.y > py - 0.18 && pos.y < py + 0.85) ||
-            (pt.balloon && !pt.popped && dx * dx + dz * dz + (pos.y - (py + 1.62)) ** 2 < 0.48)) {
+        const r2 = dx * dx + dz * dz;
+        const hitBody = r2 < 0.56 && pos.y > py - 0.24 && pos.y < py + 0.96;
+        const hitBalloon = pt.balloon && !pt.popped && r2 < 0.58 && pos.y > py + 0.65 && pos.y < py + 2.30;
+        if (hitBody || hitBalloon) {
           this._hit.kind = "pet";
           this._hit.ref = pt;
           return this._hit;
@@ -298,7 +301,9 @@ export function installShootingSystem(gun, tools, game, helpers) {
     }
   };
 
-  // Upgrade Claude's SnowGun land() so snowballs also pop balloons & trigger shootTargets + hitmarker + 3D popups!
+  // Upgrade Claude's SnowGun land() so snowballs also pop balloons, knock down perched/floating/hidden Clawds with ZERO hit-deadzone, & trigger shootTargets!
+  const _petSnap = new T.Vector3();
+  const _petVel = new T.Vector3();
   const origLand = gun.land.bind(gun);
   gun.land = function (shot, hit) {
     if (hit && hit.kind === "balloon" && hit.ref && !hit.ref.got) {
@@ -321,6 +326,25 @@ export function installShootingSystem(gun, tools, game, helpers) {
       gun.registerHit(!!(res && res.crit), (res && res.label) || "✦ 命中目标", shot.p);
       game.puffs.burst(shot.p, 10, 1.5, 0.10, 0.35, 0.6);
       gun.landed++;
+      return;
+    }
+    // Directly snap pet hit position to exact Clawd/balloon core so generous gun.probe() radius NEVER misses pets.hitTest(0.36m)!
+    if (hit && hit.kind === "pet" && hit.ref && game.pets) {
+      const pt = hit.ref;
+      const wasAerial = pt.mode === "perch" || pt.mode === "float";
+      const wasBalloon = pt.mode === "float" || (pt.sp && pt.sp.id === "balloon");
+      const wasHide = pt.mode === "hide";
+      _petSnap.set(pt.x, pt.root.position.y + (pt.balloon && !pt.popped ? 1.62 : 0.30), pt.z);
+      _petVel.copy(shot.d).multiplyScalar(27);
+      const ok = game.pets.ballHit(_petSnap, _petVel);
+      // Let origLand play snow-burst particles, ring, sparks & splat audio without calling ballHit a second time
+      origLand(shot, { kind: "petDone", ref: pt });
+      if (ok) {
+        const lbl = wasAerial
+          ? (wasBalloon ? "🎈 击落气球 Clawd!" : "❄ 击落屋顶 Clawd!")
+          : (wasHide ? "❄ 炸出雪堆 Clawd!" : "✦ 击晕小龙虾");
+        gun.registerHit(wasAerial || wasHide, lbl, shot.p);
+      }
       return;
     }
     const prevHitT = this.hitT;
@@ -600,8 +624,14 @@ export function installShootingSystem(gun, tools, game, helpers) {
       game.folk.hit(ref, ar.full ? "kick" : "ball", dir.x, dir.z);
       confirm = 1;
     } else if (kind === "pet") {
-      game.pets.ballHit(pos, _stepV.copy(dir).multiplyScalar(ar.full ? 34 : 26));
-      confirm = 1;
+      const pt = ref;
+      const hitPos = pt && pt.root
+        ? _petSnap.set(pt.x, pt.root.position.y + (pt.balloon && !pt.popped ? 1.62 : 0.30), pt.z)
+        : pos;
+      const wasAerial = pt && (pt.mode === "perch" || pt.mode === "float");
+      game.pets.ballHit(hitPos, _stepV.copy(dir).multiplyScalar(ar.full ? 34 : 26));
+      confirm = wasAerial ? 2 : 1;
+      if (wasAerial) ar._hitLabel = pt.mode === "float" ? "🎈 一箭击落气球 Clawd!" : "🏹 击落屋顶 Clawd!";
     } else if (kind === "balloon" && ref && !ref.got) {
       ref.got = true;
       ref.pop = 0;
