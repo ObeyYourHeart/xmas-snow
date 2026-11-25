@@ -4633,9 +4633,8 @@ vec4 gfEvalMouth(
 varying vec3 vBindPos;
 uniform vec4 uExpr0;
 uniform vec4 uExpr1;
-uniform float uTime;
-varying float gfHasFace_;
-varying vec3 gfEmissiveRgb_;
+vec3 gfEmissiveRgb_;
+float gfHasFace_;
 
 vec4 cfEvalEye(
   vec2 p, vec2 ctr, float sideSign,
@@ -4669,7 +4668,8 @@ vec4 cfEvalEye(
     float stroke = (1.0 - smoothstep(tk * 0.55, tk * 1.45, abs(d.y - archY)))
                  * endCap * smoothstep(0.08, 0.55, joyClose) * notHair;
     // Subtle soft peachy lid warmth right under the happy arch
-    float underGlow = exp(-pow((d.y - (archY - 0.009)) / 0.008, 2.0)) * dome
+    float ud_ = (d.y - (archY - 0.009)) / 0.008;
+    float underGlow = exp(-ud_ * ud_) * dome
                     * endCap * smoothstep(0.2, 0.7, joyClose) * 0.16 * notHair;
     col = mix(col, vec3(0.95, 0.54, 0.50), underGlow);
     col = mix(col, lashCol, stroke);
