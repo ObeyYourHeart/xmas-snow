@@ -6,7 +6,7 @@
 //   Octagonal brass-inlaid tile floor, 6 recessed arched cathedral aurora windows, apothecary reagent shelves,
 //   SW 极其猫装备柜, 4 Gemini 4 Element Laser Reactors, Center 118 Og Secret Weapon Vault, Workbench, Periodic Table & Holo-Pedestal!
 
-import { buildChemGunMesh } from "./labweapon.js?v=11242125";
+import { buildChemGunMesh } from "./labweapon.js?v=11251020";
 import {
   makeStoneMasonryTex,
   makeShingleRoofTex,

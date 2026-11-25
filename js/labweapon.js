@@ -7,9 +7,9 @@
 
 export const CHEM_GUN_DEF = {
   id: "chemgun",
-  name: "118 Og 元素炮",
-  verb: "元素发射",
-  tip: "全自动准星瞄准 · 按住右键/F 开镜聚焦 · 按 X 或 1~5 切换元素（自动循环 / 1 H 氢三连 / 6 C 碳金刚 / 10 Ne 氖火环 / 18 Ar 氩连锁雷 / 118 Og 鿫超新星！）",
+  name: "118 Og 猫猫元素枪",
+  verb: "喵呜发射",
+  tip: "大猫耳异色瞳猫猫元素枪！左键/J 连发，右键/F 开镜，按 X 或 1~5 切换五元素（自动循环 / 1 H 氢三连 / 6 C 碳金刚 / 10 Ne 氖火环 / 18 Ar 氩连锁雷 / 118 Og 鿫超新星！）",
   how: "左键/J 射击（支持长按连发），右键/F 开镜精准瞄准，按 X 或点右下元素条切弹种！"
 };
 
@@ -435,11 +435,11 @@ export class LabGear {
 }
 
 // =============================================================================
-// 2. SECRET WEAPON: 极其猫 · 118 Og 星穹元素魔导步枪 (Exquisite Cat Element Rifle + 5 Custom 3D Projectiles!)
+// 2. SECRET WEAPON: 极其猫 · 118 Og 猫猫元素枪 (Sculpted Adorable Cat-Shaped Element Cannon + 5 Custom 3D Bullets!)
 // =============================================================================
 export function buildChemGunMesh(T, wrapMat) {
   const plain = (m) => wrapMat(m, { key: "plain" });
-  const std = (hex, rough = 0.22, extra = {}) =>
+  const std = (hex, rough = 0.24, extra = {}) =>
     plain(new T.MeshStandardMaterial({ color: hex, roughness: rough, ...extra }));
   const mk = (geo, mat, x = 0, y = 0, z = 0) => {
     const m = new T.Mesh(geo, mat);
@@ -449,203 +449,377 @@ export function buildChemGunMesh(T, wrapMat) {
     return m;
   };
 
-  const mGold = std(0xf6cf74, 0.16, { metalness: 0.90 });
-  const mRoseGold = std(0xf2a6b8, 0.20, { metalness: 0.82 });
-  const mPearl = std(0xf7f9ff, 0.18, { metalness: 0.24, emissive: new T.Color(0.18, 0.26, 0.44), emissiveIntensity: 0.18 });
-  const mIndigo = std(0x192348, 0.30, { metalness: 0.46 });
-  const mSakura = std(0xff8ed4, 0.26, { emissive: new T.Color(0.86, 0.28, 0.68), emissiveIntensity: 0.42 });
-  const mCyan = std(0x4cf4ff, 0.10, { emissive: new T.Color(0.24, 0.92, 1.0), emissiveIntensity: 1.5 });
-  const mGoldGlow = std(0xffda5c, 0.10, { emissive: new T.Color(1.0, 0.78, 0.22), emissiveIntensity: 1.5 });
-  const mNeon = std(0xff6a3c, 0.10, { emissive: new T.Color(1.0, 0.36, 0.14), emissiveIntensity: 1.5 });
-  const mArgon = std(0xae7cff, 0.10, { emissive: new T.Color(0.62, 0.32, 1.0), emissiveIntensity: 1.5 });
-  const mOg = std(0xff64dc, 0.10, { emissive: new T.Color(1.0, 0.34, 0.84), emissiveIntensity: 1.5 });
+  // Dreamy Starlight-Kitty Porcelain & Rose-Gold Palette
+  const mFurPearl = std(0xfdfbff, 0.25, { metalness: 0.06, emissive: new T.Color(0.18, 0.22, 0.36), emissiveIntensity: 0.20 });
+  const mCreamBelly = std(0xfff5ec, 0.32, { metalness: 0.04, emissive: new T.Color(0.16, 0.14, 0.18), emissiveIntensity: 0.14 });
+  const mLavender = std(0x7c8aff, 0.24, { metalness: 0.22, emissive: new T.Color(0.24, 0.30, 0.72), emissiveIntensity: 0.34 });
+  const mVest = std(0x5d6cf0, 0.26, { metalness: 0.28, emissive: new T.Color(0.18, 0.24, 0.62), emissiveIntensity: 0.26 });
+  const mSakura = std(0xff6ec6, 0.24, { emissive: new T.Color(0.92, 0.26, 0.66), emissiveIntensity: 0.44 });
+  const mCollar = std(0xe63d75, 0.28, { metalness: 0.12, emissive: new T.Color(0.50, 0.08, 0.24), emissiveIntensity: 0.24 });
+  const mGold = std(0xf9d26c, 0.16, { metalness: 0.90 });
+  const mRoseGold = std(0xf5a6be, 0.20, { metalness: 0.80 });
+  const mIndigo = std(0x1a2346, 0.32, { metalness: 0.42 });
+  const mDarkEye = std(0x141834, 0.06, { metalness: 0.16 });
+  const mWhiteShine = plain(new T.MeshBasicMaterial({ color: 0xffffff }));
+  const mCyan = std(0x4cf4ff, 0.10, { emissive: new T.Color(0.24, 0.92, 1.0), emissiveIntensity: 1.55 });
+  const mGoldGlow = std(0xffda5c, 0.10, { emissive: new T.Color(1.0, 0.78, 0.22), emissiveIntensity: 1.55 });
+  const mNeon = std(0xff6a3c, 0.10, { emissive: new T.Color(1.0, 0.36, 0.14), emissiveIntensity: 1.55 });
+  const mArgon = std(0xae7cff, 0.10, { emissive: new T.Color(0.62, 0.32, 1.0), emissiveIntensity: 1.55 });
+  const mOg = std(0xff64dc, 0.10, { emissive: new T.Color(1.0, 0.34, 0.84), emissiveIntensity: 1.55 });
   const mGlass = plain(new T.MeshPhysicalMaterial({
-    color: 0xeafaff, roughness: 0.05, metalness: 0.08, transparent: true, opacity: 0.34, depthWrite: false
-  }));
-  const mHoloGlass = plain(new T.MeshBasicMaterial({
-    color: 0x7ef6ff, transparent: true, opacity: 0.28, side: T.DoubleSide, depthWrite: false
+    color: 0xeafaff, roughness: 0.05, metalness: 0.08, transparent: true, opacity: 0.30, depthWrite: false
   }));
 
   const coreMat = plain(new T.MeshStandardMaterial({
     color: 0x4cf4ff,
     emissive: new T.Color(0x4cf4ff),
-    emissiveIntensity: 1.65,
+    emissiveIntensity: 1.70,
     roughness: 0.08
   }));
 
   const root = new T.Group();
   root.name = "weapon_chemgun_118og";
 
-  // 1. SCULPTED CONTOURED RIFLE STOCK & ERGONOMIC PISTOL GRIP (origin 0,0,0 sits squarely in palm!)
-  const grip = mk(new T.CylinderGeometry(0.019, 0.024, 0.14, 12), mIndigo, 0, -0.045, -0.006);
-  grip.rotation.x = 0.26;
-  const stockProfile = new T.Shape();
-  stockProfile.moveTo(0, 0.02);
-  stockProfile.lineTo(-0.20, 0.005);
-  stockProfile.quadraticCurveTo(-0.225, -0.035, -0.215, -0.082);
-  stockProfile.lineTo(-0.185, -0.082);
-  stockProfile.quadraticCurveTo(-0.10, -0.042, -0.02, -0.018);
-  stockProfile.closePath();
-  const stockGeo = new T.ExtrudeGeometry(stockProfile, {
-    depth: 0.034, bevelEnabled: true, bevelThickness: 0.007, bevelSize: 0.006, bevelSegments: 2
-  });
-  stockGeo.translate(0, 0, -0.017);
-  stockGeo.rotateY(-Math.PI / 2); // Maps shape X(-0.22..0) -> local Z(-0.22..0) cleanly!
+  // Helper: cute plump chibi cat paw with pink main pad + 3 tiny toe beans!
+  const mkCatPaw = (sc = 1, padFacingZ = 0.028) => {
+    const p = new T.Group();
+    const mitt = mk(new T.SphereGeometry(0.034, 14, 12), mFurPearl, 0, 0, 0);
+    mitt.scale.set(0.95, 0.82, 1.22);
+    p.add(mitt);
+    // Cute pink palm pad & 3 toe beans on the outer/front tip
+    const mainPad = mk(new T.SphereGeometry(0.015, 10, 8), mSakura, 0, -0.008, padFacingZ);
+    mainPad.scale.set(1.1, 0.9, 0.45);
+    p.add(mainPad);
+    for (const [bx, by] of [[-0.014, 0.010], [0, 0.015], [0.014, 0.010]]) {
+      const bean = mk(new T.SphereGeometry(0.0068, 8, 6), mSakura, bx, by, padFacingZ + 0.004);
+      bean.scale.set(1.0, 1.0, 0.55);
+      p.add(bean);
+    }
+    p.scale.setScalar(sc);
+    return p;
+  };
+
+  // =========================================================================
+  // 1. ERGONOMIC PISTOL GRIP + TRIGGER GUARD + FRONT FOREGRIP (origin 0,0,0 sits in right palm!)
+  // =========================================================================
+  const grip = mk(new T.CylinderGeometry(0.019, 0.024, 0.135, 12), mIndigo, 0, -0.044, -0.008);
+  grip.rotation.x = 0.24;
+  const foreGrip = mk(new T.CylinderGeometry(0.016, 0.019, 0.092, 10), mIndigo, 0, -0.024, 0.215);
+  foreGrip.rotation.x = -0.28;
   root.add(
     grip,
-    mk(new T.SphereGeometry(0.024, 12, 10), mGold, 0, -0.112, -0.024),
-    mk(stockGeo, mIndigo, 0, 0.055, -0.005),
-    // Sakura-pink cushioned shoulder buttpad & rose-gold cheek crest
-    mk(new T.BoxGeometry(0.046, 0.088, 0.018), mSakura, 0, 0.018, -0.224),
-    mk(new T.BoxGeometry(0.048, 0.020, 0.145), mPearl, 0, 0.072, -0.112),
-    mk(new T.BoxGeometry(0.052, 0.009, 0.135), mRoseGold, 0, 0.058, -0.112),
-    // Curved golden trigger guard & trigger
-    mk(new T.TorusGeometry(0.030, 0.006, 8, 16, Math.PI * 1.15).rotateY(Math.PI / 2), mGold, 0, 0.006, 0.044),
-    mk(new T.BoxGeometry(0.008, 0.026, 0.010), mRoseGold, 0, 0.014, 0.042)
+    mk(new T.SphereGeometry(0.025, 12, 10), mGold, 0, -0.110, -0.024),
+    mk(new T.TorusGeometry(0.024, 0.0045, 6, 18).rotateX(Math.PI / 2), mRoseGold, 0, -0.010, 0.002),
+    // Curved rose-gold trigger guard & sakura trigger
+    mk(new T.TorusGeometry(0.030, 0.006, 8, 16, Math.PI * 1.15).rotateY(Math.PI / 2), mGold, 0, 0.006, 0.042),
+    mk(new T.BoxGeometry(0.008, 0.026, 0.010), mSakura, 0, 0.015, 0.040),
+    // Underbelly bridge chassis connecting pistol grip -> foregrip cleanly
+    mk(new T.BoxGeometry(0.052, 0.024, 0.26), mIndigo, 0, 0.024, 0.105),
+    mk(new T.BoxGeometry(0.040, 0.010, 0.27), mRoseGold, 0, 0.013, 0.108),
+    foreGrip,
+    mk(new T.SphereGeometry(0.021, 10, 8), mGold, 0, -0.064, 0.200)
   );
 
-  // 2. SLEEK BEVELED PEARL-IVORY & ROSE-GOLD RECEIVER BODY + LEFT-HAND FOREGRIP!
-  const bodyShape = new T.Shape();
-  bodyShape.moveTo(-0.04, 0.018);
-  bodyShape.lineTo(0.32, 0.024);
-  bodyShape.quadraticCurveTo(0.37, 0.042, 0.35, 0.098);
-  bodyShape.lineTo(0.24, 0.118);
-  bodyShape.lineTo(-0.02, 0.116);
-  bodyShape.quadraticCurveTo(-0.06, 0.085, -0.04, 0.018);
-  bodyShape.closePath();
-  const bodyGeo = new T.ExtrudeGeometry(bodyShape, {
-    depth: 0.052, bevelEnabled: true, bevelThickness: 0.009, bevelSize: 0.008, bevelSegments: 2
-  });
-  bodyGeo.translate(0, 0, -0.026);
-  bodyGeo.rotateY(-Math.PI / 2); // Maps shape X(-0.04..0.36) -> local Z(-0.04..0.36)!
-  root.add(
-    mk(bodyGeo, mPearl, 0, 0, 0),
-    // Midnight-indigo underbelly chassis & gilded lower picatinny rail
-    mk(new T.BoxGeometry(0.056, 0.032, 0.34), mIndigo, 0, 0.034, 0.14),
-    mk(new T.BoxGeometry(0.044, 0.014, 0.36), mGold, 0, 0.018, 0.16),
-    // Sleek angled left-hand foregrip under the barrel (z = +0.265) for natural two-handed stance!
-    (() => {
-      const fg = mk(new T.CylinderGeometry(0.016, 0.019, 0.088, 10), mIndigo, 0, -0.015, 0.255);
-      fg.rotation.x = -0.32;
-      return fg;
-    })(),
-    mk(new T.SphereGeometry(0.020, 10, 8), mRoseGold, 0, -0.054, 0.240),
-    // Gold filigree side trim strips & cute sakura cat-paw cheek emblems on both sides!
-    mk(new T.BoxGeometry(0.072, 0.012, 0.28), mGold, 0, 0.086, 0.12),
-    mk(new T.BoxGeometry(0.070, 0.009, 0.24), mRoseGold, 0, 0.052, 0.11)
-  );
-  for (const sx of [-0.037, 0.037]) {
-    root.add(
-      mk(new T.SphereGeometry(0.012, 10, 8), mSakura, sx, 0.068, 0.03),
-      mk(new T.SphereGeometry(0.0055, 8, 6), mSakura, sx, 0.082, 0.020),
-      mk(new T.SphereGeometry(0.0055, 8, 6), mSakura, sx, 0.085, 0.030),
-      mk(new T.SphereGeometry(0.0055, 8, 6), mSakura, sx, 0.082, 0.040)
-    );
+  // =========================================================================
+  // 2. PLUMP CHIBI CAT BODY + VISIBLE REVOLVING 5-ELEMENT CRYSTAL BELLY + 4 LITTLE PAWS!
+  // =========================================================================
+  // Front chest & plump rear cat haunch framing the crystal-glass alchemy belly window
+  const rearRump = mk(new T.SphereGeometry(0.088, 20, 16), mFurPearl, 0, 0.108, -0.098);
+  rearRump.scale.set(1.06, 0.94, 1.05);
+  const frontChest = mk(new T.SphereGeometry(0.086, 20, 16), mFurPearl, 0, 0.108, 0.120);
+  frontChest.scale.set(1.05, 0.94, 0.88);
+  // Smooth curved starry-lavender alchemist kitty saddle/cape draped over the back, leaving the glowing 5-element crystal belly visible on both flanks!
+  const backArch = mk(new T.CylinderGeometry(0.076, 0.079, 0.20, 18, 1, false, -Math.PI * 0.34, Math.PI * 0.68).rotateX(Math.PI / 2), mVest, 0, 0.124, 0.012);
+  backArch.rotation.z = Math.PI * 0.5;
+  const vestTrimF = mk(new T.TorusGeometry(0.080, 0.0065, 8, 22, Math.PI * 0.68), mGold, 0, 0.124, 0.110);
+  vestTrimF.rotation.z = Math.PI * 0.16;
+  const vestTrimB = mk(new T.TorusGeometry(0.080, 0.0065, 8, 22, Math.PI * 0.68), mGold, 0, 0.124, -0.088);
+  vestTrimB.rotation.z = Math.PI * 0.16;
+  const vestStarTop = mk(new T.OctahedronGeometry(0.018, 0), mGoldGlow, 0, 0.202, 0.012);
+  root.add(rearRump, frontChest, backArch, vestTrimF, vestTrimB, vestStarTop);
+
+  // Cute Golden & Sakura Star Accents across the starry lavender kitty vest (high-contrast from behind in TPS!)
+  for (const [sz, scx] of [[-0.062, 0.94], [0.012, 0.98], [0.078, 0.95]]) {
+    const stripe = mk(new T.TorusGeometry(0.083, 0.0075, 8, 22, Math.PI * 0.64), mSakura, 0, 0.118, sz);
+    stripe.rotation.z = Math.PI * 0.18;
+    stripe.scale.set(scx, 0.96, 1.0);
+    root.add(stripe);
   }
 
-  // 3. SCULPTED CAT-EAR HOLOGRAPHIC REFLEX SIGHT ON TOP RAIL (猫耳全息瞄准镜!)
-  const sightG = new T.Group();
-  sightG.position.set(0, 0.124, 0.035);
-  const earSightShape = new T.Shape();
-  earSightShape.moveTo(-0.044, 0);
-  earSightShape.lineTo(-0.048, 0.038);
-  earSightShape.quadraticCurveTo(-0.046, 0.072, -0.024, 0.082);
-  earSightShape.lineTo(-0.010, 0.052);
-  earSightShape.lineTo(0.010, 0.052);
-  earSightShape.lineTo(0.024, 0.082);
-  earSightShape.quadraticCurveTo(0.046, 0.072, 0.048, 0.038);
-  earSightShape.lineTo(0.044, 0);
-  earSightShape.closePath();
-  const earSightHole = new T.Path();
-  earSightHole.moveTo(-0.032, 0.012);
-  earSightHole.lineTo(0.032, 0.012);
-  earSightHole.lineTo(0.032, 0.042);
-  earSightHole.lineTo(-0.032, 0.042);
-  earSightHole.closePath();
-  earSightShape.holes.push(earSightHole);
-  const sightFrameGeo = new T.ExtrudeGeometry(earSightShape, {
-    depth: 0.024, bevelEnabled: true, bevelThickness: 0.003, bevelSize: 0.003, bevelSegments: 1
-  });
-  sightFrameGeo.translate(0, 0, -0.012);
-  sightG.add(
-    mk(new T.BoxGeometry(0.064, 0.012, 0.095), mIndigo, 0, 0.004, 0),
-    mk(sightFrameGeo, mGold, 0, 0.008, 0.012),
-    // Glowing inner pink cat-ear triangles on sight
-    mk(new T.ConeGeometry(0.010, 0.024, 3), mSakura, -0.026, 0.068, 0.012),
-    mk(new T.ConeGeometry(0.010, 0.024, 3), mSakura, 0.026, 0.068, 0.012),
-    // Translucent cyan holographic lens + center glowing aiming star dot!
-    mk(new T.PlaneGeometry(0.062, 0.030), mHoloGlass, 0, 0.034, 0.012),
-    mk(new T.OctahedronGeometry(0.006, 0), coreMat, 0, 0.034, 0.013)
-  );
-  root.add(sightG);
-
-  // 4. VISIBLE REVOLVING 5-ELEMENT CRYSTAL DRUM MAGAZINE (五元素水晶转轮弹仓!)
+  // Visible Revolving 5-Element Alchemy Crystal Belly Chamber (spins 72° per shot/switch!)
   const drumWrap = new T.Group();
-  drumWrap.position.set(0, 0.088, 0.165);
+  drumWrap.position.set(0, 0.096, 0.014);
   const drumSpin = new T.Group();
   const vialMats = [mCyan, mGoldGlow, mNeon, mArgon, mOg];
   for (let i = 0; i < 5; i++) {
     const a = (i / 5) * Math.PI * 2;
-    const vx = Math.sin(a) * 0.034;
-    const vy = Math.cos(a) * 0.034;
+    const vx = Math.sin(a) * 0.048;
+    const vy = Math.cos(a) * 0.048;
     drumSpin.add(
-      mk(new T.CylinderGeometry(0.011, 0.011, 0.108, 10).rotateX(Math.PI / 2), vialMats[i], vx, vy, 0),
-      mk(new T.CylinderGeometry(0.014, 0.014, 0.014, 10).rotateX(Math.PI / 2), mGold, vx, vy, -0.056),
-      mk(new T.CylinderGeometry(0.014, 0.014, 0.014, 10).rotateX(Math.PI / 2), mGold, vx, vy, 0.056)
+      mk(new T.CylinderGeometry(0.013, 0.013, 0.128, 10).rotateX(Math.PI / 2), vialMats[i], vx, vy, 0),
+      mk(new T.CylinderGeometry(0.016, 0.016, 0.015, 10).rotateX(Math.PI / 2), mGold, vx, vy, -0.065),
+      mk(new T.CylinderGeometry(0.016, 0.016, 0.015, 10).rotateX(Math.PI / 2), mGold, vx, vy, 0.065)
     );
   }
   drumSpin.add(
-    mk(new T.CylinderGeometry(0.018, 0.018, 0.125, 12).rotateX(Math.PI / 2), mGold, 0, 0, 0),
-    mk(new T.CylinderGeometry(0.052, 0.052, 0.012, 18).rotateX(Math.PI / 2), mGold, 0, 0, -0.062),
-    mk(new T.CylinderGeometry(0.052, 0.052, 0.012, 18).rotateX(Math.PI / 2), mGold, 0, 0, 0.062)
+    mk(new T.CylinderGeometry(0.020, 0.020, 0.145, 12).rotateX(Math.PI / 2), mGold, 0, 0, 0),
+    mk(new T.TorusGeometry(0.068, 0.008, 8, 24), mRoseGold, 0, 0, -0.068),
+    mk(new T.TorusGeometry(0.068, 0.008, 8, 24), mRoseGold, 0, 0, 0.068)
   );
-  const drumGlass = mk(new T.CylinderGeometry(0.054, 0.054, 0.118, 18).rotateX(Math.PI / 2), mGlass, 0, 0, 0);
+  const drumGlass = mk(new T.CylinderGeometry(0.072, 0.072, 0.136, 22).rotateX(Math.PI / 2), mGlass, 0, 0, 0);
   drumGlass.renderOrder = 2;
   drumWrap.add(drumSpin, drumGlass);
   root.add(drumWrap);
 
-  // Glowing active element jewel right behind the barrel bridge!
-  const coreOrb = mk(new T.OctahedronGeometry(0.026, 0), coreMat, 0, 0.132, 0.255);
-  root.add(coreOrb);
+  // 4 Adorable Chibi Cat Paws with Pink Bean Pads (front paws hugging cheeks, rear paws tucked by grip!)
+  for (const s of [-1, 1]) {
+    const fp = mkCatPaw(1.05, 0.032);
+    fp.position.set(s * 0.090, 0.050, 0.258);
+    fp.rotation.set(0.18, s * 0.26, -s * 0.18);
+    const rp = mkCatPaw(0.92, 0.030);
+    rp.position.set(s * 0.080, 0.044, -0.078);
+    rp.rotation.set(0.32, s * 0.48, -s * 0.22);
+    root.add(fp, rp);
+  }
 
-  // 5. TWIN-RAIL FLUTED PEARL BARREL + SCULPTED CAT-FACE COLLAR + DUAL-GYRO STAR MUZZLE!
-  root.add(
-    // Glowing inner plasma conduit beam visible between the twin rails!
-    mk(new T.CylinderGeometry(0.014, 0.016, 0.27, 12).rotateX(Math.PI / 2), coreMat, 0, 0.076, 0.40),
-    // Sculpted pearl & gold upper/lower rail blades
-    mk(new T.BoxGeometry(0.022, 0.018, 0.24), mPearl, 0, 0.106, 0.40),
-    mk(new T.BoxGeometry(0.022, 0.016, 0.24), mPearl, 0, 0.046, 0.40),
-    mk(new T.CylinderGeometry(0.008, 0.009, 0.26, 8).rotateX(Math.PI / 2), mGold, -0.028, 0.076, 0.40),
-    mk(new T.CylinderGeometry(0.008, 0.009, 0.26, 8).rotateX(Math.PI / 2), mGold, 0.028, 0.076, 0.40),
-    // Cute Sculpted Golden Cat-Face Barrel Collar at z = 0.445!
-    mk(new T.CylinderGeometry(0.042, 0.044, 0.036, 16).rotateX(Math.PI / 2), mPearl, 0, 0.076, 0.445),
-    mk(new T.TorusGeometry(0.044, 0.006, 8, 20), mGold, 0, 0.076, 0.462),
-    mk(new T.ConeGeometry(0.014, 0.036, 4), mGold, -0.026, 0.122, 0.445),
-    mk(new T.ConeGeometry(0.014, 0.036, 4), mGold, 0.026, 0.122, 0.445),
-    mk(new T.ConeGeometry(0.007, 0.020, 3), mSakura, -0.026, 0.120, 0.458),
-    mk(new T.ConeGeometry(0.007, 0.020, 3), mSakura, 0.026, 0.120, 0.458),
-    // Heterochromia cat eyes on the barrel collar (left cyan, right pink-gold!)
-    mk(new T.SphereGeometry(0.0065, 8, 6), mCyan, -0.016, 0.088, 0.464),
-    mk(new T.SphereGeometry(0.0065, 8, 6), mSakura, 0.016, 0.088, 0.464)
+  // =========================================================================
+  // 3. CRIMSON-SAKURA COLLAR + BACK NECK BOW-TIE + HUGE SHINY GOLDEN CAT BELL!
+  // =========================================================================
+  const collar = mk(new T.TorusGeometry(0.094, 0.017, 12, 28), mCollar, 0, 0.118, 0.155);
+  const collarTrim = mk(new T.TorusGeometry(0.098, 0.0055, 8, 28), mGold, 0, 0.118, 0.155);
+  root.add(collar, collarTrim);
+
+  // Cute Sakura Bow-Tie perched at the back of the cat's neck (adorable highlight in TPS view!)
+  const bowG = new T.Group();
+  bowG.position.set(0, 0.210, 0.145);
+  bowG.rotation.x = -0.25;
+  const bowL = mk(new T.SphereGeometry(0.034, 12, 10), mSakura, -0.034, 0, 0);
+  bowL.scale.set(1.25, 0.72, 0.45); bowL.rotation.z = 0.22;
+  const bowR = mk(new T.SphereGeometry(0.034, 12, 10), mSakura, 0.034, 0, 0);
+  bowR.scale.set(1.25, 0.72, 0.45); bowR.rotation.z = -0.22;
+  const ribL = mk(new T.BoxGeometry(0.018, 0.056, 0.008), mSakura, -0.020, -0.034, -0.006);
+  ribL.rotation.z = -0.32;
+  const ribR = mk(new T.BoxGeometry(0.018, 0.056, 0.008), mSakura, 0.020, -0.034, -0.006);
+  ribR.rotation.z = 0.32;
+  bowG.add(bowL, bowR, ribL, ribR, mk(new T.SphereGeometry(0.016, 10, 8), mGold, 0, 0, 0.008));
+  root.add(bowG);
+
+  // HUGE Swinging Golden Cat Bell dangling proudly under the cat's chin!
+  const bell = new T.Group();
+  bell.position.set(0, 0.034, 0.192);
+  bell.add(
+    mk(new T.TorusGeometry(0.014, 0.0038, 6, 14), mGold, 0, 0.004, 0),
+    mk(new T.SphereGeometry(0.035, 16, 14), mGold, 0, -0.032, 0.008),
+    mk(new T.TorusGeometry(0.036, 0.0048, 8, 22).rotateX(Math.PI / 2), mRoseGold, 0, -0.034, 0.008),
+    mk(new T.BoxGeometry(0.038, 0.008, 0.012), mIndigo, 0, -0.050, 0.036),
+    mk(new T.SphereGeometry(0.009, 8, 6), coreMat, 0, -0.026, 0.042)
   );
+  root.add(bell);
 
-  // Spinning Dual-Gyro Starlight Accelerator Muzzle at z = 0.545!
+  // =========================================================================
+  // 4. BIG SCULPTED CHIBI CAT HEAD + HUGE UPRIGHT CAT EARS + ANIME FACE + OPEN-MOUTH CANNON!
+  // =========================================================================
+  const headG = new T.Group();
+  headG.position.set(0, 0.148, 0.252);
+
+  // Plump wide chubby chibi cat head + puffy cheek whisker pads!
+  const skull = mk(new T.SphereGeometry(0.114, 24, 18), mFurPearl, 0, 0, 0);
+  skull.scale.set(1.18, 0.95, 1.04);
+  const cheekL = mk(new T.SphereGeometry(0.046, 14, 12), mCreamBelly, -0.054, -0.034, 0.078);
+  cheekL.scale.set(1.18, 0.80, 0.85);
+  const cheekR = mk(new T.SphereGeometry(0.046, 14, 12), mCreamBelly, 0.054, -0.034, 0.078);
+  cheekR.scale.set(1.18, 0.80, 0.85);
+  headG.add(skull, cheekL, cheekR);
+
+  // 3 Cute Pastel Lavender Forehead Tabby Stripes
+  for (const [fx, fy, fz, rz] of [[0, 0.104, 0.034, 0], [-0.032, 0.098, 0.036, 0.24], [0.032, 0.098, 0.036, -0.24]]) {
+    const st = mk(new T.CapsuleGeometry(0.0085, 0.036, 6, 8).rotateX(Math.PI * 0.42), mLavender, fx, fy, fz);
+    st.rotation.z = rz;
+    headG.add(st);
+  }
+
+  // WIDE-BASED, CLASSIC TRIANGULAR CAT EARS (100% kitty silhouette, flared outward — NEVER narrow bunny ears!)
+  const earOuterShape = new T.Shape();
+  earOuterShape.moveTo(-0.068, 0);
+  earOuterShape.quadraticCurveTo(-0.064, 0.062, -0.008, 0.114);
+  earOuterShape.quadraticCurveTo(0, 0.122, 0.008, 0.114);
+  earOuterShape.quadraticCurveTo(0.064, 0.062, 0.068, 0);
+  earOuterShape.closePath();
+  const earOuterGeo = new T.ExtrudeGeometry(earOuterShape, {
+    depth: 0.028, bevelEnabled: true, bevelThickness: 0.008, bevelSize: 0.007, bevelSegments: 3, curveSegments: 10
+  });
+  earOuterGeo.translate(0, 0, -0.014);
+
+  const earInnerShape = new T.Shape();
+  earInnerShape.moveTo(-0.045, 0.012);
+  earInnerShape.quadraticCurveTo(-0.040, 0.056, 0, 0.092);
+  earInnerShape.quadraticCurveTo(0.040, 0.056, 0.045, 0.012);
+  earInnerShape.closePath();
+  const earInnerGeo = new T.ExtrudeGeometry(earInnerShape, {
+    depth: 0.009, bevelEnabled: true, bevelThickness: 0.003, bevelSize: 0.003, bevelSegments: 2, curveSegments: 8
+  });
+  earInnerGeo.translate(0, 0, -0.0045);
+
+  const earBackAccentGeo = new T.ExtrudeGeometry(earInnerShape, {
+    depth: 0.007, bevelEnabled: true, bevelThickness: 0.002, bevelSize: 0.002, bevelSegments: 1, curveSegments: 8
+  });
+  earBackAccentGeo.translate(0, 0, -0.0035);
+
+  const buildBigCatEar = (side) => {
+    const eg = new T.Group();
+    eg.position.set(side * 0.088, 0.064, -0.006);
+    eg.rotation.set(0.08, side * 0.16, -side * 0.46);
+    // Pearl-white chunky outer cat ear + lush sakura-pink inner ear (front) + rosy-lavender ear-back accent (back!)
+    const backTint = mk(earBackAccentGeo, mLavender, 0, 0.014, -0.019);
+    backTint.scale.set(0.76, 0.76, 1.0);
+    // Fluffy white inner ear fur tuft
+    const tuft = mk(new T.ConeGeometry(0.017, 0.036, 6), mFurPearl, -side * 0.018, 0.018, 0.022);
+    tuft.rotation.z = side * 0.58;
+    eg.add(
+      mk(earOuterGeo, mFurPearl),
+      mk(earInnerGeo, mSakura, 0, 0.002, 0.017),
+      backTint,
+      tuft
+    );
+    // Stylish double golden ear-cuff rings + glowing cyan star charm on the left ear (+1)!
+    if (side > 0) {
+      const cuff1 = mk(new T.TorusGeometry(0.019, 0.0052, 8, 18).rotateY(Math.PI / 2), mGold, 0.052, 0.054, 0.002);
+      cuff1.rotation.z = 0.42;
+      const cuff2 = mk(new T.TorusGeometry(0.017, 0.0046, 8, 18).rotateY(Math.PI / 2), mRoseGold, 0.058, 0.034, 0.002);
+      cuff2.rotation.z = 0.34;
+      const charm = mk(new T.OctahedronGeometry(0.016, 0), mCyan, 0.068, 0.014, 0.004);
+      eg.add(cuff1, cuff2, charm);
+    }
+    return eg;
+  };
+  const earL = buildBigCatEar(-1);
+  const earR = buildBigCatEar(1);
+  headG.add(earL, earR);
+
+  // Glowing Active-Element Crown Gem + Golden Crescent nestled right between the two big cat ears!
+  const crownCrescent = mk(new T.TorusGeometry(0.030, 0.006, 8, 22, Math.PI * 1.25), mGold, 0, 0.122, 0.014);
+  crownCrescent.rotation.z = Math.PI * 0.88;
+  const coreOrb = mk(new T.OctahedronGeometry(0.028, 0), coreMat, 0, 0.132, 0.016);
+  headG.add(crownCrescent, coreOrb);
+
+  // BIG GLOSSY HETEROCHROMIA ANIME CAT EYES (Left = Gemini Cyan, Right = Sakura-Gold!)
+  for (const side of [-1, 1]) {
+    const eyeG = new T.Group();
+    eyeG.position.set(side * 0.062, 0.018, 0.099);
+    eyeG.rotation.set(-0.06, side * 0.36, 0);
+    const eyeBase = mk(new T.SphereGeometry(0.032, 16, 12), mDarkEye, 0, 0, 0);
+    eyeBase.scale.set(1.06, 1.18, 0.38);
+    const iris = mk(new T.SphereGeometry(0.022, 14, 10), side > 0 ? mCyan : mGoldGlow, 0, -0.007, 0.007);
+    iris.scale.set(1.04, 0.92, 0.38);
+    const shineBig = mk(new T.SphereGeometry(0.010, 8, 6), mWhiteShine, -side * 0.009, 0.013, 0.012);
+    const shineSm = mk(new T.SphereGeometry(0.005, 6, 6), mWhiteShine, side * 0.009, -0.012, 0.012);
+    const lash = mk(new T.TorusGeometry(0.031, 0.005, 6, 16, Math.PI * 0.78), mDarkEye, 0, 0.005, 0.007);
+    lash.rotation.z = Math.PI * 0.11;
+    eyeG.add(eyeBase, iris, shineBig, shineSm, lash);
+    headG.add(eyeG);
+
+    // Cute Rosy Pink Cheek Blush + 3 Delicate Rose-Gold Whiskers fanning from each cheek!
+    const blush = mk(new T.SphereGeometry(0.026, 10, 8), mSakura, side * 0.095, -0.018, 0.076);
+    blush.scale.set(1.18, 0.65, 0.42);
+    blush.rotation.y = side * 0.65;
+    headG.add(blush);
+
+    for (let w = 0; w < 3; w++) {
+      const ang = (w - 1) * 0.22;
+      const whisk = mk(
+        new T.CylinderGeometry(0.0032, 0.0018, 0.104, 6).rotateZ(Math.PI / 2),
+        mGold,
+        side * 0.152,
+        -0.024 + (w - 1) * 0.018,
+        0.070 - w * 0.006
+      );
+      whisk.rotation.set(0, -side * 0.24, side * ang);
+      headG.add(whisk);
+    }
+  }
+
+  // Cute Tiny Sakura-Pink Triangle Cat Nose!
+  const nose = mk(new T.ConeGeometry(0.015, 0.016, 3), mSakura, 0, -0.010, 0.123);
+  nose.rotation.set(Math.PI * 0.42, 0, Math.PI);
+  headG.add(nose);
+
+  // ADORABLE OPEN "NYAAA!" CAT-MOUTH + TINY KITTY FANGS + SLEEK COMPACT CRYSTAL STAR-CANNON NOZZLE!
+  const mouthRim = mk(new T.TorusGeometry(0.046, 0.012, 10, 24), mSakura, 0, -0.046, 0.105);
+  const mouthBack = mk(new T.CylinderGeometry(0.042, 0.038, 0.032, 18).rotateX(Math.PI / 2), mDarkEye, 0, -0.046, 0.094);
+  // Two super-cute tiny sharp white kitty fangs peeking down from the upper lip!
+  const fangL = mk(new T.ConeGeometry(0.0075, 0.020, 4), mWhiteShine, -0.023, -0.018, 0.116);
+  fangL.rotation.x = Math.PI;
+  const fangR = mk(new T.ConeGeometry(0.0075, 0.020, 4), mWhiteShine, 0.023, -0.018, 0.116);
+  fangR.rotation.x = Math.PI;
+  headG.add(mouthRim, mouthBack, fangL, fangR);
+
+  // Sleek translucent Elemental Plasma Nozzle projecting cleanly out of the cat's open mouth!
+  const nozzleBeam = mk(new T.CylinderGeometry(0.020, 0.024, 0.125, 14).rotateX(Math.PI / 2), coreMat, 0, -0.046, 0.166);
+  const nozzleGlass = mk(new T.CylinderGeometry(0.036, 0.042, 0.102, 18).rotateX(Math.PI / 2), mGlass, 0, -0.046, 0.158);
+  nozzleGlass.renderOrder = 2;
+  const finTop = mk(new T.BoxGeometry(0.014, 0.018, 0.096), mRoseGold, 0, -0.008, 0.158);
+  const finBot = mk(new T.BoxGeometry(0.014, 0.018, 0.096), mRoseGold, 0, -0.084, 0.158);
+  const finL = mk(new T.CylinderGeometry(0.0068, 0.0078, 0.112, 8).rotateX(Math.PI / 2), mGold, -0.042, -0.046, 0.162);
+  const finR = mk(new T.CylinderGeometry(0.0068, 0.0078, 0.112, 8).rotateX(Math.PI / 2), mGold, 0.042, -0.046, 0.162);
+  const nozzleCollar = mk(new T.TorusGeometry(0.042, 0.007, 8, 22), mGold, 0, -0.046, 0.205);
+  headG.add(nozzleBeam, nozzleGlass, finTop, finBot, finL, finR, nozzleCollar);
+  root.add(headG);
+
+  // Spinning Dual-Gyro Starlight Accelerator Muzzle right at the cat's mouth cannon tip (z = 0.486, y = 0.102)!
   const muzzleSpin = new T.Group();
-  muzzleSpin.position.set(0, 0.076, 0.545);
-  const ringA = mk(new T.TorusGeometry(0.062, 0.0065, 8, 28), coreMat, 0, 0, 0);
-  const ringB = mk(new T.TorusGeometry(0.044, 0.0055, 8, 24), mGold, 0, 0, 0);
+  muzzleSpin.position.set(0, 0.102, 0.486);
+  const ringA = mk(new T.TorusGeometry(0.064, 0.0068, 8, 28), coreMat, 0, 0, 0);
+  const ringB = mk(new T.TorusGeometry(0.046, 0.0055, 8, 24), mGold, 0, 0, 0);
   ringB.rotation.x = Math.PI * 0.38;
   muzzleSpin.add(
     ringA, ringB,
-    mk(new T.OctahedronGeometry(0.020, 0), coreMat, 0, 0, 0),
-    mk(new T.SphereGeometry(0.010, 8, 6), mNeon, 0.062, 0, 0),
-    mk(new T.SphereGeometry(0.010, 8, 6), mArgon, -0.062, 0, 0),
-    mk(new T.SphereGeometry(0.009, 8, 6), mGoldGlow, 0, 0.062, 0),
-    mk(new T.SphereGeometry(0.009, 8, 6), mSakura, 0, -0.062, 0)
+    mk(new T.OctahedronGeometry(0.022, 0), coreMat, 0, 0, 0),
+    mk(new T.SphereGeometry(0.010, 8, 6), mNeon, 0.064, 0, 0),
+    mk(new T.SphereGeometry(0.010, 8, 6), mArgon, -0.064, 0, 0),
+    mk(new T.SphereGeometry(0.0095, 8, 6), mGoldGlow, 0, 0.064, 0),
+    mk(new T.SphereGeometry(0.0095, 8, 6), mSakura, 0, -0.064, 0)
   );
   root.add(muzzleSpin);
 
-  return { root, coreMat, coreOrb, drumSpin, muzzleSpin, ringA, ringB };
+  // =========================================================================
+  // 5. ANIMATED CURLY FLUFFY CAT TAIL (REAR STOCK DECORATION THAT ACTIVELY WAGS!)
+  // =========================================================================
+  const catTail = new T.Group();
+  catTail.position.set(0, 0.126, -0.172);
+  const tailCurve = new T.CatmullRomCurve3([
+    new T.Vector3(0, 0, 0),
+    new T.Vector3(0, 0.036, -0.072),
+    new T.Vector3(0, 0.118, -0.122),
+    new T.Vector3(0, 0.188, -0.104),
+    new T.Vector3(0, 0.214, -0.056)
+  ]);
+  const tailGeo = new T.TubeGeometry(tailCurve, 22, 0.022, 10, false);
+  const tPos = tailGeo.attributes.position;
+  const tUv = tailGeo.attributes.uv;
+  for (let i = 0; i < tPos.count; i++) {
+    const u = Math.max(0, Math.min(1, tUv.getX(i)));
+    const pt = tailCurve.getPointAt(u);
+    const radK = 1.05 - 0.18 * u + 0.16 * Math.sin(u * Math.PI);
+    tPos.setXYZ(
+      i,
+      pt.x + (tPos.getX(i) - pt.x) * radK,
+      pt.y + (tPos.getY(i) - pt.y) * radK,
+      pt.z + (tPos.getZ(i) - pt.z) * radK
+    );
+  }
+  tailGeo.computeVertexNormals();
+  const tailTipPt = tailCurve.getPointAt(1.0);
+  const tailRingPt = tailCurve.getPointAt(0.76);
+  const tailRing = mk(new T.TorusGeometry(0.032, 0.0055, 8, 20).rotateX(Math.PI * 0.42), mGold, tailRingPt.x, tailRingPt.y, tailRingPt.z);
+  catTail.add(
+    mk(tailGeo, mFurPearl),
+    mk(new T.SphereGeometry(0.027, 12, 10), mLavender, tailTipPt.x, tailTipPt.y, tailTipPt.z),
+    mk(new T.SphereGeometry(0.015, 10, 8), mSakura, tailTipPt.x, tailTipPt.y + 0.008, tailTipPt.z + 0.016),
+    tailRing
+  );
+  root.add(catTail);
+
+  return { root, coreMat, coreOrb, drumSpin, muzzleSpin, ringA, ringB, catTail, earL, earR, bell };
 }
 
 export function installChemGun(tools, game, helpers, ymRef) {
@@ -668,6 +842,10 @@ export function installChemGun(tools, game, helpers, ymRef) {
     muzzleSpin: built.muzzleSpin,
     ringA: built.ringA,
     ringB: built.ringB,
+    catTail: built.catTail,
+    earL: built.earL,
+    earR: built.earR,
+    bell: built.bell,
     pic: null,
     claudePic: null,
     geminiPic: null
@@ -1350,14 +1528,34 @@ export function installChemGun(tools, game, helpers, ymRef) {
     const active = !!(this.gun && this.gun.chemActive);
     if (chemBar) chemBar.classList.toggle("show", active);
 
-    // Animate held Cat Element Rifle muzzle gyro, crystal orb & REVOLVING 5-ELEMENT DRUM!
+    // Animate held Cat-Shaped Element Gun: wagging cat tail, twitching ears, swinging bell, muzzle gyro & 5-element belly drum!
     if (this.held === "chemgun" && item.root.visible) {
       const adsBoost = this.gun ? (this.gun.ads || 0) * 6.5 : 0;
-      const spinSpd = 2.8 + adsBoost + (this.kick || 0) * 16.0;
+      const kick = this.kick || 0;
+      const spinSpd = 2.8 + adsBoost + kick * 16.0;
       item.muzzleSpin.rotation.z += dt * spinSpd;
       item.ringB.rotation.y += dt * (spinSpd * 0.85);
       item.coreOrb.rotation.y = time * 3.6;
       item.coreOrb.rotation.x = time * 2.1;
+      // Lively wagging curly cat tail!
+      if (item.catTail) {
+        item.catTail.rotation.z = Math.sin(time * (4.0 + adsBoost * 0.45)) * (0.20 + kick * 0.24);
+        item.catTail.rotation.x = 0.06 * Math.sin(time * 2.5) + kick * 0.22;
+      }
+      // Adorable cat-ear recoil bounce & occasional subtle twitch!
+      if (item.earL && item.earR) {
+        const twitch = Math.pow(Math.max(0, Math.sin(time * 1.9 + 0.5)), 18) * 0.16;
+        const earSpread = kick * 0.18;
+        item.earL.rotation.z = 0.46 + earSpread;
+        item.earR.rotation.z = -0.46 - earSpread - twitch;
+        item.earL.rotation.x = 0.08 - kick * 0.22;
+        item.earR.rotation.x = 0.08 - kick * 0.22;
+      }
+      // Gently jingling golden cat bell under her chin!
+      if (item.bell) {
+        item.bell.rotation.z = Math.sin(time * 4.8) * 0.09 + kick * 0.16;
+        item.bell.rotation.x = -kick * 0.30;
+      }
       // Smoothly revolve the 5-element crystal cylinder drum so the loaded element clicks into the top chamber!
       if (item.drumSpin) {
         const elIdx = lockedMode >= 0 ? lockedMode : (shotCycle % ELEMENT_SHOTS.length);
@@ -1517,9 +1715,9 @@ export function installChemGun(tools, game, helpers, ymRef) {
     wasIn && wasIn.remove(item.root);
     item.root.position.set(0, 0, 0);
     item.root.scale.set(1, 1, 1);
-    item.root.rotation.set(-0.18, -0.82, 0.08);
+    item.root.rotation.set(0, 0, 0);
     item.root.visible = true;
-    const pic = thumbs.shot(item.root, { from: [0.84, 0.28, 0.78], look: [0, 0.07, 0.14], px: 120 });
+    const pic = thumbs.shot(item.root, { from: [0.84, 0.36, 0.96], look: [0, 0.13, 0.12], px: 128 });
     item.root.position.copy(pPos);
     item.root.rotation.copy(pRot);
     item.root.scale.copy(pScl);

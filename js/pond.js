@@ -270,6 +270,7 @@ export class CrystalPond {
       this.bedMesh = new T.Mesh(bedGeo, bedMat);
       this.bedMesh.position.set(p.x, y0, p.z);
       this.bedMesh.receiveShadow = true;
+      this.bedMesh.frustumCulled = false;
       this.bedMesh.matrixAutoUpdate = false;
       this.bedMesh.updateMatrix();
       root.add(this.bedMesh);
@@ -299,7 +300,7 @@ export class CrystalPond {
         const sc = 0.42 + ((i * 0.29) % 0.95);
         rm.scale.set(sc * 1.25, sc * 0.52, sc * 0.95);
         rm.position.set(rx, y0 - dep + sc * 0.10, rz);
-        rm.rotation.set(i * 0.4, i * 1.1, i * 0.2);
+        rm.rotation.set(Math.sin(i * 1.7) * 0.20, i * 1.1, Math.cos(i * 1.3) * 0.20);
         root.add(rm);
       }
 
@@ -452,6 +453,7 @@ export class CrystalPond {
 
       this.iceWall = new T.Mesh(wallGeo, wallMat);
       this.iceWall.renderOrder = 1;
+      this.iceWall.frustumCulled = false;
       this.iceWall.matrixAutoUpdate = false;
       this.iceWall.updateMatrix();
       root.add(this.iceWall);
@@ -554,6 +556,7 @@ export class CrystalPond {
       this.iceMesh.position.set(p.x, y0 + 0.008, p.z);
       this.iceMesh.receiveShadow = true;
       this.iceMesh.renderOrder = 2;
+      this.iceMesh.frustumCulled = false;
       this.iceMesh.matrixAutoUpdate = false;
       this.iceMesh.updateMatrix();
       root.add(this.iceMesh);
@@ -771,6 +774,7 @@ export class CrystalPond {
       this.waterMesh.position.set(w.x, y0 - 0.035, w.z);
       this.waterMesh.receiveShadow = true;
       this.waterMesh.renderOrder = 3;
+      this.waterMesh.frustumCulled = false;
       this.waterMesh.matrixAutoUpdate = false;
       this.waterMesh.updateMatrix();
       root.add(this.waterMesh);

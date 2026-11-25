@@ -472,10 +472,15 @@ export class PerfOptimizer {
 
     // 2) Register large dynamic outer landmark groups for indoor/outdoor, distance & frustum culling
     this.outerDynamicGroups = [];
-    if (g.ballroom && g.ballroom.group) this.outerDynamicGroups.push({ obj: g.ballroom.group, x: g.ballroom.cx || -98, z: g.ballroom.cz || 72, r: 16, maxD: 195 });
-    if (g.parkour && g.parkour.group) this.outerDynamicGroups.push({ obj: g.parkour.group, x: g.parkour.cx || -76, z: g.parkour.cz || -86, r: 28, maxD: 195 });
-    if (g.pondFx && g.pondFx.group) this.outerDynamicGroups.push({ obj: g.pondFx.group, x: 5, z: -28, r: 28, maxD: 185 });
-    if (g.chemlab && g.chemlab.ext) this.outerDynamicGroups.push({ obj: g.chemlab.ext, x: g.chemlab.cx || 76, z: g.chemlab.cz || 102, r: 14, maxD: 205 });
+    if (g.ballroom && g.ballroom.group) this.outerDynamicGroups.push({ obj: g.ballroom.group, x: g.ballroom.cx ?? -64, y: 4, z: g.ballroom.cz ?? 94, r: 20, maxD: 205 });
+    if (g.parkour && g.parkour.group) this.outerDynamicGroups.push({ obj: g.parkour.group, x: g.parkour.cx ?? -74, y: 6, z: g.parkour.cz ?? -44, r: 30, maxD: 205 });
+    if (g.pondFx && g.pondFx.group) {
+      const px = g.pondFx.pond ? g.pondFx.pond.x : -41;
+      const pz = g.pondFx.pond ? g.pondFx.pond.z : 36;
+      const py = Number.isFinite(g.pondFx.iceY) ? g.pondFx.iceY : 0;
+      this.outerDynamicGroups.push({ obj: g.pondFx.group, x: px, y: py, z: pz, r: 34, maxD: 220 });
+    }
+    if (g.chemlab && g.chemlab.ext) this.outerDynamicGroups.push({ obj: g.chemlab.ext, x: g.chemlab.cx ?? 76, y: 4, z: g.chemlab.cz ?? 102, r: 16, maxD: 210 });
 
     // 3) Collect & tune MeshPhysicalMaterials + CSS compositor + shadow cadence
     this._collectPhysicalMaterials();
@@ -607,7 +612,7 @@ export class PerfOptimizer {
       const d2 = dx * dx + dz * dz;
       let vis = d2 <= lim * lim;
       if (vis && d2 > 2704) {
-        sph.center.set(d.x, 4, d.z);
+        sph.center.set(d.x, d.y ?? 4, d.z);
         sph.radius = (d.r || 22) + 18;
         vis = this._frustum.intersectsSphere(sph);
       }
