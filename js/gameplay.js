@@ -22,6 +22,8 @@ export class GameplayPlus {
 
     // Snow-Glide Dash state
     this.dashT = 0;
+    this.dashDur = 0.40;
+    this.dashOnIce = false;
     this.dashCd = 0;
     this.dashDirX = 0;
     this.dashDirZ = 0;
@@ -227,7 +229,10 @@ export class GameplayPlus {
     this.dashDirZ = -Math.cos(yaw);
     const onIce = g.world && g.world.surfaceAt(pl.pos.x, pl.pos.z) === "ice";
     this.dashT = onIce ? 0.56 : 0.40;
+    this.dashDur = this.dashT;
+    this.dashOnIce = onIce;
     this.dashCd = 1.65;
+    if (g.character && g.character.stop) g.character.stop(0.06);
 
     const isGem = g.avatar === "gemini";
     if (g.audio.dashWhoosh) g.audio.dashWhoosh(isGem);
