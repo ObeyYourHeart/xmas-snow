@@ -137,7 +137,7 @@ export function installShootingSystem(gun, tools, game, helpers) {
     configurable: true,
     get() {
       const ch = game.character;
-      return tools.held === "chemgun" && tools.usable && game.player.enabled && !!ch && ch.ready && !ch.rooted;
+      return tools.held === "chemgun" && tools.isGemini && tools.usable && game.player.enabled && !!ch && ch.ready && !ch.rooted;
     }
   });
 

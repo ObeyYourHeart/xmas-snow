@@ -1379,6 +1379,7 @@ export function installChemGun(tools, game, helpers, ymRef) {
   }
 
   tools._useChemGun = function () {
+    if (!this.isGemini) return false;
     if (cool > 0) return true;
     const pl = game.player;
     const ch = game.character;
@@ -1508,11 +1509,19 @@ export function installChemGun(tools, game, helpers, ymRef) {
   let chemBarShown = false;
   tools._updateChemGun = function (dt, time) {
     if (cool > 0) cool = Math.max(0, cool - dt);
+    if (!this.isGemini && this.held === "chemgun") {
+      this.held = null;
+      this.sw = null;
+      this.queued = false;
+      this.aimT = 0;
+      item.root.visible = false;
+      this.syncBar && this.syncBar();
+    }
     if (this.kick > 0 && this.held === "chemgun") {
       this.kick = Math.max(0, this.kick - dt * 5.2);
     }
 
-    const active = !!(this.gun && this.gun.chemActive);
+    const active = !!(this.isGemini && this.gun && this.gun.chemActive);
     if (chemBar && active !== chemBarShown) {
       chemBarShown = active;
       chemBar.classList.toggle("show", active);
@@ -1732,6 +1741,7 @@ export function installChemGun(tools, game, helpers, ymRef) {
       const btn = document.createElement("button");
       btn.dataset.tool = "chemgun";
       btn.className = "secret-tool";
+      btn.style.display = tools.isGemini ? "" : "none";
       btn.title = `${CHEM_GUN_DEF.name}：${CHEM_GUN_DEF.tip}`;
       btn.innerHTML = pic ? `<img src="${pic}" alt="${CHEM_GUN_DEF.name}">` : `<u>Og</u>`;
       btn.onclick = () => {
@@ -1746,10 +1756,13 @@ export function installChemGun(tools, game, helpers, ymRef) {
       }
     }
 
-    if (autoEquip && tools.usable) {
+    if (autoEquip && tools.usable && tools.isGemini) {
       tools.equip("chemgun");
     } else {
       tools.syncBar();
+      if (autoEquip && !tools.isGemini && !silent && game.ui && game.ui.toast) {
+        game.ui.toast("已解锁「118 Og 星芒猫耳枪」（猫猫 Gemini 专属武器，切换主角到 Gemini 即可装备喵～）", 4.5);
+      }
     }
 
     if (!silent) {

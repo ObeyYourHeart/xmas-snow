@@ -6,7 +6,7 @@
 //   Octagonal brass-inlaid tile floor, 6 recessed arched cathedral aurora windows, apothecary reagent shelves,
 //   SW 极其猫装备柜, 4 Gemini 4 Element Laser Reactors, Center 118 Og Secret Weapon Vault, Workbench, Periodic Table & Holo-Pedestal!
 
-import { buildChemGunMesh } from "./labweapon.js?v=11251045";
+import { buildChemGunMesh } from "./labweapon.js?v=11251445";
 import {
   makeStoneMasonryTex,
   makeShingleRoofTex,
@@ -991,11 +991,19 @@ export class ChemLab {
     ext.add(spireMol);
     this.spinners.push({ obj: spireMol, speed: 0.75 });
 
-    // Solid exterior building colliders (main body + projecting bay alcoves + portico side walls)
+    // Solid exterior building colliders (main body + East/West bay alcoves + portico side piers + porch stone balustrades!)
     world.boxes.push(
-      { x0: this.cx - hw - 0.15, x1: this.cx + hw + 0.15, z0: this.cz - hd - 0.15, z1: this.cz + hd + 0.95, h: 8 },
-      { x0: this.cx - hw - 1.95, x1: this.cx - hw + 0.1, z0: this.cz - 1.85, z1: this.cz + 1.55, h: 6 },
-      { x0: this.cx + hw - 0.1, x1: this.cx + hw + 1.95, z0: this.cz - 1.85, z1: this.cz + 1.55, h: 6 }
+      { x0: this.cx - hw - 0.15, x1: this.cx + hw + 0.15, z0: this.cz - hd - 0.15, z1: this.cz + hd + 0.95, h: 9.5 },
+      { x0: this.cx - hw - 1.95, x1: this.cx - hw + 0.1, z0: this.cz - 1.85, z1: this.cz + 1.55, h: 6.5 },
+      { x0: this.cx + hw - 0.1, x1: this.cx + hw + 1.95, z0: this.cz - 1.85, z1: this.cz + 1.55, h: 6.5 },
+      // Projecting front portico side piers (central 3.24m doorway remains 100% wide open!)
+      { x0: this.cx - 2.12, x1: this.cx - 1.62, z0: this.cz + hd + 0.85, z1: this.cz + hd + 1.50, h: 6.0 },
+      { x0: this.cx + 1.62, x1: this.cx + 2.12, z0: this.cz + hd + 0.85, z1: this.cz + hd + 1.50, h: 6.0 },
+      // Front porch stone balustrades & golden cat-ear newel posts (central 2.68m stairs remain 100% open!)
+      { x0: this.cx - 2.46, x1: this.cx - 2.18, z0: this.cz + hd + 0.15, z1: this.cz + hd + 2.26, h: 1.42 },
+      { x0: this.cx + 2.18, x1: this.cx + 2.46, z0: this.cz + hd + 0.15, z1: this.cz + hd + 2.26, h: 1.42 },
+      { x0: this.cx - 2.46, x1: this.cx - 1.34, z0: this.cz + hd + 2.00, z1: this.cz + hd + 2.28, h: 1.52 },
+      { x0: this.cx + 1.34, x1: this.cx + 2.46, z0: this.cz + hd + 2.00, z1: this.cz + hd + 2.28, h: 1.52 }
     );
 
     // Warm outdoor entrance glow

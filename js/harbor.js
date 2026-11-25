@@ -258,7 +258,7 @@ export class StarlightHarbor {
     arch.updateMatrixWorld(true);
     for (const side of [-1, 1]) {
       const wp = new T.Vector3(side * 2.25, 0, 0).applyMatrix4(arch.matrixWorld);
-      world.circles.push({ x: wp.x, z: wp.z, r: 0.40 });
+      world.circles.push({ x: wp.x, z: wp.z, r: 0.42, top: 5.2 });
     }
   }
 
@@ -278,7 +278,7 @@ export class StarlightHarbor {
       this.mesh(new T.TorusGeometry(5.38, 0.09, 8, 40).rotateX(Math.PI / 2), this.m.gold, 0, 0.17, 0),
       this.mesh(new T.TorusGeometry(3.2, 0.05, 6, 36).rotateX(Math.PI / 2), this.m.cyanGlow, 0, 0.17, 0)
     );
-    // 6 low maritime brass bollards around the plaza ring
+    // 6 low maritime brass bollards around the plaza ring (with physical colliders!)
     for (let i = 0; i < 6; i++) {
       const a = (i / 6) * Math.PI * 2 + 0.3;
       const bx = Math.cos(a) * 5.15, bz = Math.sin(a) * 5.15;
@@ -286,6 +286,7 @@ export class StarlightHarbor {
         this.mesh(new T.CylinderGeometry(0.13, 0.16, 0.65, 10), this.m.iron, bx, 0.42, bz),
         this.mesh(new T.SphereGeometry(0.11, 10, 8), i % 2 === 0 ? this.m.cyanGlow : this.m.goldGlow, bx, 0.80, bz)
       );
+      world.circles.push({ x: this.cx + bx, z: this.cz + bz, r: 0.24, top: 0.92 });
     }
     this.group.add(plaza);
 
@@ -372,7 +373,7 @@ export class StarlightHarbor {
 
     this.group.add(lh);
     lh.updateMatrixWorld(true);
-    world.circles.push({ x: lx, z: lz, r: 3.35 });
+    world.circles.push({ x: lx, z: lz, r: 3.45, top: 17.8 });
     this.addLight(lx, ly + 13.4, lz, 0x9cf6ff, 22, 34, true);
     this.addLight(lx + 2.2, ly + 3.2, lz + 3.0, 0xffd084, 10, 16, false);
 
@@ -474,7 +475,18 @@ export class StarlightHarbor {
 
     this.group.add(g);
     g.updateMatrixWorld(true);
-    world.circles.push({ x: wx, z: wz, r: 3.4 });
+    // Tight rotated multi-circle footprint covering the entire 6.2x4.6 workshop + stone forge chimney + overcharge pedestal!
+    const addWsCol = (lx, lz, r, top) => {
+      const wp = new T.Vector3(lx, 0, lz).applyMatrix4(g.matrixWorld);
+      world.circles.push({ x: wp.x, z: wp.z, r, top });
+    };
+    for (const lx of [-2.25, -0.75, 0.75, 2.25]) {
+      for (const lz of [-1.35, 0, 1.35]) {
+        addWsCol(lx, lz, 1.05, 5.4);
+      }
+    }
+    addWsCol(-3.05, -0.60, 0.68, 5.8); // Stone forge chimney stack
+    addWsCol(2.35, 3.15, 0.66, 1.55);  // Glowing Overcharge Pedestal
     this.addLight(wx, wy + 3.0, wz, 0xffcc80, 12, 18, false);
 
     const pedWorld = new T.Vector3(2.35, 1.2, 3.15).applyMatrix4(g.matrixWorld);
@@ -551,10 +563,11 @@ export class StarlightHarbor {
 
     this.group.add(g);
     g.updateMatrixWorld(true);
-    for (let i = 0; i <= 8; i++) {
-      const a = 1.05 + ((Math.PI * 2 - 2.1) * i) / 8;
+    // 22 tightly overlapping curved-wall colliders (zero walk-through gaps, front NW doorway stays 100% open!)
+    for (let i = 0; i <= 21; i++) {
+      const a = 1.05 + ((Math.PI * 2 - 2.1) * i) / 21;
       const wp = new T.Vector3(Math.sin(a) * r, 0, Math.cos(a) * r).applyMatrix4(g.matrixWorld);
-      world.circles.push({ x: wp.x, z: wp.z, r: 0.42 });
+      world.circles.push({ x: wp.x, z: wp.z, r: 0.46, top: 4.8 });
     }
     this.addLight(gx, gy + 2.4, gz, 0xffb2eb, 11, 15, true);
 
@@ -595,6 +608,12 @@ export class StarlightHarbor {
     booth.add(awning, snowCap, rSign);
     this.group.add(booth);
     world.boxes.push({ x0: bx + 0.1, x1: bx + 1.2, z0: bz - 2.8, z1: bz + 2.8, h: 1.25 });
+    // Solid colliders for all 4 shooting-booth awning corner posts
+    for (const dx of [-0.82, 0.82]) {
+      for (const dz of [-2.65, 2.65]) {
+        world.circles.push({ x: bx + dx, z: bz + dz, r: 0.20, top: 3.3 });
+      }
+    }
     this.addLight(bx, by + 2.7, bz, 0xffd68a, 11, 16, false);
 
     // ROW 1 (7.5m East): 6 Breakable Glowing Alchemy Elixir Bottles on 2 Carved Oak Barrel Racks!
@@ -621,6 +640,10 @@ export class StarlightHarbor {
       this.mesh(new T.CylinderGeometry(0.055, 0.055, 9.4, 8).rotateX(Math.PI / 2), this.m.gold, 0, 1.42, 0)
     );
     this.group.add(railG);
+    world.circles.push(
+      { x: railX, z: bz - 4.6, r: 0.22, top: 2.3 },
+      { x: railX, z: bz + 4.6, r: 0.22, top: 2.3 }
+    );
 
     for (let i = 0; i < 4; i++) {
       const tg = new T.Group();
@@ -681,6 +704,10 @@ export class StarlightHarbor {
     this.gongPivot = gongPiv;
     gantry.add(gongPiv);
     this.group.add(gantry);
+    world.circles.push(
+      { x: gongX, z: bz - 2.0, r: 0.28, top: 4.9 },
+      { x: gongX, z: bz + 2.0, r: 0.28, top: 4.9 }
+    );
 
     const gongPos = new T.Vector3(gongX, gongY + 2.50, bz);
     this.registerTarget({
@@ -765,7 +792,11 @@ export class StarlightHarbor {
       this.mesh(new T.BoxGeometry(0.56, 0.10, 2.35), this.m.darkWood, 0, 0.96, 0)
     );
     this.group.add(g);
-    this.game.world.circles.push({ x: rx, z: rz - 0.82, r: 0.44, top: 1.02 }, { x: rx, z: rz + 0.82, r: 0.44, top: 1.02 });
+    this.game.world.circles.push(
+      { x: rx, z: rz - 0.82, r: 0.44, top: 1.05 },
+      { x: rx, z: rz, r: 0.44, top: 1.05 },
+      { x: rx, z: rz + 0.82, r: 0.44, top: 1.05 }
+    );
 
     specs.forEach((sp, i) => {
       const dz = (i - 1) * 0.74;
@@ -806,10 +837,10 @@ export class StarlightHarbor {
     for (const b of this.bottles) { b.brokenT = 0; b.g.visible = true; b.g.scale.setScalar(1); }
     for (const r of this.railTargets) { r.downT = 0; r.flip = 0; }
     for (const bl of this.tetherBalloons) { bl.popT = 0; bl.orb.visible = true; bl.cord.visible = true; }
-    // Auto-equip ChemGun if unlocked, else Blaster!
+    // Auto-equip ChemGun if unlocked & Gemini, else Blaster!
     const t = this.game.tools;
     if (t && t.held !== "chemgun" && t.held !== "blaster") {
-      t.equip(t.chemGunUnlocked ? "chemgun" : "blaster");
+      t.equip(t.chemGunUnlocked && t.isGemini ? "chemgun" : "blaster");
     }
     this.game.audio && this.game.audio.chimeChord && this.game.audio.chimeChord(2);
     this.game.ui && this.game.ui.toast("🎯 极其猫靶场 30 秒挑战开始！击碎药水瓶、移动星靶、气球与中央大金锣冲刺高分喵！", 4.5);
@@ -893,6 +924,11 @@ export class StarlightHarbor {
     }
     g.add(piv);
     this.group.add(g);
+    g.updateMatrixWorld(true);
+    for (const px of [-0.78, 0.78]) {
+      const wp = new T.Vector3(px, 0, 0).applyMatrix4(g.matrixWorld);
+      this.game.world.circles.push({ x: wp.x, z: wp.z, r: 0.18, top: 2.6 });
+    }
     const st = { piv, sway: 0, vel: 0, seed: this.chimes.length };
     this.chimes.push(st);
     const pos = new T.Vector3(x, y + 1.85, z);
