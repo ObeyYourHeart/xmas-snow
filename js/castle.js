@@ -1361,8 +1361,8 @@ export class ClaudeCastle {
         this.mesh(new T.CylinderGeometry(0.065, 0.16, 1.95, 10), this.m.velvet, 1.24, -1.30, 0.19),
         this.mesh(new T.TorusGeometry(0.088, 0.024, 6, 14).rotateX(Math.PI / 2), this.m.gold, 1.24, -0.32, 0.19)
       );
-      // Plush Cushioned Marble Window Seat under the center & west cathedral windows
-      if (wx <= 0.1) {
+      // Plush Cushioned Marble Window Seat under the center cathedral window (keeps NW corner spacious for Grand Piano!)
+      if (Math.abs(wx) < 0.1) {
         wg.add(
           this.mesh(new T.BoxGeometry(2.18, 0.50, 0.62), im, 0, -2.90, 0.24),
           this.mesh(new T.BoxGeometry(2.06, 0.10, 0.54), this.m.velvet, 0, -2.61, 0.24),
@@ -1510,10 +1510,10 @@ export class ClaudeCastle {
     }
     g.add(fp);
 
-    // Sculpted Curved French Chesterfield Tufted Velvet Sofa (-3.55, -2.25) with Rolled Arms, Gold Legs & Cushions!
+    // Sculpted Curved French Chesterfield Tufted Velvet Sofa (-3.35, -1.78) — clear 1.3m aisle from Grand Piano!
     const sofa = new T.Group();
-    sofa.position.set(-3.55, 0, -2.25);
-    sofa.rotation.y = -0.30;
+    sofa.position.set(-3.35, 0, -1.78);
+    sofa.rotation.y = -0.26;
     sofa.add(
       // Carved mahogany & gold apron + 4 turned golden cabriole legs
       this.mesh(new T.BoxGeometry(2.04, 0.16, 0.84), this.m.walnut, 0, 0.22, 0),
@@ -1546,17 +1546,20 @@ export class ClaudeCastle {
     sofa.children[7].scale.set(1, 0.48, 1);
     g.add(sofa);
 
-    // Two Sculpted Curved Louis-XVI Wingback Armchairs (positioned to keep open fireplace flame view!)
+    // Two Sculpted Seamless Louis-XVI Medallion-Back Armchairs (flush gilded oval frame, zero floating hoops!)
     for (const [cx, cz, ry] of [[-3.55, 2.25, -Math.PI * 0.84], [-1.95, 1.35, -Math.PI * 0.66]]) {
       const ch = new T.Group();
       ch.position.set(cx, 0, cz);
       ch.rotation.y = ry;
       const seatPad = this.mesh(new T.SphereGeometry(0.42, 14, 10), this.m.velvet, 0, 0.44, 0.03);
       seatPad.scale.set(0.96, 0.38, 0.90);
-      const backPad = this.mesh(new T.CylinderGeometry(0.42, 0.38, 0.74, 14), this.m.velvet, 0, 0.78, -0.28);
-      backPad.scale.set(1.0, 1.0, 0.32);
-      const pillow = this.mesh(new T.SphereGeometry(0.18, 10, 8), this.m.silkCream, 0, 0.66, -0.14);
-      pillow.scale.set(1.0, 0.88, 0.42);
+      // Seamless plush oval medallion backrest flush inside its gilded medallion rim
+      const backMedallion = this.mesh(new T.SphereGeometry(0.38, 14, 12), this.m.velvet, 0, 0.86, -0.28);
+      backMedallion.scale.set(1.0, 1.18, 0.24);
+      const backRim = this.mesh(new T.TorusGeometry(0.39, 0.028, 8, 26), this.m.gold, 0, 0.86, -0.28);
+      backRim.scale.set(1.0, 1.18, 1.0);
+      const pillow = this.mesh(new T.SphereGeometry(0.18, 10, 8), this.m.silkCream, 0, 0.64, -0.14);
+      pillow.scale.set(1.0, 0.86, 0.42);
       ch.add(
         this.mesh(new T.CylinderGeometry(0.42, 0.40, 0.16, 16), this.m.walnut, 0, 0.24, 0),
         this.mesh(new T.TorusGeometry(0.42, 0.025, 8, 22).rotateX(Math.PI / 2), this.m.gold, 0, 0.32, 0),
@@ -1564,11 +1567,15 @@ export class ClaudeCastle {
         this.mesh(new T.CylinderGeometry(0.032, 0.022, 0.18, 8), this.m.gold, 0.30, 0.09, -0.26),
         this.mesh(new T.CylinderGeometry(0.032, 0.022, 0.18, 8), this.m.gold, -0.30, 0.09, 0.26),
         this.mesh(new T.CylinderGeometry(0.032, 0.022, 0.18, 8), this.m.gold, 0.30, 0.09, 0.26),
-        seatPad, backPad, pillow,
-        // Rolled curved arms
-        this.mesh(new T.CylinderGeometry(0.095, 0.095, 0.68, 10).rotateX(Math.PI / 2), this.m.velvet, -0.39, 0.62, 0.02),
-        this.mesh(new T.CylinderGeometry(0.095, 0.095, 0.68, 10).rotateX(Math.PI / 2), this.m.velvet, 0.39, 0.62, 0.02),
-        this.mesh(new T.TorusGeometry(0.40, 0.026, 8, 20, Math.PI), this.m.gold, 0, 1.06, -0.28)
+        // Sturdy twin gilded backrest stiles joining seat frame to medallion back
+        this.mesh(new T.CylinderGeometry(0.024, 0.026, 0.38, 8), this.m.gold, -0.22, 0.46, -0.28),
+        this.mesh(new T.CylinderGeometry(0.024, 0.026, 0.38, 8), this.m.gold, 0.22, 0.46, -0.28),
+        seatPad, backMedallion, backRim, pillow,
+        // Rolled curved arms with brass support uprights
+        this.mesh(new T.CylinderGeometry(0.082, 0.082, 0.64, 10).rotateX(Math.PI / 2), this.m.velvet, -0.39, 0.62, 0.02),
+        this.mesh(new T.CylinderGeometry(0.082, 0.082, 0.64, 10).rotateX(Math.PI / 2), this.m.velvet, 0.39, 0.62, 0.02),
+        this.mesh(new T.CylinderGeometry(0.024, 0.024, 0.28, 8), this.m.gold, -0.39, 0.46, 0.24),
+        this.mesh(new T.CylinderGeometry(0.024, 0.024, 0.28, 8), this.m.gold, 0.39, 0.46, 0.24)
       );
       g.add(ch);
     }
@@ -1615,62 +1622,66 @@ export class ClaudeCastle {
       // Sculpted Ivory & Gold Royal Bedstead (2.60m × 1.82m) + Plush Cream Mattress (top = 0.56m above dais = 0.74m!)
       this.mesh(new T.BoxGeometry(2.60, 0.34, 1.82), this.m.marble, 0, 0.18, 0),
       this.mesh(new T.BoxGeometry(2.66, 0.05, 1.88), this.m.gold, 0, 0.35, 0),
-      this.mesh(new T.BoxGeometry(2.48, 0.24, 1.70), this.m.silkCream, 0, 0.44, 0),
-      // Decorative velvet foot runner at foot of bed (-X) cleanly below sleeping duvet!
-      this.mesh(new T.BoxGeometry(0.68, 0.255, 1.74), this.m.velvet, -0.90, 0.445, 0),
-      this.mesh(new T.BoxGeometry(0.06, 0.26, 1.75), this.m.gold, -0.54, 0.445, 0),
-      // Pair of plump rounded goose-down pillows along East headboard (+X = +0.86)
-      (() => { const p = this.mesh(new T.SphereGeometry(0.36, 14, 10), this.m.snow, 0.86, 0.62, -0.38); p.scale.set(0.74, 0.34, 1.08); return p; })(),
-      (() => { const p = this.mesh(new T.SphereGeometry(0.36, 14, 10), this.m.snow, 0.86, 0.62, 0.38); p.scale.set(0.74, 0.34, 1.08); return p; })(),
+      this.mesh(new T.BoxGeometry(2.48, 0.20, 1.70), this.m.silkCream, 0, 0.46, 0),
+      // Cleanly layered velvet foot throw sitting ON TOP of mattress + side drapes (zero clipping into bedframe!)
+      this.mesh(new T.BoxGeometry(0.68, 0.026, 1.74), this.m.velvet, -0.90, 0.573, 0),
+      this.mesh(new T.BoxGeometry(0.68, 0.19, 0.024), this.m.velvet, -0.90, 0.47, 0.86),
+      this.mesh(new T.BoxGeometry(0.68, 0.19, 0.024), this.m.velvet, -0.90, 0.47, -0.86),
+      this.mesh(new T.BoxGeometry(0.05, 0.032, 1.75), this.m.gold, -0.55, 0.574, 0),
+      // Wide continuous cloud-plush goose-down royal master pillow centered for sleeping + twin accent bolsters!
+      (() => { const p = this.mesh(new T.SphereGeometry(0.40, 16, 10), this.m.snow, 0.84, 0.62, 0.0); p.scale.set(0.66, 0.32, 1.68); return p; })(),
+      (() => { const p = this.mesh(new T.SphereGeometry(0.20, 10, 8), this.m.apricot, 1.00, 0.68, -0.62); p.scale.set(0.62, 0.78, 0.88); return p; })(),
+      (() => { const p = this.mesh(new T.SphereGeometry(0.20, 10, 8), this.m.apricot, 1.00, 0.68, 0.62); p.scale.set(0.62, 0.78, 0.88); return p; })(),
       // Grand Carved & Tufted Velvet East Headboard (+X = +1.26)
       this.mesh(new T.BoxGeometry(0.16, 1.75, 1.88), this.m.marble, 1.26, 0.90, 0),
       this.mesh(new T.BoxGeometry(0.08, 1.25, 1.56), this.m.velvet, 1.18, 1.02, 0),
       this.mesh(new T.BoxGeometry(0.20, 0.10, 1.94), this.m.gold, 1.26, 1.78, 0),
-      // Graceful Tufted Velvet Bed-Foot Bench with Turned Golden Legs (-X = -1.72)
-      this.mesh(new T.CylinderGeometry(0.20, 0.20, 1.28, 12).rotateX(Math.PI / 2), this.m.velvet, -1.72, 0.38, 0),
-      this.mesh(new T.BoxGeometry(0.42, 0.05, 1.34), this.m.gold, -1.72, 0.28, 0),
-      this.mesh(new T.CylinderGeometry(0.03, 0.02, 0.28, 8), this.m.gold, -1.72, 0.14, -0.56),
-      this.mesh(new T.CylinderGeometry(0.03, 0.02, 0.28, 8), this.m.gold, -1.72, 0.14, 0.56)
+      // Graceful Tufted Velvet Bed-Foot Bench spaced cleanly 20cm clear of footboard (-X = -1.78)
+      this.mesh(new T.CylinderGeometry(0.20, 0.20, 1.26, 12).rotateX(Math.PI / 2), this.m.velvet, -1.78, 0.38, 0),
+      this.mesh(new T.BoxGeometry(0.42, 0.05, 1.32), this.m.gold, -1.78, 0.28, 0),
+      this.mesh(new T.CylinderGeometry(0.03, 0.02, 0.28, 8), this.m.gold, -1.78, 0.14, -0.56),
+      this.mesh(new T.CylinderGeometry(0.03, 0.02, 0.28, 8), this.m.gold, -1.78, 0.14, 0.56)
     );
-    bed.children[bed.children.length - 4].scale.set(1.1, 0.65, 1.0);
+    bed.children[bed.children.length - 4].scale.set(1.08, 0.64, 1.0);
     const bedHeadSun = this.mkSunflower(0.46, false);
     bedHeadSun.position.set(1.16, 1.86, 0);
     bedHeadSun.rotation.y = -Math.PI / 2;
     bed.add(bedHeadSun);
 
-    // Four Slender Turned Ivory & Gold Canopy Columns (h = 3.25m) + Graceful Gathered Hourglass Corner Drapes!
+    // Four Slender Turned Ivory & Gold Canopy Columns (h = 3.25m) + Separate Outer Hourglass Drapes (ZERO post/curtain clipping!)
     for (const [px, pz] of [[-1.26, -0.88], [1.26, -0.88], [-1.26, 0.88], [1.26, 0.88]]) {
-      const ox = px * 1.03, oz = pz * 1.03;
+      const sx = px > 0 ? 1 : -1, sz = pz > 0 ? 1 : -1;
+      const ox = px + sx * 0.135, oz = pz + sz * 0.115;
       bed.add(
-        this.mesh(new T.CylinderGeometry(0.042, 0.056, 3.25, 12), this.m.marble, px, 1.625, pz),
+        this.mesh(new T.CylinderGeometry(0.042, 0.054, 3.25, 12), this.m.marble, px, 1.625, pz),
         this.mesh(new T.SphereGeometry(0.068, 10, 8), this.m.gold, px, 0.44, pz),
-        this.mesh(new T.TorusGeometry(0.066, 0.018, 6, 16).rotateX(Math.PI / 2), this.m.gold, px, 1.85, pz),
-        this.mesh(new T.TorusGeometry(0.066, 0.018, 6, 16).rotateX(Math.PI / 2), this.m.gold, px, 3.16, pz),
-        this.mesh(new T.SphereGeometry(0.088, 10, 8), this.m.gold, px, 3.34, pz),
-        // Delicate tapered hourglass silk-velvet corner drapes (tucked neatly OUTSIDE the posts for unobstructed sleeping views!)
-        this.mesh(new T.CylinderGeometry(0.10, 0.048, 1.55, 10), this.m.velvet, ox, 2.38, oz),
-        this.mesh(new T.CylinderGeometry(0.048, 0.105, 1.15, 10), this.m.velvet, ox, 1.04, oz),
-        this.mesh(new T.TorusGeometry(0.068, 0.02, 6, 14).rotateX(Math.PI / 2), this.m.gold, ox, 1.61, oz)
+        this.mesh(new T.TorusGeometry(0.064, 0.018, 6, 16).rotateX(Math.PI / 2), this.m.gold, px, 1.85, pz),
+        this.mesh(new T.TorusGeometry(0.064, 0.018, 6, 16).rotateX(Math.PI / 2), this.m.gold, px, 3.16, pz),
+        this.mesh(new T.SphereGeometry(0.086, 10, 8), this.m.gold, px, 3.34, pz),
+        // Delicate tapered hourglass silk-velvet corner drapes mounted cleanly outside the posts (zero z-overlap!)
+        this.mesh(new T.CylinderGeometry(0.072, 0.036, 1.48, 10), this.m.velvet, ox, 2.38, oz),
+        this.mesh(new T.CylinderGeometry(0.036, 0.080, 1.24, 10), this.m.velvet, ox, 1.02, oz),
+        this.mesh(new T.TorusGeometry(0.052, 0.018, 6, 14).rotateX(Math.PI / 2), this.m.gold, ox, 1.64, oz)
       );
     }
     bed.add(
-      // Ornate Golden Canopy Cornice Frame, Velvet Valance Trim & Pleated Silk Canopy Ceiling
-      this.mesh(new T.BoxGeometry(2.68, 0.10, 1.92), this.m.gold, 0, 3.22, 0),
-      this.mesh(new T.BoxGeometry(2.64, 0.16, 0.05), this.m.velvet, 0, 3.10, 0.94),
-      this.mesh(new T.BoxGeometry(2.64, 0.16, 0.05), this.m.velvet, 0, 3.10, -0.94),
-      this.mesh(new T.BoxGeometry(0.05, 0.16, 1.88), this.m.velvet, -1.31, 3.10, 0),
-      this.mesh(new T.BoxGeometry(2.52, 0.06, 1.76), this.m.silkCream, 0, 3.27, 0)
+      // Ornate Golden Canopy Cornice Frame (extended slightly to overhang outer drapes cleanly!), Velvet Valance & Silk Canopy
+      this.mesh(new T.BoxGeometry(2.86, 0.10, 2.10), this.m.gold, 0, 3.22, 0),
+      this.mesh(new T.BoxGeometry(2.80, 0.16, 0.05), this.m.velvet, 0, 3.10, 1.02),
+      this.mesh(new T.BoxGeometry(2.80, 0.16, 0.05), this.m.velvet, 0, 3.10, -1.02),
+      this.mesh(new T.BoxGeometry(0.05, 0.16, 2.04), this.m.velvet, -1.40, 3.10, 0),
+      this.mesh(new T.BoxGeometry(2.68, 0.06, 1.92), this.m.silkCream, 0, 3.27, 0)
     );
 
     // Animated 3D Sculpted Royal Quilted Sunflower Duvet (unfolds smoothly over sleeping character when tucked!)
     const sleepQuilt = this._buildCastleSleepQuilt();
-    sleepQuilt.position.set(-0.18, 0.565, 0.04);
+    sleepQuilt.position.set(-0.34, 0.565, 0.04);
     sleepQuilt.visible = false;
     bed.add(sleepQuilt);
     this.castleBed.quilt = sleepQuilt;
 
     // Twin Carved Marble Nightstands with Glowing Crystal Bedside Lamps flanking the East headboard!
-    for (const nz of [-1.32, 1.32]) {
+    for (const nz of [-1.34, 1.34]) {
       const ns = new T.Group();
       ns.position.set(1.02, 0, nz);
       ns.add(
@@ -1685,11 +1696,11 @@ export class ClaudeCastle {
     g.add(bed);
 
     // -------------------------------------------------------------------------
-    // 8. NW GLOSSY EBONY CONCERT GRAND PIANO ALCOVE (-4.35, -4.15) — INTERACTIVE!
+    // 8. NW GLOSSY EBONY CONCERT GRAND PIANO ALCOVE (-4.58, -4.38) — INTERACTIVE!
     // -------------------------------------------------------------------------
     const piano = new T.Group();
-    piano.position.set(-4.35, 0, -4.15);
-    piano.rotation.y = 0.44;
+    piano.position.set(-4.58, 0, -4.38);
+    piano.rotation.y = 0.56;
     // Sculpted Grand Piano Curved Ebony Soundboard Case (ExtrudeGeometry!)
     const gpShape = new T.Shape();
     gpShape.moveTo(-0.76, 0.52);
@@ -1702,18 +1713,20 @@ export class ClaudeCastle {
     gpCaseGeo.rotateX(Math.PI / 2);
     const gpLidGeo = new T.ExtrudeGeometry(gpShape, { depth: 0.04, bevelEnabled: false });
     gpLidGeo.rotateX(Math.PI / 2);
-    const gpLid = this.mesh(gpLidGeo, this.m.obsidian, -0.72, 1.04, 0);
-    gpLid.position.set(0, 1.04, 0);
-    gpLid.rotation.z = 0.52;
-    gpLid.position.set(-0.34, 1.38, 0);
+    // Hinged lid pivoting cleanly along the left straight spine (x = -0.76, y = 1.04)
+    const gpLidPivot = new T.Group();
+    gpLidPivot.position.set(-0.74, 1.04, 0);
+    gpLidPivot.rotation.z = 0.44;
+    const gpLid = this.mesh(gpLidGeo, this.m.obsidian, 0.74, 0.02, 0);
+    gpLidPivot.add(gpLid);
     const gpSoundboard = this.mesh(gpLidGeo, this.m.gold, 0, 0.99, 0);
     gpSoundboard.scale.set(0.90, 1, 0.90);
     piano.add(
       this.mesh(gpCaseGeo, this.m.obsidian, 0, 1.02, 0),
       gpSoundboard,
-      gpLid,
-      // Brass lid prop stick + gilded harp rim
-      this.mesh(new T.CylinderGeometry(0.014, 0.014, 0.72, 6).rotateZ(-0.22), this.m.gold, 0.46, 1.32, -0.20),
+      gpLidPivot,
+      // Brass lid prop stick seated cleanly inside the soundboard rim & meeting underside of raised lid!
+      this.mesh(new T.CylinderGeometry(0.014, 0.014, 0.56, 6).rotateZ(-0.14), this.m.gold, 0.34, 1.24, -0.14),
       // Keyboard bed, crimson felt strip, crisp ivory white keys & 15 ebony black keys
       this.mesh(new T.BoxGeometry(1.52, 0.14, 0.36), this.m.obsidian, 0, 0.76, 0.56),
       this.mesh(new T.BoxGeometry(1.42, 0.04, 0.24), this.m.snow, 0, 0.85, 0.60),
@@ -1731,13 +1744,13 @@ export class ClaudeCastle {
       this.mesh(new T.BoxGeometry(0.04, 0.56, 0.04), this.m.obsidian, -0.10, 0.36, 0.14),
       this.mesh(new T.BoxGeometry(0.04, 0.56, 0.04), this.m.obsidian, 0.10, 0.36, 0.14),
       this.mesh(new T.BoxGeometry(0.28, 0.06, 0.12), this.m.gold, 0, 0.10, 0.16),
-      // Tufted Velvet Concert Piano Bench with Golden Legs
-      this.mesh(new T.BoxGeometry(0.96, 0.10, 0.42), this.m.velvet, 0, 0.50, 1.12),
-      this.mesh(new T.BoxGeometry(0.98, 0.04, 0.44), this.m.gold, 0, 0.44, 1.12),
-      this.mesh(new T.CylinderGeometry(0.03, 0.022, 0.44, 8), this.m.obsidian, -0.42, 0.22, 0.96),
-      this.mesh(new T.CylinderGeometry(0.03, 0.022, 0.44, 8), this.m.obsidian, 0.42, 0.22, 0.96),
-      this.mesh(new T.CylinderGeometry(0.03, 0.022, 0.44, 8), this.m.obsidian, -0.42, 0.22, 1.28),
-      this.mesh(new T.CylinderGeometry(0.03, 0.022, 0.44, 8), this.m.obsidian, 0.42, 0.22, 1.28)
+      // Tufted Velvet Concert Piano Bench neatly tucked in front of keyboard (z = 0.96, 1.3m clear of sofa!)
+      this.mesh(new T.BoxGeometry(0.92, 0.10, 0.38), this.m.velvet, 0, 0.50, 0.96),
+      this.mesh(new T.BoxGeometry(0.94, 0.04, 0.40), this.m.gold, 0, 0.44, 0.96),
+      this.mesh(new T.CylinderGeometry(0.03, 0.022, 0.44, 8), this.m.obsidian, -0.40, 0.22, 0.82),
+      this.mesh(new T.CylinderGeometry(0.03, 0.022, 0.44, 8), this.m.obsidian, 0.40, 0.22, 0.82),
+      this.mesh(new T.CylinderGeometry(0.03, 0.022, 0.44, 8), this.m.obsidian, -0.40, 0.22, 1.10),
+      this.mesh(new T.CylinderGeometry(0.03, 0.022, 0.44, 8), this.m.obsidian, 0.40, 0.22, 1.10)
     );
     for (let k = -6; k <= 6; k++) {
       if (k === -3 || k === 1 || k === 5) continue;
@@ -1923,24 +1936,31 @@ export class ClaudeCastle {
         wood: true
       });
     }
-    // Furniture colliders (cleanly matched to every piece, leaving wide spacious royal walkways!)
-    addBox(-HW, -5.65, -2.15, 2.15, 6.2);           // Monumental West Fireplace
-    addBox(-4.65, -2.45, -2.65, -1.62, 1.3);        // Royal Velvet Sofa
-    addCirc(-3.55, 2.05, 0.56, 1.3);                // South-West Wingback Armchair
-    addCirc(-2.15, 0.95, 0.56, 1.3);                // Inner Wingback Armchair
-    addCirc(-3.45, 0, 0.62, 0.9);                   // Marble Hot-Cocoa Tea Table
-    addBox(bedX - 1.34, bedX + 1.36, bedZ - 0.95, bedZ + 0.95, 3.4); // Princess Canopy Bed
-    addCirc(bedX + 1.02, bedZ - 1.32, 0.36, 1.2);   // North Nightstand
-    addCirc(bedX + 1.02, bedZ + 1.32, 0.36, 1.2);   // South Nightstand
-    addBox(-5.45, -3.45, -5.05, -3.45, 1.6);        // NW Concert Piano & Bench
+    // Furniture colliders (tightly matched to EVERY single piece — zero pass-through, zero ghost boxes!)
+    addBox(-HW, -5.62, -2.15, 2.15, 6.2);           // Monumental West Fireplace
+    // Chesterfield Velvet Sofa (-3.35, -1.78, rot -0.26) — 3 tight circles hugging rotated sofa body!
+    addCirc(-4.02, -1.96, 0.52, 1.35);
+    addCirc(-3.35, -1.78, 0.52, 1.35);
+    addCirc(-2.68, -1.60, 0.52, 1.35);
+    addCirc(-3.55, 2.25, 0.52, 1.35);               // South-West Louis-XVI Armchair
+    addCirc(-1.95, 1.35, 0.52, 1.35);               // Inner Louis-XVI Armchair
+    addCirc(-3.45, 0, 0.62, 1.0);                   // Marble Hot-Cocoa Tea Table
+    // Princess Canopy Bed + Detached Bed-Foot Bench + Twin Nightstands (100% solid!)
+    addBox(bedX - 1.38, bedX + 1.40, bedZ - 0.98, bedZ + 0.98, 3.5); // Princess Canopy Bed & Corner Drapes
+    addBox(bedX - 2.02, bedX - 1.54, bedZ - 0.68, bedZ + 0.68, 1.1); // Tufted Bed-Foot Bench
+    addCirc(bedX + 1.02, bedZ - 1.34, 0.36, 1.2);   // North Nightstand
+    addCirc(bedX + 1.02, bedZ + 1.34, 0.36, 1.2);   // South Nightstand
+    // NW Ebony Concert Grand Piano (-4.58, -4.38, rot 0.56) + Velvet Piano Bench — 3 tight colliders!
+    addCirc(-4.58, -4.38, 0.82, 1.6);               // Grand Piano Main Body
+    addCirc(-5.15, -4.92, 0.62, 1.6);               // Grand Piano Curved Tail
+    addCirc(-4.07, -3.57, 0.44, 1.0);               // Concert Piano Bench
     addBox(HW - 0.85, HW, -0.85, 4.45, 4.2);        // East Twin Grand Bookcases & Ladder
-    addCirc(4.55, 3.35, 1.05, 3.8);                 // 3.8m Giant Indoor Christmas Tree
+    addCirc(4.55, 3.35, 1.36, 3.8);                 // 3.8m Giant Indoor Christmas Tree & 7 Gifts
     addBox(1.24, 2.48, 4.66, HD, 1.6);              // Gramophone Sideboard
     addCirc(-4.25, 4.65, 0.38, 1.2);                // Guestbook Lectern
     addCirc(-2.52, HD - 0.50, 0.26, 2.1);           // West Portal Candelabra
     addCirc(0.52, HD - 0.50, 0.26, 2.1);            // East Portal Candelabra
-    addBox(-4.95, -2.75, -HD, -HD + 0.72, 0.75);    // NW Window Seat
-    addBox(-1.10, 1.10, -HD, -HD + 0.72, 0.75);     // Center-North Window Seat
+    addBox(-1.12, 1.12, -HD, -HD + 0.72, 0.85);     // Center-North Cushioned Window Seat
 
     // Configure 3rd-Person Visible Royal Princess Bed Sleep Anchors & Floating ZZZ Sprites!
     const cb = this.castleBed;
@@ -2020,7 +2040,7 @@ export class ClaudeCastle {
       // Bonus interactive Grand Concert Piano!
       world.spots.push({
         id: "in_piano",
-        pos: new T.Vector3(origin.x - 4.15, origin.y + 1.05, origin.z - 3.65),
+        pos: new T.Vector3(origin.x - 4.05, origin.y + 1.05, origin.z - 3.50),
         r: 2.3,
         label: "弹奏一段城堡冬夜钢琴曲",
         can: () => !!(this.game.cabin && this.game.cabin.inside && !this.game.player.seat),
