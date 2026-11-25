@@ -435,11 +435,11 @@ export class LabGear {
 }
 
 // =============================================================================
-// 2. SECRET WEAPON: 118 Og · 周期表元素炮 (ChemGun Model + 5-Element Projectile Engine!)
+// 2. SECRET WEAPON: 极其猫 · 118 Og 星穹元素魔导步枪 (Exquisite Cat Element Rifle + 5 Custom 3D Projectiles!)
 // =============================================================================
 export function buildChemGunMesh(T, wrapMat) {
   const plain = (m) => wrapMat(m, { key: "plain" });
-  const std = (hex, rough = 0.24, extra = {}) =>
+  const std = (hex, rough = 0.22, extra = {}) =>
     plain(new T.MeshStandardMaterial({ color: hex, roughness: rough, ...extra }));
   const mk = (geo, mat, x = 0, y = 0, z = 0) => {
     const m = new T.Mesh(geo, mat);
@@ -449,81 +449,203 @@ export function buildChemGunMesh(T, wrapMat) {
     return m;
   };
 
-  const mBrass = std(0xf2c868, 0.18, { metalness: 0.90 });
-  const mPearl = std(0xf2f7ff, 0.22, { metalness: 0.30, emissive: new T.Color(0.22, 0.36, 0.62), emissiveIntensity: 0.22 });
-  const mIndigo = std(0x162042, 0.34, { metalness: 0.48 });
-  const mNeon = std(0xff6a3c, 0.12, { emissive: new T.Color(1.0, 0.36, 0.14), emissiveIntensity: 1.35 });
-  const mArgon = std(0xa876ff, 0.12, { emissive: new T.Color(0.58, 0.28, 1.0), emissiveIntensity: 1.35 });
-  const mGlass = plain(new T.MeshStandardMaterial({
-    color: 0xeafaff, roughness: 0.06, metalness: 0.12, transparent: true, opacity: 0.42, depthWrite: false
+  const mGold = std(0xf6cf74, 0.16, { metalness: 0.90 });
+  const mRoseGold = std(0xf2a6b8, 0.20, { metalness: 0.82 });
+  const mPearl = std(0xf7f9ff, 0.18, { metalness: 0.24, emissive: new T.Color(0.18, 0.26, 0.44), emissiveIntensity: 0.18 });
+  const mIndigo = std(0x192348, 0.30, { metalness: 0.46 });
+  const mSakura = std(0xff8ed4, 0.26, { emissive: new T.Color(0.86, 0.28, 0.68), emissiveIntensity: 0.42 });
+  const mCyan = std(0x4cf4ff, 0.10, { emissive: new T.Color(0.24, 0.92, 1.0), emissiveIntensity: 1.5 });
+  const mGoldGlow = std(0xffda5c, 0.10, { emissive: new T.Color(1.0, 0.78, 0.22), emissiveIntensity: 1.5 });
+  const mNeon = std(0xff6a3c, 0.10, { emissive: new T.Color(1.0, 0.36, 0.14), emissiveIntensity: 1.5 });
+  const mArgon = std(0xae7cff, 0.10, { emissive: new T.Color(0.62, 0.32, 1.0), emissiveIntensity: 1.5 });
+  const mOg = std(0xff64dc, 0.10, { emissive: new T.Color(1.0, 0.34, 0.84), emissiveIntensity: 1.5 });
+  const mGlass = plain(new T.MeshPhysicalMaterial({
+    color: 0xeafaff, roughness: 0.05, metalness: 0.08, transparent: true, opacity: 0.34, depthWrite: false
+  }));
+  const mHoloGlass = plain(new T.MeshBasicMaterial({
+    color: 0x7ef6ff, transparent: true, opacity: 0.28, side: T.DoubleSide, depthWrite: false
   }));
 
   const coreMat = plain(new T.MeshStandardMaterial({
     color: 0x4cf4ff,
     emissive: new T.Color(0x4cf4ff),
-    emissiveIntensity: 1.45,
-    roughness: 0.10
+    emissiveIntensity: 1.65,
+    roughness: 0.08
   }));
 
   const root = new T.Group();
   root.name = "weapon_chemgun_118og";
 
-  // Ergonomic Grip & Brass Pommel (centered at hand origin 0,0,0; barrel points along +Z!)
-  const grip = mk(new T.CylinderGeometry(0.022, 0.026, 0.16, 10), mIndigo, 0, -0.05, -0.01);
-  grip.rotation.x = 0.24;
+  // 1. SCULPTED CONTOURED RIFLE STOCK & ERGONOMIC PISTOL GRIP (origin 0,0,0 sits squarely in palm!)
+  const grip = mk(new T.CylinderGeometry(0.019, 0.024, 0.14, 12), mIndigo, 0, -0.045, -0.006);
+  grip.rotation.x = 0.26;
+  const stockProfile = new T.Shape();
+  stockProfile.moveTo(0, 0.02);
+  stockProfile.lineTo(-0.20, 0.005);
+  stockProfile.quadraticCurveTo(-0.225, -0.035, -0.215, -0.082);
+  stockProfile.lineTo(-0.185, -0.082);
+  stockProfile.quadraticCurveTo(-0.10, -0.042, -0.02, -0.018);
+  stockProfile.closePath();
+  const stockGeo = new T.ExtrudeGeometry(stockProfile, {
+    depth: 0.034, bevelEnabled: true, bevelThickness: 0.007, bevelSize: 0.006, bevelSegments: 2
+  });
+  stockGeo.translate(0, 0, -0.017);
+  stockGeo.rotateY(-Math.PI / 2); // Maps shape X(-0.22..0) -> local Z(-0.22..0) cleanly!
   root.add(
     grip,
-    mk(new T.SphereGeometry(0.028, 10, 8), mBrass, 0, -0.125, -0.03),
-    mk(new T.TorusGeometry(0.036, 0.008, 6, 16, Math.PI * 1.1).rotateY(Math.PI / 2), mBrass, 0, 0.01, 0.055)
+    mk(new T.SphereGeometry(0.024, 12, 10), mGold, 0, -0.112, -0.024),
+    mk(stockGeo, mIndigo, 0, 0.055, -0.005),
+    // Sakura-pink cushioned shoulder buttpad & rose-gold cheek crest
+    mk(new T.BoxGeometry(0.046, 0.088, 0.018), mSakura, 0, 0.018, -0.224),
+    mk(new T.BoxGeometry(0.048, 0.020, 0.145), mPearl, 0, 0.072, -0.112),
+    mk(new T.BoxGeometry(0.052, 0.009, 0.135), mRoseGold, 0, 0.058, -0.112),
+    // Curved golden trigger guard & trigger
+    mk(new T.TorusGeometry(0.030, 0.006, 8, 16, Math.PI * 1.15).rotateY(Math.PI / 2), mGold, 0, 0.006, 0.044),
+    mk(new T.BoxGeometry(0.008, 0.026, 0.010), mRoseGold, 0, 0.014, 0.042)
   );
 
-  // Main Starlight-Alchemy Receiver Body
+  // 2. SLEEK BEVELED PEARL-IVORY & ROSE-GOLD RECEIVER BODY + LEFT-HAND FOREGRIP!
+  const bodyShape = new T.Shape();
+  bodyShape.moveTo(-0.04, 0.018);
+  bodyShape.lineTo(0.32, 0.024);
+  bodyShape.quadraticCurveTo(0.37, 0.042, 0.35, 0.098);
+  bodyShape.lineTo(0.24, 0.118);
+  bodyShape.lineTo(-0.02, 0.116);
+  bodyShape.quadraticCurveTo(-0.06, 0.085, -0.04, 0.018);
+  bodyShape.closePath();
+  const bodyGeo = new T.ExtrudeGeometry(bodyShape, {
+    depth: 0.052, bevelEnabled: true, bevelThickness: 0.009, bevelSize: 0.008, bevelSegments: 2
+  });
+  bodyGeo.translate(0, 0, -0.026);
+  bodyGeo.rotateY(-Math.PI / 2); // Maps shape X(-0.04..0.36) -> local Z(-0.04..0.36)!
   root.add(
-    mk(new T.BoxGeometry(0.088, 0.095, 0.32), mIndigo, 0, 0.065, 0.11),
-    mk(new T.BoxGeometry(0.098, 0.032, 0.30), mPearl, 0, 0.115, 0.11),
-    mk(new T.BoxGeometry(0.096, 0.022, 0.34), mBrass, 0, 0.022, 0.12),
-    // Cute twin cat-ear iron-sight fins on top rear!
-    mk(new T.ConeGeometry(0.022, 0.055, 4), mBrass, -0.032, 0.155, -0.01),
-    mk(new T.ConeGeometry(0.022, 0.055, 4), mBrass, 0.032, 0.155, -0.01)
+    mk(bodyGeo, mPearl, 0, 0, 0),
+    // Midnight-indigo underbelly chassis & gilded lower picatinny rail
+    mk(new T.BoxGeometry(0.056, 0.032, 0.34), mIndigo, 0, 0.034, 0.14),
+    mk(new T.BoxGeometry(0.044, 0.014, 0.36), mGold, 0, 0.018, 0.16),
+    // Sleek angled left-hand foregrip under the barrel (z = +0.265) for natural two-handed stance!
+    (() => {
+      const fg = mk(new T.CylinderGeometry(0.016, 0.019, 0.088, 10), mIndigo, 0, -0.015, 0.255);
+      fg.rotation.x = -0.32;
+      return fg;
+    })(),
+    mk(new T.SphereGeometry(0.020, 10, 8), mRoseGold, 0, -0.054, 0.240),
+    // Gold filigree side trim strips & cute sakura cat-paw cheek emblems on both sides!
+    mk(new T.BoxGeometry(0.072, 0.012, 0.28), mGold, 0, 0.086, 0.12),
+    mk(new T.BoxGeometry(0.070, 0.009, 0.24), mRoseGold, 0, 0.052, 0.11)
   );
-
-  // Twin side micro-vials: Left = 10 Ne (orange-red), Right = 18 Ar (violet-blue)!
-  for (const [sx, mat] of [[-0.062, mNeon], [0.062, mArgon]]) {
+  for (const sx of [-0.037, 0.037]) {
     root.add(
-      mk(new T.CylinderGeometry(0.014, 0.014, 0.17, 10).rotateX(Math.PI / 2), mat, sx, 0.072, 0.10),
-      mk(new T.CylinderGeometry(0.020, 0.020, 0.19, 12).rotateX(Math.PI / 2), mGlass, sx, 0.072, 0.10),
-      mk(new T.CylinderGeometry(0.022, 0.022, 0.018, 12).rotateX(Math.PI / 2), mBrass, sx, 0.072, 0.00),
-      mk(new T.CylinderGeometry(0.022, 0.022, 0.018, 12).rotateX(Math.PI / 2), mBrass, sx, 0.072, 0.20)
+      mk(new T.SphereGeometry(0.012, 10, 8), mSakura, sx, 0.068, 0.03),
+      mk(new T.SphereGeometry(0.0055, 8, 6), mSakura, sx, 0.082, 0.020),
+      mk(new T.SphereGeometry(0.0055, 8, 6), mSakura, sx, 0.085, 0.030),
+      mk(new T.SphereGeometry(0.0055, 8, 6), mSakura, sx, 0.082, 0.040)
     );
   }
 
-  // Central Glowing Element Core Chamber (changes color dynamically to the NEXT loaded element!)
-  const coreOrb = mk(new T.OctahedronGeometry(0.044, 0), coreMat, 0, 0.138, 0.14);
-  const chamberGlass = mk(new T.SphereGeometry(0.062, 14, 10), mGlass, 0, 0.138, 0.14);
-  chamberGlass.renderOrder = 2;
-  root.add(coreOrb, chamberGlass);
+  // 3. SCULPTED CAT-EAR HOLOGRAPHIC REFLEX SIGHT ON TOP RAIL (猫耳全息瞄准镜!)
+  const sightG = new T.Group();
+  sightG.position.set(0, 0.124, 0.035);
+  const earSightShape = new T.Shape();
+  earSightShape.moveTo(-0.044, 0);
+  earSightShape.lineTo(-0.048, 0.038);
+  earSightShape.quadraticCurveTo(-0.046, 0.072, -0.024, 0.082);
+  earSightShape.lineTo(-0.010, 0.052);
+  earSightShape.lineTo(0.010, 0.052);
+  earSightShape.lineTo(0.024, 0.082);
+  earSightShape.quadraticCurveTo(0.046, 0.072, 0.048, 0.038);
+  earSightShape.lineTo(0.044, 0);
+  earSightShape.closePath();
+  const earSightHole = new T.Path();
+  earSightHole.moveTo(-0.032, 0.012);
+  earSightHole.lineTo(0.032, 0.012);
+  earSightHole.lineTo(0.032, 0.042);
+  earSightHole.lineTo(-0.032, 0.042);
+  earSightHole.closePath();
+  earSightShape.holes.push(earSightHole);
+  const sightFrameGeo = new T.ExtrudeGeometry(earSightShape, {
+    depth: 0.024, bevelEnabled: true, bevelThickness: 0.003, bevelSize: 0.003, bevelSegments: 1
+  });
+  sightFrameGeo.translate(0, 0, -0.012);
+  sightG.add(
+    mk(new T.BoxGeometry(0.064, 0.012, 0.095), mIndigo, 0, 0.004, 0),
+    mk(sightFrameGeo, mGold, 0, 0.008, 0.012),
+    // Glowing inner pink cat-ear triangles on sight
+    mk(new T.ConeGeometry(0.010, 0.024, 3), mSakura, -0.026, 0.068, 0.012),
+    mk(new T.ConeGeometry(0.010, 0.024, 3), mSakura, 0.026, 0.068, 0.012),
+    // Translucent cyan holographic lens + center glowing aiming star dot!
+    mk(new T.PlaneGeometry(0.062, 0.030), mHoloGlass, 0, 0.034, 0.012),
+    mk(new T.OctahedronGeometry(0.006, 0), coreMat, 0, 0.034, 0.013)
+  );
+  root.add(sightG);
 
-  // Twin Brass Accelerator Barrel Rails + Spinning Dual-Ring Bohr Atom Muzzle!
+  // 4. VISIBLE REVOLVING 5-ELEMENT CRYSTAL DRUM MAGAZINE (五元素水晶转轮弹仓!)
+  const drumWrap = new T.Group();
+  drumWrap.position.set(0, 0.088, 0.165);
+  const drumSpin = new T.Group();
+  const vialMats = [mCyan, mGoldGlow, mNeon, mArgon, mOg];
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2;
+    const vx = Math.sin(a) * 0.034;
+    const vy = Math.cos(a) * 0.034;
+    drumSpin.add(
+      mk(new T.CylinderGeometry(0.011, 0.011, 0.108, 10).rotateX(Math.PI / 2), vialMats[i], vx, vy, 0),
+      mk(new T.CylinderGeometry(0.014, 0.014, 0.014, 10).rotateX(Math.PI / 2), mGold, vx, vy, -0.056),
+      mk(new T.CylinderGeometry(0.014, 0.014, 0.014, 10).rotateX(Math.PI / 2), mGold, vx, vy, 0.056)
+    );
+  }
+  drumSpin.add(
+    mk(new T.CylinderGeometry(0.018, 0.018, 0.125, 12).rotateX(Math.PI / 2), mGold, 0, 0, 0),
+    mk(new T.CylinderGeometry(0.052, 0.052, 0.012, 18).rotateX(Math.PI / 2), mGold, 0, 0, -0.062),
+    mk(new T.CylinderGeometry(0.052, 0.052, 0.012, 18).rotateX(Math.PI / 2), mGold, 0, 0, 0.062)
+  );
+  const drumGlass = mk(new T.CylinderGeometry(0.054, 0.054, 0.118, 18).rotateX(Math.PI / 2), mGlass, 0, 0, 0);
+  drumGlass.renderOrder = 2;
+  drumWrap.add(drumSpin, drumGlass);
+  root.add(drumWrap);
+
+  // Glowing active element jewel right behind the barrel bridge!
+  const coreOrb = mk(new T.OctahedronGeometry(0.026, 0), coreMat, 0, 0.132, 0.255);
+  root.add(coreOrb);
+
+  // 5. TWIN-RAIL FLUTED PEARL BARREL + SCULPTED CAT-FACE COLLAR + DUAL-GYRO STAR MUZZLE!
   root.add(
-    mk(new T.CylinderGeometry(0.014, 0.016, 0.30, 10).rotateX(Math.PI / 2), mBrass, 0, 0.098, 0.35),
-    mk(new T.CylinderGeometry(0.014, 0.016, 0.30, 10).rotateX(Math.PI / 2), mBrass, 0, 0.042, 0.35),
-    mk(new T.CylinderGeometry(0.032, 0.038, 0.12, 14).rotateX(Math.PI / 2), mPearl, 0, 0.070, 0.31)
+    // Glowing inner plasma conduit beam visible between the twin rails!
+    mk(new T.CylinderGeometry(0.014, 0.016, 0.27, 12).rotateX(Math.PI / 2), coreMat, 0, 0.076, 0.40),
+    // Sculpted pearl & gold upper/lower rail blades
+    mk(new T.BoxGeometry(0.022, 0.018, 0.24), mPearl, 0, 0.106, 0.40),
+    mk(new T.BoxGeometry(0.022, 0.016, 0.24), mPearl, 0, 0.046, 0.40),
+    mk(new T.CylinderGeometry(0.008, 0.009, 0.26, 8).rotateX(Math.PI / 2), mGold, -0.028, 0.076, 0.40),
+    mk(new T.CylinderGeometry(0.008, 0.009, 0.26, 8).rotateX(Math.PI / 2), mGold, 0.028, 0.076, 0.40),
+    // Cute Sculpted Golden Cat-Face Barrel Collar at z = 0.445!
+    mk(new T.CylinderGeometry(0.042, 0.044, 0.036, 16).rotateX(Math.PI / 2), mPearl, 0, 0.076, 0.445),
+    mk(new T.TorusGeometry(0.044, 0.006, 8, 20), mGold, 0, 0.076, 0.462),
+    mk(new T.ConeGeometry(0.014, 0.036, 4), mGold, -0.026, 0.122, 0.445),
+    mk(new T.ConeGeometry(0.014, 0.036, 4), mGold, 0.026, 0.122, 0.445),
+    mk(new T.ConeGeometry(0.007, 0.020, 3), mSakura, -0.026, 0.120, 0.458),
+    mk(new T.ConeGeometry(0.007, 0.020, 3), mSakura, 0.026, 0.120, 0.458),
+    // Heterochromia cat eyes on the barrel collar (left cyan, right pink-gold!)
+    mk(new T.SphereGeometry(0.0065, 8, 6), mCyan, -0.016, 0.088, 0.464),
+    mk(new T.SphereGeometry(0.0065, 8, 6), mSakura, 0.016, 0.088, 0.464)
   );
 
+  // Spinning Dual-Gyro Starlight Accelerator Muzzle at z = 0.545!
   const muzzleSpin = new T.Group();
-  muzzleSpin.position.set(0, 0.070, 0.45);
-  const ringA = mk(new T.TorusGeometry(0.072, 0.008, 8, 24), coreMat, 0, 0, 0);
-  const ringB = mk(new T.TorusGeometry(0.052, 0.007, 8, 22), mBrass, 0, 0, 0);
+  muzzleSpin.position.set(0, 0.076, 0.545);
+  const ringA = mk(new T.TorusGeometry(0.062, 0.0065, 8, 28), coreMat, 0, 0, 0);
+  const ringB = mk(new T.TorusGeometry(0.044, 0.0055, 8, 24), mGold, 0, 0, 0);
   ringB.rotation.x = Math.PI * 0.38;
   muzzleSpin.add(
     ringA, ringB,
-    mk(new T.OctahedronGeometry(0.028, 0), coreMat, 0, 0, 0),
-    mk(new T.SphereGeometry(0.014, 8, 6), mNeon, 0.072, 0, 0),
-    mk(new T.SphereGeometry(0.014, 8, 6), mArgon, -0.072, 0, 0)
+    mk(new T.OctahedronGeometry(0.020, 0), coreMat, 0, 0, 0),
+    mk(new T.SphereGeometry(0.010, 8, 6), mNeon, 0.062, 0, 0),
+    mk(new T.SphereGeometry(0.010, 8, 6), mArgon, -0.062, 0, 0),
+    mk(new T.SphereGeometry(0.009, 8, 6), mGoldGlow, 0, 0.062, 0),
+    mk(new T.SphereGeometry(0.009, 8, 6), mSakura, 0, -0.062, 0)
   );
   root.add(muzzleSpin);
 
-  return { root, coreMat, coreOrb, muzzleSpin, ringA, ringB };
+  return { root, coreMat, coreOrb, drumSpin, muzzleSpin, ringA, ringB };
 }
 
 export function installChemGun(tools, game, helpers, ymRef) {
@@ -542,6 +664,7 @@ export function installChemGun(tools, game, helpers, ymRef) {
     geminiDef: CHEM_GUN_DEF,
     coreMat: built.coreMat,
     coreOrb: built.coreOrb,
+    drumSpin: built.drumSpin,
     muzzleSpin: built.muzzleSpin,
     ringA: built.ringA,
     ringB: built.ringB,
@@ -552,63 +675,227 @@ export function installChemGun(tools, game, helpers, ymRef) {
   tools.items.chemgun = item;
   tools.chemGunUnlocked = false;
 
-  // Projectile, Shockwave Ring, 3D Argon Chain-Lightning Arc & Floating Element Bubble Pools
+  // 5 BESPOKE HANDCRAFTED 3D ELEMENT PROJECTILE RIGS + VOLUMETRIC 3D LIGHTNING + SUPERNOVA SPHERE POOL!
   const shots = [];
   const rings = [];
   const bubbles = [];
   const arcs = [];
+  const novas = [];
 
-  for (let i = 0; i < 20; i++) {
+  const whiteCoreMat = plain(new T.MeshBasicMaterial({ color: 0xffffff, fog: false }));
+  const hShellMat = plain(new T.MeshPhysicalMaterial({
+    color: 0x7ef8ff, emissive: new T.Color(0x22d8ff), emissiveIntensity: 0.9,
+    roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.56, depthWrite: false
+  }));
+  const hTailMat = plain(new T.MeshBasicMaterial({ color: 0x52f4ff, transparent: true, opacity: 0.52, depthWrite: false, fog: false }));
+  const cCrystalMat = plain(new T.MeshStandardMaterial({
+    color: 0xfff0a8, emissive: new T.Color(0xffc838), emissiveIntensity: 1.55,
+    roughness: 0.08, metalness: 0.45, transparent: true, opacity: 0.88
+  }));
+  const cFinMat = plain(new T.MeshBasicMaterial({ color: 0xffe478, transparent: true, opacity: 0.65, side: T.DoubleSide, depthWrite: false, fog: false }));
+  const neRingMat = plain(new T.MeshStandardMaterial({
+    color: 0xff8244, emissive: new T.Color(0xff4c18), emissiveIntensity: 1.85, roughness: 0.12
+  }));
+  const neBladeMat = plain(new T.MeshBasicMaterial({ color: 0xffc662, transparent: true, opacity: 0.78, side: T.DoubleSide, depthWrite: false, fog: false }));
+  const arCoreMat = plain(new T.MeshBasicMaterial({ color: 0xf4eaff, fog: false }));
+  const arCoilMat = plain(new T.MeshStandardMaterial({
+    color: 0xb682ff, emissive: new T.Color(0x7c44ff), emissiveIntensity: 2.0, roughness: 0.08
+  }));
+  const arCyanMat = plain(new T.MeshBasicMaterial({ color: 0x62f4ff, transparent: true, opacity: 0.78, depthWrite: false, fog: false }));
+
+  const geoTailCone = new T.ConeGeometry(0.11, 1.35, 10).rotateX(-Math.PI / 2);
+  const geoDiamondTip = new T.ConeGeometry(0.11, 0.46, 4).rotateX(Math.PI / 2);
+  const geoDiamondBack = new T.ConeGeometry(0.11, 0.92, 4).rotateX(-Math.PI / 2);
+  const geoBlade = new T.PlaneGeometry(0.18, 0.34);
+
+  function buildShotRigs() {
     const g = new T.Group();
-    const mat = plain(new T.MeshStandardMaterial({
-      color: 0x4cf4ff, emissive: new T.Color(0x4cf4ff), emissiveIntensity: 1.75, roughness: 0.08
+
+    // (1) 1 H: Luminous Star-Pearl Plasma Bubble + Orbiting Electrons + Silky Cyan Comet Tail!
+    const rigH = new T.Group();
+    const hOrbit = new T.Group();
+    hOrbit.add(
+      new T.Mesh(new T.TorusGeometry(0.18, 0.012, 6, 20), hTailMat),
+      (() => { const m = new T.Mesh(new T.SphereGeometry(0.032, 8, 6), whiteCoreMat); m.position.set(0.18, 0, 0); return m; })(),
+      (() => { const m = new T.Mesh(new T.SphereGeometry(0.032, 8, 6), whiteCoreMat); m.position.set(-0.18, 0, 0); return m; })()
+    );
+    const hTail = new T.Mesh(geoTailCone, hTailMat);
+    hTail.position.z = -0.68;
+    rigH.add(
+      new T.Mesh(new T.SphereGeometry(0.082, 12, 10), whiteCoreMat),
+      new T.Mesh(new T.SphereGeometry(0.145, 14, 12), hShellMat),
+      hOrbit, hTail
+    );
+
+    // (2) 6 C: Faceted Golden Diamond Crystal Lance + Swept Crystal Wings + Prism Halo!
+    const rigC = new T.Group();
+    const cTip = new T.Mesh(geoDiamondTip, cCrystalMat); cTip.position.z = 0.24;
+    const cBack = new T.Mesh(geoDiamondBack, cCrystalMat); cBack.position.z = -0.45;
+    const cCore = new T.Mesh(new T.OctahedronGeometry(0.09, 0), whiteCoreMat);
+    const cHalo = new T.Mesh(new T.TorusGeometry(0.19, 0.018, 4, 4), cFinMat); cHalo.position.z = -0.14;
+    rigC.add(cTip, cBack, cCore, cHalo);
+    for (let k = 0; k < 4; k++) {
+      const fin = new T.Mesh(geoBlade, cFinMat);
+      const a = (k / 4) * Math.PI * 2;
+      fin.position.set(Math.cos(a) * 0.12, Math.sin(a) * 0.12, -0.28);
+      fin.rotation.set(Math.PI / 2, a, 0);
+      rigC.add(fin);
+    }
+
+    // (3) 10 Ne: Counter-Rotating Fiery Neon-Coral Plasma Chakram + Swept Flame Petals!
+    const rigNe = new T.Group();
+    const neSpin = new T.Group();
+    neSpin.add(
+      new T.Mesh(new T.TorusGeometry(0.28, 0.042, 10, 26), neRingMat),
+      new T.Mesh(new T.TorusGeometry(0.18, 0.022, 8, 22).rotateY(Math.PI / 2), neBladeMat)
+    );
+    for (let k = 0; k < 4; k++) {
+      const a = (k / 4) * Math.PI * 2;
+      const pet = new T.Mesh(geoBlade, neBladeMat);
+      pet.position.set(Math.cos(a) * 0.30, Math.sin(a) * 0.30, 0);
+      pet.rotation.z = a + 0.5;
+      neSpin.add(pet);
+    }
+    const neTail = new T.Mesh(geoTailCone, neBladeMat); neTail.scale.set(1.3, 1.3, 1.1); neTail.position.z = -0.72;
+    rigNe.add(new T.Mesh(new T.SphereGeometry(0.11, 12, 10), whiteCoreMat), neSpin, neTail);
+
+    // (4) 18 Ar: Sleek Violet-Cyan Electromagnetic Rail-Bolt + Crackling Helical Energy Coils!
+    const rigAr = new T.Group();
+    const arNeedle = new T.Mesh(new T.CylinderGeometry(0.032, 0.065, 1.55, 10).rotateX(Math.PI / 2), arCoreMat);
+    arNeedle.position.z = -0.35;
+    const arCoilA = new T.Mesh(new T.TorusGeometry(0.15, 0.022, 6, 18), arCoilMat); arCoilA.rotation.x = 0.55;
+    const arCoilB = new T.Mesh(new T.TorusGeometry(0.19, 0.016, 6, 18), arCyanMat); arCoilB.rotation.y = 0.55; arCoilB.position.z = -0.25;
+    const arCoilC = new T.Mesh(new T.TorusGeometry(0.13, 0.018, 6, 18), arCoilMat); arCoilC.rotation.x = -0.55; arCoilC.position.z = -0.55;
+    rigAr.add(arNeedle, arCoilA, arCoilB, arCoilC);
+
+    // (5) 118 Og: Radiant Prismatic Mini-Galaxy Supernova Orb (3 Tilted Rings + Orbiting Element Gems!)
+    const rigOg = new T.Group();
+    const ogMat = plain(new T.MeshStandardMaterial({
+      color: 0xff62d8, emissive: new T.Color(0xff62d8), emissiveIntensity: 2.0, roughness: 0.06
     }));
-    const core = new T.Mesh(new T.OctahedronGeometry(0.14, 1), mat);
-    const spear = new T.Mesh(new T.CylinderGeometry(0.035, 0.085, 0.85, 8).rotateX(Math.PI / 2), mat);
-    spear.position.z = -0.22;
-    const halo = new T.Mesh(new T.TorusGeometry(0.24, 0.028, 8, 22), mat);
-    g.add(core, spear, halo);
+    const ogOrbitA = new T.Group();
+    ogOrbitA.rotation.set(0.55, 0.3, 0);
+    ogOrbitA.add(
+      new T.Mesh(new T.TorusGeometry(0.36, 0.024, 8, 28), hTailMat),
+      (() => { const m = new T.Mesh(new T.SphereGeometry(0.055, 10, 8), whiteCoreMat); m.position.set(0.36, 0, 0); return m; })()
+    );
+    const ogOrbitB = new T.Group();
+    ogOrbitB.rotation.set(-0.62, 0.7, 0);
+    ogOrbitB.add(
+      new T.Mesh(new T.TorusGeometry(0.30, 0.022, 8, 26), cFinMat),
+      (() => { const m = new T.Mesh(new T.OctahedronGeometry(0.058, 0), cCrystalMat); m.position.set(-0.30, 0, 0); return m; })()
+    );
+    const ogOrbitC = new T.Group();
+    ogOrbitC.rotation.set(1.1, -0.4, 0);
+    ogOrbitC.add(
+      new T.Mesh(new T.TorusGeometry(0.42, 0.020, 8, 28), ogMat),
+      (() => { const m = new T.Mesh(new T.SphereGeometry(0.052, 10, 8), arCoilMat); m.position.set(0, 0.42, 0); return m; })()
+    );
+    const ogTail = new T.Mesh(geoTailCone, ogMat); ogTail.scale.set(1.75, 1.75, 1.35); ogTail.position.z = -0.95;
+    rigOg.add(
+      new T.Mesh(new T.SphereGeometry(0.15, 14, 12), whiteCoreMat),
+      new T.Mesh(new T.SphereGeometry(0.22, 16, 12), ogMat),
+      ogOrbitA, ogOrbitB, ogOrbitC, ogTail
+    );
+
+    for (const rg of [rigH, rigC, rigNe, rigAr, rigOg]) {
+      rg.visible = false;
+      rg.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.frustumCulled = false; } });
+      g.add(rg);
+    }
     g.visible = false;
     g.frustumCulled = false;
     game.scene.add(g);
+    return { g, rigH, hOrbit, rigC, cHalo, rigNe, neSpin, rigAr, arCoilA, arCoilB, arCoilC, rigOg, ogMat, ogOrbitA, ogOrbitB, ogOrbitC };
+  }
+
+  for (let i = 0; i < 20; i++) {
+    const r = buildShotRigs();
     shots.push({
-      on: false, g, orb: core, spear, halo, mat,
+      on: false, ...r,
       pos: new T.Vector3(), dir: new T.Vector3(),
       el: ELEMENT_SHOTS[0], speed: 46, dist: 0, maxDist: 60, t: 0, trail: 0, free: 0, seen: new Set()
     });
   }
 
-  // 3D Jagged Electric Lightning Arc Pool (for 18 Ar Argon Chain-Lightning!)
-  for (let i = 0; i < 8; i++) {
-    const posArr = new Float32Array(7 * 3);
-    const geo = new T.BufferGeometry();
-    geo.setAttribute("position", new T.BufferAttribute(posArr, 3));
-    const mat = new T.LineBasicMaterial({ color: 0xd0a8ff, transparent: true, opacity: 0, fog: false });
-    const line = new T.Line(geo, mat);
-    line.visible = false;
-    line.frustumCulled = false;
-    line.renderOrder = 7;
-    game.scene.add(line);
-    arcs.push({ on: false, line, geo, mat, t: 0, dur: 0.24 });
+  // THICK GLOWING 3D VOLUMETRIC ZIG-ZAG LIGHTNING BOLT POOL (Cylinder segments — vivid on every GPU!)
+  const boltUnitGeo = new T.CylinderGeometry(0.032, 0.032, 1.0, 6);
+  const boltCoreGeo = new T.CylinderGeometry(0.015, 0.015, 1.0, 5);
+  const _bMid = new T.Vector3();
+  const _bDir = new T.Vector3();
+  const _bPts = Array.from({ length: 7 }, () => new T.Vector3());
+  for (let i = 0; i < 10; i++) {
+    const grp = new T.Group();
+    const outerMat = new T.MeshBasicMaterial({ color: 0xb682ff, transparent: true, opacity: 0, depthWrite: false, fog: false });
+    const innerMat = new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, fog: false });
+    const segs = [];
+    for (let s = 0; s < 6; s++) {
+      const mOut = new T.Mesh(boltUnitGeo, outerMat);
+      const mIn = new T.Mesh(boltCoreGeo, innerMat);
+      mOut.frustumCulled = mIn.frustumCulled = false;
+      mOut.renderOrder = 7; mIn.renderOrder = 8;
+      grp.add(mOut, mIn);
+      segs.push({ mOut, mIn });
+    }
+    grp.visible = false;
+    game.scene.add(grp);
+    arcs.push({ on: false, grp, segs, outerMat, innerMat, t: 0, dur: 0.28 });
   }
 
   function spawnLightningArc(p0, p1) {
     const a = arcs.find((x) => !x.on) || arcs[0];
-    a.on = true; a.t = 0; a.dur = 0.24;
-    const attr = a.geo.attributes.position;
+    a.on = true; a.t = 0; a.dur = 0.28;
+    const dist = p0.distanceTo(p1);
+    const amp = Math.min(0.65, Math.max(0.18, dist * 0.09));
     for (let k = 0; k < 7; k++) {
       const f = k / 6;
-      const jit = (k === 0 || k === 6) ? 0 : 0.36;
-      attr.setXYZ(
-        k,
+      const jit = (k === 0 || k === 6) ? 0 : amp;
+      _bPts[k].set(
         p0.x + (p1.x - p0.x) * f + (Math.random() - 0.5) * jit,
-        p0.y + (p1.y - p0.y) * f + (Math.random() - 0.5) * jit + Math.sin(f * Math.PI) * 0.22,
+        p0.y + (p1.y - p0.y) * f + (Math.random() - 0.5) * jit + Math.sin(f * Math.PI) * 0.24,
         p0.z + (p1.z - p0.z) * f + (Math.random() - 0.5) * jit
       );
     }
-    attr.needsUpdate = true;
-    a.mat.opacity = 1.0;
-    a.line.visible = true;
+    for (let s = 0; s < 6; s++) {
+      const A = _bPts[s], B = _bPts[s + 1];
+      _bDir.subVectors(B, A);
+      const len = Math.max(0.01, _bDir.length());
+      _bMid.addVectors(A, B).multiplyScalar(0.5);
+      _bDir.multiplyScalar(1 / len);
+      const seg = a.segs[s];
+      seg.mOut.position.copy(_bMid);
+      seg.mOut.scale.set(1, len, 1);
+      seg.mOut.quaternion.setFromUnitVectors(UP, _bDir);
+      seg.mIn.position.copy(_bMid);
+      seg.mIn.scale.set(1, len, 1);
+      seg.mIn.quaternion.setFromUnitVectors(UP, _bDir);
+    }
+    a.outerMat.opacity = 0.92;
+    a.innerMat.opacity = 1.0;
+    a.grp.visible = true;
+  }
+
+  // 3D Translucent Additive Aurora Supernova Sphere Pool (for 118 Og impact climax!)
+  const novaGeo = new T.SphereGeometry(1, 24, 16);
+  for (let i = 0; i < 4; i++) {
+    const mat = new T.MeshBasicMaterial({
+      color: 0xff7ae8, transparent: true, opacity: 0, depthWrite: false,
+      side: T.DoubleSide, blending: T.AdditiveBlending, fog: false
+    });
+    const m = new T.Mesh(novaGeo, mat);
+    m.visible = false;
+    m.renderOrder = 7;
+    m.frustumCulled = false;
+    game.scene.add(m);
+    novas.push({ on: false, m, mat, t: 0, dur: 0.54 });
+  }
+  function spawnNovaSphere(x, y, z) {
+    const n = novas.find((it) => !it.on) || novas[0];
+    n.on = true; n.t = 0; n.dur = 0.54;
+    n.m.position.set(x, y, z);
+    n.m.scale.setScalar(0.3);
+    n.mat.opacity = 0.36;
+    n.m.visible = true;
   }
 
   const ringGeo = new T.RingGeometry(0.68, 1.0, 28);
@@ -841,12 +1128,13 @@ export function installChemGun(tools, game, helpers, ymRef) {
     }
 
     if (hitLabel && gun && gun.registerHit) {
-      gun.registerHit(hitCrit, hitLabel);
+      gun.registerHit(hitCrit, hitLabel, p);
     }
 
     // 3. Visual & Studio DSP Detonation FX by Element!
     if (el.kind === "og_nova") {
       // 118 Og GRAND RAINBOW PERIODIC-TABLE SUPERNOVA!
+      spawnNovaSphere(p.x, p.y, p.z);
       spawnRing(p.x, floorY, p.z, 0.35, 5.2, 0.74, 0x4cf4ff);
       spawnRing(p.x, floorY + 0.16, p.z, 0.25, 4.2, 0.66, 0xffd85a);
       spawnRing(p.x, floorY + 0.32, p.z, 0.20, 3.3, 0.58, 0xff62d8);
@@ -1005,8 +1293,6 @@ export function installChemGun(tools, game, helpers, ymRef) {
       slot.maxDist = el.range;
       slot.pos.copy(_mz);
       slot.dir.copy(_toAim).addScaledVector(_u, off).normalize();
-      slot.mat.color.setHex(el.hex);
-      slot.mat.emissive.setHex(el.hex);
 
       // Avoid immediate wall clipping right next to muzzle
       if (gun && !(game.chemlab && game.chemlab.inside)) {
@@ -1016,13 +1302,22 @@ export function installChemGun(tools, game, helpers, ymRef) {
         }
       }
 
-      const sc = el.kind === "og_nova" ? 1.65 : el.kind === "c_diamond" ? 1.30 : el.kind === "h_triple" ? 0.78 : 1.08;
+      // Activate ONLY the bespoke handcrafted 3D rig for this element!
+      slot.rigH.visible = el.kind === "h_triple";
+      slot.rigC.visible = el.kind === "c_diamond";
+      slot.rigNe.visible = el.kind === "ne_ring";
+      slot.rigAr.visible = el.kind === "ar_bolt";
+      slot.rigOg.visible = el.kind === "og_nova";
+      const sc = el.kind === "og_nova" ? 1.32 : el.kind === "c_diamond" ? 1.15 : el.kind === "h_triple" ? 0.88 : 1.08;
       slot.g.scale.setScalar(sc);
-      slot.spear.visible = el.kind === "c_diamond" || el.kind === "ar_bolt" || el.kind === "h_triple";
-      slot.halo.visible = el.kind === "ne_ring" || el.kind === "og_nova" || el.kind === "ar_bolt";
       slot.g.position.copy(slot.pos);
       slot.g.quaternion.setFromUnitVectors(FWD, slot.dir);
       slot.g.visible = true;
+    }
+
+    // For 18 Ar Argon Rail-Bolt: crackle a brief volumetric electric flash arc forward from barrel!
+    if (el.kind === "ar_bolt") {
+      spawnLightningArc(_mz, _tmpP.copy(_mz).addScaledVector(_toAim, 4.2));
     }
 
     // Crisp Muzzle Flash Burst + Dynamic Light + Spring Camera Recoil + Studio Physical DSP Audio!
@@ -1055,7 +1350,7 @@ export function installChemGun(tools, game, helpers, ymRef) {
     const active = !!(this.gun && this.gun.chemActive);
     if (chemBar) chemBar.classList.toggle("show", active);
 
-    // Animate held 118 Og Element Cannon muzzle & core orb (spins faster when ADS / overdrive!)
+    // Animate held Cat Element Rifle muzzle gyro, crystal orb & REVOLVING 5-ELEMENT DRUM!
     if (this.held === "chemgun" && item.root.visible) {
       const adsBoost = this.gun ? (this.gun.ads || 0) * 6.5 : 0;
       const spinSpd = 2.8 + adsBoost + (this.kick || 0) * 16.0;
@@ -1063,6 +1358,14 @@ export function installChemGun(tools, game, helpers, ymRef) {
       item.ringB.rotation.y += dt * (spinSpd * 0.85);
       item.coreOrb.rotation.y = time * 3.6;
       item.coreOrb.rotation.x = time * 2.1;
+      // Smoothly revolve the 5-element crystal cylinder drum so the loaded element clicks into the top chamber!
+      if (item.drumSpin) {
+        const elIdx = lockedMode >= 0 ? lockedMode : (shotCycle % ELEMENT_SHOTS.length);
+        const targetAng = -(elIdx / 5) * Math.PI * 2;
+        const cur = item.drumSpin.rotation.z;
+        const diff = Math.atan2(Math.sin(targetAng - cur), Math.cos(targetAng - cur));
+        item.drumSpin.rotation.z += diff * (1 - Math.exp(-16 * dt));
+      }
       // Rainbow pulse when 118 Og Supernova is chambered next!
       if (getActiveElement().kind === "og_nova") {
         const hue = (time * 0.95) % 1;
@@ -1132,21 +1435,50 @@ export function installChemGun(tools, game, helpers, ymRef) {
 
       s.g.position.copy(s.pos);
       s.g.quaternion.setFromUnitVectors(FWD, s.dir);
-      s.orb.rotation.z = s.t * 14;
-      s.halo.rotation.z = -s.t * 10;
-      if (s.el.kind === "og_nova") {
+      // Bespoke lively animations per custom 3D element projectile!
+      if (s.el.kind === "h_triple") {
+        s.hOrbit.rotation.z = s.t * 16;
+        s.hOrbit.rotation.x = s.t * 9;
+      } else if (s.el.kind === "c_diamond") {
+        s.rigC.rotation.z = s.t * 11;
+        s.cHalo.rotation.z = -s.t * 18;
+      } else if (s.el.kind === "ne_ring") {
+        s.neSpin.rotation.z = s.t * 18;
+        s.neSpin.rotation.x = Math.sin(s.t * 10) * 0.25;
+      } else if (s.el.kind === "ar_bolt") {
+        s.arCoilA.rotation.z = s.t * 22;
+        s.arCoilB.rotation.z = -s.t * 18;
+        s.arCoilC.rotation.z = s.t * 24;
+      } else if (s.el.kind === "og_nova") {
         const hue = (time * 1.9 + s.t * 2.2) % 1;
-        s.mat.color.setHSL(hue, 0.95, 0.66);
-        s.mat.emissive.setHSL(hue, 0.95, 0.56);
+        s.ogMat.color.setHSL(hue, 0.95, 0.66);
+        s.ogMat.emissive.setHSL(hue, 0.95, 0.56);
+        s.ogOrbitA.rotation.z = s.t * 11;
+        s.ogOrbitB.rotation.z = -s.t * 14;
+        s.ogOrbitC.rotation.z = s.t * 9;
       }
     }
 
-    // Fade 3D Argon Chain-Lightning Arcs
+    // Fade 3D Volumetric Argon Lightning Bolts
     for (const a of arcs) {
       if (!a.on) continue;
       a.t += dt;
-      if (a.t >= a.dur) { a.on = false; a.line.visible = false; continue; }
-      a.mat.opacity = 1 - a.t / a.dur;
+      if (a.t >= a.dur) { a.on = false; a.grp.visible = false; continue; }
+      const k = 1 - a.t / a.dur;
+      a.outerMat.opacity = 0.92 * k;
+      a.innerMat.opacity = 1.0 * k;
+    }
+
+    // Expand 3D Prismatic Supernova Spheres
+    for (const n of novas) {
+      if (!n.on) continue;
+      n.t += dt;
+      const u = n.t / n.dur;
+      if (u >= 1) { n.on = false; n.m.visible = false; continue; }
+      const ease = 1 - Math.pow(1 - u, 3);
+      n.m.scale.setScalar(0.35 + 3.4 * ease);
+      n.mat.color.setHSL((time * 2.4 + u * 0.6) % 1, 0.94, 0.62);
+      n.mat.opacity = 0.36 * (1 - u);
     }
 
     // Expand shockwave rings
@@ -1187,7 +1519,7 @@ export function installChemGun(tools, game, helpers, ymRef) {
     item.root.scale.set(1, 1, 1);
     item.root.rotation.set(-0.18, -0.82, 0.08);
     item.root.visible = true;
-    const pic = thumbs.shot(item.root, { from: [0.76, 0.30, 0.82], look: [0, 0.08, 0.16], px: 120 });
+    const pic = thumbs.shot(item.root, { from: [0.84, 0.28, 0.78], look: [0, 0.07, 0.14], px: 120 });
     item.root.position.copy(pPos);
     item.root.rotation.copy(pRot);
     item.root.scale.copy(pScl);

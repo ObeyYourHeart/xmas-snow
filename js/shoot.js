@@ -48,7 +48,56 @@ export function installShootingSystem(gun, tools, game, helpers) {
     }
   };
 
-  gun.registerHit = function (crit = false, label = "") {
+  // 3D Holographic Laser Sight + Glowing Targeting Dot + Floating 3D World-Space Hit Popups!
+  const laserMat = new T.MeshBasicMaterial({ color: 0x52f4ff, transparent: true, opacity: 0.42, depthWrite: false, fog: false });
+  const laserBeam = new T.Mesh(new T.CylinderGeometry(0.008, 0.008, 1, 6), laserMat);
+  laserBeam.visible = false; laserBeam.frustumCulled = false; laserBeam.renderOrder = 6;
+  const laserDotMat = new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.92, depthWrite: false, fog: false });
+  const laserDot = new T.Mesh(new T.SphereGeometry(0.068, 10, 8), laserDotMat);
+  laserDot.visible = false; laserDot.frustumCulled = false; laserDot.renderOrder = 7;
+  game.scene.add(laserBeam, laserDot);
+  const _lzStart = new T.Vector3();
+  const _lzMid = new T.Vector3();
+  const _lzDir = new T.Vector3();
+
+  // Floating 3D World-Space Damage/Score Popup Pool (leaps upward right from exact hit point!)
+  const popups = [];
+  for (let i = 0; i < 10; i++) {
+    const cv = document.createElement("canvas");
+    cv.width = 256; cv.height = 96;
+    const tex = new T.CanvasTexture(cv);
+    tex.colorSpace = T.SRGBColorSpace;
+    const mat = new T.SpriteMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false, depthTest: false, fog: false });
+    const sp = new T.Sprite(mat);
+    sp.visible = false;
+    sp.renderOrder = 9;
+    game.scene.add(sp);
+    popups.push({ on: false, sp, cv, tex, mat, t: 0, dur: 0.92, vy: 1.8 });
+  }
+
+  gun.spawnPopup = function (worldPos, text, crit = false) {
+    if (!worldPos || !text) return;
+    const p = popups.find((x) => !x.on) || popups[0];
+    p.on = true; p.t = 0; p.dur = crit ? 1.05 : 0.85; p.vy = crit ? 2.1 : 1.65;
+    const c = p.cv.getContext("2d");
+    c.clearRect(0, 0, 256, 96);
+    c.font = `900 ${crit ? 38 : 32}px "Microsoft YaHei", "PingFang SC", system-ui, sans-serif`;
+    c.textAlign = "center"; c.textBaseline = "middle";
+    c.lineWidth = 8;
+    c.strokeStyle = "rgba(14, 18, 42, 0.88)";
+    c.strokeText(text, 128, 48, 240);
+    c.fillStyle = crit ? "#ffe66b" : "#7cf6ff";
+    c.fillText(text, 128, 48, 240);
+    p.tex.needsUpdate = true;
+    p.sp.position.set(worldPos.x + (Math.random() - 0.5) * 0.25, worldPos.y + 0.35, worldPos.z + (Math.random() - 0.5) * 0.25);
+    const dist = game.camera ? game.camera.position.distanceTo(worldPos) : 12;
+    const sc = Math.max(0.75, Math.min(2.2, dist * 0.085)) * (crit ? 1.18 : 0.95);
+    p.sp.scale.set(sc * 2.2, sc * 0.82, 1);
+    p.mat.opacity = 1;
+    p.sp.visible = true;
+  };
+
+  gun.registerHit = function (crit = false, label = "", worldPos = null) {
     gun.combo = gun.comboT > 0 ? Math.min(99, gun.combo + 1) : 1;
     gun.comboT = 3.6;
     gun.comboShowT = 1.45;
@@ -59,6 +108,9 @@ export function installShootingSystem(gun, tools, game, helpers) {
     }
     if (game.audio && game.audio.gunHit) {
       game.audio.gunHit(crit, gun.combo);
+    }
+    if (worldPos) {
+      gun.spawnPopup(worldPos, label || (crit ? "暴击!" : "命中!"), crit);
     }
     if (comboEl) {
       const txt = label
@@ -130,7 +182,51 @@ export function installShootingSystem(gun, tools, game, helpers) {
     return origProbe(pos);
   };
 
-  // Upgrade Claude's SnowGun land() so snowballs also pop balloons & trigger shootTargets + hitmarker!
+  // Smart Magnetic Aim-Assist inside gun.sightLine() so moving targets, bottles & balloons snap crisply within a 3.6° cone!
+  const origSightLine = gun.sightLine.bind(gun);
+  const _magDir = new T.Vector3();
+  const _magTo = new T.Vector3();
+  gun.sightLine = function () {
+    origSightLine();
+    const pl = game.player;
+    if (!pl || !pl.cam || pl.frontLock) return;
+    if (this.aimOn === "shootTarget" || this.aimOn === "balloon" || this.aimOn === "thing") return;
+
+    const camP = pl.cam.position;
+    pl.cam.getWorldDirection(_magDir);
+    const minCos = 0.9978; // ~3.8° forgiving smart magnetism cone
+    let bestCos = minCos;
+    let bestPos = null;
+    let bestKind = null;
+
+    if (game.shootTargets) {
+      for (const tg of game.shootTargets) {
+        if (tg.alive && !tg.alive()) continue;
+        _magTo.subVectors(tg.pos, camP);
+        const d = _magTo.length();
+        if (d < 1.8 || d > 72) continue;
+        const c = _magTo.dot(_magDir) / d;
+        if (c > bestCos) { bestCos = c; bestPos = tg.pos; bestKind = "shootTarget"; }
+      }
+    }
+    if (game.heli && game.heli.balloons) {
+      for (const b of game.heli.balloons) {
+        if (b.got) continue;
+        const by = b.grp ? b.grp.position.y : b.y;
+        _magTo.set(b.x - camP.x, by - camP.y, b.z - camP.z);
+        const d = _magTo.length();
+        if (d < 2.5 || d > 85) continue;
+        const c = _magTo.dot(_magDir) / d;
+        if (c > bestCos) { bestCos = c; bestPos = _lzMid.set(b.x, by, b.z); bestKind = "balloon"; }
+      }
+    }
+    if (bestPos) {
+      this.aim.copy(bestPos);
+      this.aimOn = bestKind;
+    }
+  };
+
+  // Upgrade Claude's SnowGun land() so snowballs also pop balloons & trigger shootTargets + hitmarker + 3D popups!
   const origLand = gun.land.bind(gun);
   gun.land = function (shot, hit) {
     if (hit && hit.kind === "balloon" && hit.ref && !hit.ref.got) {
@@ -142,7 +238,7 @@ export function installShootingSystem(gun, tools, game, helpers) {
       game.logic.count("balloons", l, c);
       if (l >= c) { game.logic.complete("balloons"); game.ui.toast("八个礼物气球全被击落啦！雪境神枪手！", 6); }
       else game.ui.toast(`击落礼物气球！（${l} / ${c}）`, 3.2);
-      gun.registerHit(true, "🎈 击落礼物气球");
+      gun.registerHit(true, "🎈 击落礼物气球", shot.p);
       game.puffs.burst(shot.p, 16, 2.2, 0.14, 0.5, 0.8);
       game.sparks && game.sparks.spawn(shot.p.x, shot.p.y, shot.p.z, 0, 0, 0, 0.7, 0.95, 0.16, 3.6, 2.6, 1.4, 0, 0);
       gun.landed++;
@@ -150,7 +246,7 @@ export function installShootingSystem(gun, tools, game, helpers) {
     }
     if (hit && hit.kind === "shootTarget" && hit.ref) {
       const res = hit.ref.onHit({ pos: shot.p.clone(), dir: shot.d.clone(), weapon: "snow", element: null, heavy: false });
-      gun.registerHit(!!(res && res.crit), (res && res.label) || "✦ 命中目标");
+      gun.registerHit(!!(res && res.crit), (res && res.label) || "✦ 命中目标", shot.p);
       game.puffs.burst(shot.p, 10, 1.5, 0.10, 0.35, 0.6);
       gun.landed++;
       return;
@@ -160,7 +256,7 @@ export function installShootingSystem(gun, tools, game, helpers) {
     if (hit && (hit.kind === "friend" || hit.kind === "folk" || hit.kind === "pet" || hit.kind === "thing")) {
       const isCrit = hit.kind === "thing" && hit.ref && hit.ref.target;
       if (this.hitT >= prevHitT) {
-        gun.registerHit(isCrit, isCrit ? "🎯 靶心命中" : "");
+        gun.registerHit(isCrit, isCrit ? "🎯 靶心命中" : "", shot.p);
       }
     }
   };
@@ -514,7 +610,7 @@ export function installShootingSystem(gun, tools, game, helpers) {
     if (confirm) {
       const lbl = kind === "balloon" ? "🎈 一箭穿云" : (ar._hitLabel || (confirm > 1 ? "✦ 满弦贯穿" : ""));
       ar._hitLabel = "";
-      gun.registerHit(confirm > 1 || ar.full, lbl);
+      gun.registerHit(confirm > 1 || ar.full, lbl, pos);
     }
 
     // Stick the glowing 3D arrow upright into solid surfaces (snow, ground, walls, tree trunks)!
@@ -682,6 +778,53 @@ export function installShootingSystem(gun, tools, game, helpers) {
     if (gun.comboShowT > 0) {
       gun.comboShowT -= dt;
       if (gun.comboShowT <= 0 && comboEl) comboEl.classList.remove("show");
+    }
+
+    // Update Floating 3D World-Space Hit/Score Popups
+    for (const p of popups) {
+      if (!p.on) continue;
+      p.t += dt;
+      const u = p.t / p.dur;
+      if (u >= 1) { p.on = false; p.sp.visible = false; continue; }
+      p.sp.position.y += p.vy * (1 - u * 0.65) * dt;
+      p.mat.opacity = u < 0.2 ? u / 0.2 : Math.max(0, 1 - (u - 0.35) / 0.65);
+    }
+
+    // Update 3D Holographic Laser Sight & Aim Dot (visible when ADS or hovering a live target!)
+    const isGunLive = this.chemActive || (this.active && !this.isGemini);
+    const isHot = !!({ friend: 1, folk: 1, pet: 1, thing: 1, balloon: 1, shootTarget: 1 }[this.aimOn]);
+    const showLaser = isGunLive && !game.player.frontLock && (this.ads > 0.14 || isHot);
+    if (showLaser) {
+      if (this.chemActive && tools.items.chemgun && tools.items.chemgun.muzzleSpin && tools.items.chemgun.root.visible) {
+        tools.items.chemgun.muzzleSpin.getWorldPosition(_lzStart);
+      } else {
+        this.muzzle(_lzStart);
+      }
+      _lzDir.subVectors(this.aim, _lzStart);
+      const len = _lzDir.length();
+      if (len > 0.6 && len < 82) {
+        _lzMid.addVectors(_lzStart, this.aim).multiplyScalar(0.5);
+        _lzDir.multiplyScalar(1 / len);
+        laserBeam.position.copy(_lzMid);
+        laserBeam.scale.set(1, len, 1);
+        laserBeam.quaternion.setFromUnitVectors(UP, _lzDir);
+        laserDot.position.copy(this.aim);
+        const colHex = this.chemActive && tools._getChemSightState
+          ? new T.Color(tools._getChemSightState().css).getHex()
+          : (isHot ? 0xff9a3c : 0x62e8ff);
+        laserMat.color.setHex(colHex);
+        laserMat.opacity = (isHot ? 0.50 : 0.28) * Math.max(0.45, this.ads);
+        laserDotMat.color.setHex(isHot ? 0xffe66b : colHex);
+        laserDot.scale.setScalar(isHot ? 1.35 : 0.85);
+        laserBeam.visible = true;
+        laserDot.visible = true;
+      } else {
+        laserBeam.visible = false;
+        laserDot.visible = false;
+      }
+    } else if (laserBeam.visible) {
+      laserBeam.visible = false;
+      laserDot.visible = false;
     }
 
     bow.cool = Math.max(0, bow.cool - dt);
