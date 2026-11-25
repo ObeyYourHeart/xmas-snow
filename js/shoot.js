@@ -195,6 +195,23 @@ export function installShootingSystem(gun, tools, game, helpers) {
         }
       }
     }
+    // 2b. Generous anti-tunnel hitbox for perched roof Clawds & floating balloon Clawds so ranged shots reliably knock them down!
+    if (game.pets && game.pets.all) {
+      for (const pt of game.pets.all) {
+        if (!pt.root || !pt.root.visible || (pt.mode !== "perch" && pt.mode !== "float")) continue;
+        const dx = pos.x - pt.x;
+        if (dx > 0.72 || dx < -0.72) continue;
+        const dz = pos.z - pt.z;
+        if (dz > 0.72 || dz < -0.72) continue;
+        const py = pt.root.position.y;
+        if ((dx * dx + dz * dz < 0.48 && pos.y > py - 0.18 && pos.y < py + 0.85) ||
+            (pt.balloon && !pt.popped && dx * dx + dz * dz + (pos.y - (py + 1.62)) ** 2 < 0.48)) {
+          this._hit.kind = "pet";
+          this._hit.ref = pt;
+          return this._hit;
+        }
+      }
+    }
     return origProbe(pos);
   };
 
@@ -256,6 +273,18 @@ export function installShootingSystem(gun, tools, game, helpers) {
         if (d < 2.5 || d > 85) continue;
         const c = _magTo.dot(_magDir) / d;
         if (c > bestCos) { bestCos = c; bestPos = _lzMid.set(b.x, by, b.z); bestKind = "balloon"; }
+      }
+    }
+    // Smart magnetic aim-assist for perched roof Clawds & floating balloon Clawds!
+    if (game.pets && game.pets.all) {
+      for (const pt of game.pets.all) {
+        if (!pt.root || !pt.root.visible || (pt.mode !== "perch" && pt.mode !== "float")) continue;
+        const py = pt.root.position.y + (pt.mode === "float" && pt.balloon && !pt.popped ? 1.45 : 0.28);
+        _magTo.set(pt.x - camP.x, py - camP.y, pt.z - camP.z);
+        const d = _magTo.length();
+        if (d < 2.0 || d > 72) continue;
+        const c = _magTo.dot(_magDir) / d;
+        if (c > bestCos) { bestCos = c; bestPos = _lzMid.set(pt.x, py, pt.z); bestKind = "pet"; }
       }
     }
     if (bestPos) {

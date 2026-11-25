@@ -1223,8 +1223,18 @@ export function installChemGun(tools, game, helpers, ymRef) {
       game.folk && game.folk.hit(hitRef, el.kind === "c_diamond" || el.kind === "og_nova" ? "kick" : "ball", s.dir.x, s.dir.z);
       hitLabel = `⚗️ ${el.short} 命中`;
     } else if (hitKind === "pet") {
-      game.pets && game.pets.strike(p.x, p.z, 1.0, "cane", s.dir.x, s.dir.z);
-      hitLabel = "✨ 击飞小龙虾";
+      const wasPerched = !!(hitRef && (hitRef.mode === "perch" || hitRef.mode === "float"));
+      if (game.pets && game.pets.ballHit) {
+        // Pass the pet's exact center so internal pets.hitTest(<0.36m) ALWAYS confirms & knocks roof/balloon Clawd down!
+        const hitAt = hitRef && hitRef.root
+          ? _tmpP.set(hitRef.x, hitRef.root.position.y + 0.18, hitRef.z)
+          : p;
+        game.pets.ballHit(hitAt, _u.copy(s.dir).multiplyScalar(el.kind === "og_nova" ? 36 : 26));
+      } else if (game.pets && game.pets.strike) {
+        game.pets.strike(p.x, p.z, 1.0, "cane", s.dir.x, s.dir.z);
+      }
+      hitLabel = wasPerched ? "🦞 打下小龙虾！" : "✨ 击晕小龙虾";
+      hitCrit = wasPerched;
     } else if (hitKind === "friend" && hitRef) {
       game.friends && game.friends.hopNow(hitRef, 0.55, 0.6);
       if (hitRef.cool <= 0) {
@@ -1315,7 +1325,19 @@ export function installChemGun(tools, game, helpers, ymRef) {
           }
         }
       }
-      if (!isLab && game.pets) game.pets.shock(p.x, p.z, 4.8);
+      if (!isLab && game.pets) {
+        game.pets.shock(p.x, p.z, 4.8);
+        // 118 Og Supernova shockwave also blasts nearby roof/balloon Clawds cleanly off their perch!
+        if (game.pets.all && game.pets.ballHit) {
+          for (const pt of game.pets.all) {
+            if (!pt.root || !pt.root.visible || (pt.mode !== "perch" && pt.mode !== "float")) continue;
+            const py = pt.root.position.y;
+            if (Math.hypot(pt.x - p.x, py - p.y, pt.z - p.z) < 4.5) {
+              game.pets.ballHit(_u.set(pt.x, py + 0.18, pt.z), _tmpP.set(pt.x - p.x, 2.0, pt.z - p.z).normalize().multiplyScalar(28));
+            }
+          }
+        }
+      }
       if (!isLab && game.folk) {
         for (const fk of game.folk.around(p.x, p.z, 4.6)) {
           const m = fk.clawd || fk.snowman;

@@ -479,12 +479,12 @@ export class ClaudeCastle {
       this.mesh(new T.BoxGeometry(7.82, 0.14, 6.22), this.m.gold, 0, 4.22, 0)
     );
 
-    // Crenellated Castle Parapet Merlons along front & back eaves
+    // Crenellated Castle Parapet Merlons along front & back eaves (leave rear i=+2 open for the rooftop staircase gateway!)
     for (let i = -3; i <= 3; i++) {
-      g.add(
-        this.mesh(new T.BoxGeometry(0.54, 0.30, 0.22), this.m.marble, i * 1.04, 4.40, 2.98),
-        this.mesh(new T.BoxGeometry(0.54, 0.30, 0.22), this.m.marble, i * 1.04, 4.40, -2.98)
-      );
+      g.add(this.mesh(new T.BoxGeometry(0.54, 0.30, 0.22), this.m.marble, i * 1.04, 4.40, 2.98));
+      if (i !== 2) {
+        g.add(this.mesh(new T.BoxGeometry(0.54, 0.30, 0.22), this.m.marble, i * 1.04, 4.40, -2.98));
+      }
     }
 
     // 2. Steep French-Château Terracotta Roof (y: 4.24..6.45) + Snow Blanket + Golden Crest!
@@ -760,6 +760,113 @@ export class ClaudeCastle {
     );
     this.bell = bellPivot;
     g.add(bellPivot);
+
+    // 12. Royal Rear Snow-Viewing Staircase & Walkable Rooftop Platforms (walk right up onto Claude's Castle roof!)
+    const stairG = new T.Group();
+    const stX0 = -3.35, stX1 = 2.25, stTopY = 4.28, stZ = -4.25, stW = 1.12;
+    const steps = 18;
+    for (let i = 0; i < steps; i++) {
+      const f = (i + 0.5) / steps;
+      const sx = stX0 + (stX1 - stX0) * f;
+      const sy = stTopY * ((i + 1) / steps);
+      stairG.add(
+        this.mesh(new T.BoxGeometry(0.36, 0.10, stW), this.m.marble, sx, sy - 0.05, stZ),
+        this.mesh(new T.BoxGeometry(0.32, 0.04, stW - 0.14), this.m.walnut, sx, sy + 0.01, stZ)
+      );
+      if (i % 5 === 4) {
+        stairG.add(
+          this.mesh(new T.CylinderGeometry(0.065, 0.08, sy - 0.08, 10), this.m.marble, sx, (sy - 0.08) / 2, stZ - stW * 0.42),
+          this.mesh(new T.CylinderGeometry(0.065, 0.08, sy - 0.08, 10), this.m.marble, sx, (sy - 0.08) / 2, stZ + stW * 0.42)
+        );
+      }
+    }
+    // Sloped golden staircase handrails & warm entry lantern at base
+    const railLen = Math.hypot(stX1 - stX0, stTopY);
+    const railAng = Math.atan2(stTopY, stX1 - stX0);
+    for (const dz of [-stW * 0.48, stW * 0.48]) {
+      const hr = this.mesh(new T.BoxGeometry(railLen, 0.065, 0.065), this.m.gold, (stX0 + stX1) / 2, stTopY / 2 + 0.72, stZ + dz);
+      hr.rotation.z = railAng;
+      const str = this.mesh(new T.BoxGeometry(railLen, 0.18, 0.09), this.m.marble, (stX0 + stX1) / 2, stTopY / 2 - 0.08, stZ + dz);
+      str.rotation.z = railAng;
+      stairG.add(hr, str);
+      for (let k = 0; k <= 5; k++) {
+        const px = stX0 + (stX1 - stX0) * (k / 5);
+        const py = stTopY * (k / 5);
+        stairG.add(this.mesh(new T.CylinderGeometry(0.03, 0.036, 0.74, 8), this.m.marble, px, py + 0.36, stZ + dz));
+      }
+    }
+    // Warm golden beacon lantern at the staircase foot so players spot the roof stairs right away!
+    stairG.add(
+      this.mesh(new T.CylinderGeometry(0.055, 0.075, 1.35, 8), this.m.obsidian, stX0 - 0.15, 0.68, stZ - 0.62),
+      this.mesh(new T.CylinderGeometry(0.12, 0.09, 0.24, 6), this.m.lantern, stX0 - 0.15, 1.44, stZ - 0.62),
+      this.mesh(new T.ConeGeometry(0.17, 0.18, 6), this.m.gold, stX0 - 0.15, 1.62, stZ - 0.62)
+    );
+    // Top Rooftop Bridge Landing connecting staircase cleanly onto the Main Castle Roof (clear of rear-right turret!)
+    stairG.add(
+      this.mesh(new T.BoxGeometry(1.22, 0.16, 1.92), this.m.marble, 2.22, stTopY - 0.08, -3.86),
+      this.mesh(new T.BoxGeometry(1.26, 0.05, 1.96), this.m.gold, 2.22, stTopY - 0.01, -3.86),
+      this.mesh(new T.CylinderGeometry(0.08, 0.10, stTopY - 0.12, 10), this.m.marble, 2.75, (stTopY - 0.12) / 2, -4.72),
+      this.mesh(new T.BoxGeometry(1.22, 0.07, 0.07), this.m.gold, 2.22, stTopY + 0.72, -4.78),
+      this.mesh(new T.BoxGeometry(0.07, 0.07, 1.80), this.m.gold, 2.80, stTopY + 0.72, -3.90),
+      this.mesh(new T.SphereGeometry(0.10, 8, 8), this.m.gold, 1.62, stTopY + 0.78, -3.02),
+      this.mesh(new T.SphereGeometry(0.10, 8, 8), this.m.gold, 2.80, stTopY + 0.78, -3.02)
+    );
+    g.add(stairG);
+
+    // Register smooth walkable platforms for Rear Staircase, Top Bridge Landing, Porch Canopy & Main Castle Roof!
+    if (this.game && this.game.world && this.game.world.platforms) {
+      const footY = () => {
+        const pl = this.game.player;
+        return pl ? pl.y - pl.eye + pl.air : wy;
+      };
+      this.game.world.platforms.push(
+        // (a) Rear Roof Staircase ramp (walkable smoothly from ground up to y = 4.28!)
+        {
+          test: (px, pz) => {
+            const lx = px - wx, lz = pz - wz;
+            if (lx < stX0 - 0.25 || lx > stX1 + 0.20 || lz < stZ - 0.64 || lz > stZ + 0.64) return false;
+            const sy = wy + stTopY * Math.max(0, Math.min(1, (lx - stX0) / (stX1 - stX0)));
+            return footY() >= sy - 0.80;
+          },
+          y: (px) => wy + stTopY * Math.max(0, Math.min(1, (px - wx - stX0) / (stX1 - stX0))),
+          wood: true
+        },
+        // (b) Top Rooftop Bridge Landing
+        {
+          test: (px, pz) => {
+            const lx = px - wx, lz = pz - wz;
+            return lx >= 1.56 && lx <= 2.88 && lz >= -4.85 && lz <= -2.85 && footY() >= wy + stTopY - 0.85;
+          },
+          y: () => wy + stTopY,
+          wood: true
+        },
+        // (c) Front Porch Canopy Roof (jumpable from porch bench/railing or drop down from main roof!)
+        {
+          test: (px, pz) => {
+            const lx = px - wx, lz = pz - wz;
+            if (lx < -4.08 || lx > 4.08 || lz < 2.85 || lz > 5.30) return false;
+            const cy = wy + 2.86 - (lz - 4.10) * 0.22;
+            return footY() >= cy - 0.65;
+          },
+          y: (px, pz) => wy + 2.86 - (pz - wz - 4.10) * 0.22,
+          wood: false
+        },
+        // (d) Entire Walkable Main Castle Terracotta & Snow Roof (y = 4.24 at eaves -> 6.52 along snowy ridge!)
+        {
+          test: (px, pz) => {
+            const lx = px - wx, lz = pz - wz;
+            if (lx < -3.86 || lx > 3.86 || lz < -3.26 || lz > 3.26) return false;
+            const ry = wy + 4.24 + 2.28 * Math.max(0, Math.min(1, (3.25 - Math.abs(lz)) / 2.10));
+            return footY() >= ry - 0.90;
+          },
+          y: (px, pz) => {
+            const lz = pz - wz;
+            return wy + 4.24 + 2.28 * Math.max(0, Math.min(1, (3.25 - Math.abs(lz)) / 2.10));
+          },
+          wood: false
+        }
+      );
+    }
 
     g.updateMatrixWorld(true);
     this.ext = g;
