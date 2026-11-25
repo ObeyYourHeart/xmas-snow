@@ -128,7 +128,11 @@ export class CatHome {
     this.swing = {
       pivot: null,
       seatAnchor: null,
+      riderAnchor: null,
       eye: new this.THREE.Vector3(),
+      focus: new this.THREE.Vector3(),
+      seatPos: new this.THREE.Vector3(),
+      seatYaw: 0,
       angle: 0,
       vel: 0,
       riding: false,
@@ -1388,10 +1392,11 @@ export class CatHome {
         const c = cv.getContext("2d");
         c.clearRect(0, 0, 512, 512);
 
-        // Soft scalloped thought-cloud clip path centered at (256, 224)
+        // Soft scalloped thought-cloud clip path centered at (256, 226) — includes solid center fill so NO hollow gap ever appears!
         const traceCloud = (scale = 1) => {
           c.beginPath();
           const puffs = [
+            [256, 232, 148],
             [256, 118, 108], [156, 152, 92], [356, 152, 92],
             [118, 240, 88], [394, 240, 88],
             [168, 326, 86], [344, 326, 86], [256, 344, 96]
@@ -1935,9 +1940,11 @@ export class CatHome {
     const moonSeat = this.mesh(new T.TubeGeometry(new T.CatmullRomCurve3(moonPts), 22, 0.14, 12, false), this.m.gold);
     const cushion = this.mesh(new T.BoxGeometry(1.12, 0.14, 0.56), this.m.sakura, 0, -2.76, 0);
     const seatAnchor = new T.Group();
-    seatAnchor.position.set(0, -1.78, 0.18); // Eye height while seated on crescent swing!
+    seatAnchor.position.set(0, -2.06, 0.08); // Camera focus centered cleanly on seated cat's torso!
+    const riderAnchor = new T.Group();
+    riderAnchor.position.set(0, -2.88, 0.06); // Character root anchor so seated dress & tail sit flush on top of the sakura cushion (-2.69)!
     pivot.add(
-      moonSeat, cushion, seatAnchor,
+      moonSeat, cushion, seatAnchor, riderAnchor,
       this.mesh(this.starSm, this.m.cyan, -0.92, -2.36, 0.08),
       this.mesh(this.starSm, this.m.pink, 0.92, -2.36, 0.08)
     );
@@ -1947,6 +1954,8 @@ export class CatHome {
 
     this.swing.pivot = pivot;
     this.swing.seatAnchor = seatAnchor;
+    this.swing.riderAnchor = riderAnchor;
+    this.swing.seatYaw = yaw + Math.PI;
     this.swing.exitPos.set(0, 0, 2.15).applyMatrix4(g.matrixWorld);
     this.swing.exitYaw = yaw;
     this.swing.spot = {
@@ -1969,19 +1978,38 @@ export class CatHome {
   enterSwing(viewYaw) {
     const g = this.game, p = g.player;
     this.swing.riding = true;
-    this.swing.vel = 1.15;
+    this.swing.vel = 1.25;
     this.swing.sparkT = 0;
-    this.swing.seatAnchor.getWorldPosition(this.swing.eye);
+    this.swing.pivot.updateMatrixWorld(true);
+    this.swing.seatAnchor.getWorldPosition(this.swing.focus);
+    this.swing.eye.copy(this.swing.focus);
+    this.swing.riderAnchor.getWorldPosition(this.swing.seatPos);
     this.chime([587.33, 739.99, 880, 1174.66], 0.075, 0.14);
     p.seat = {
       pos: this.swing.eye,
+      tp: true,
+      swing: true,
+      focus: this.swing.focus,
+      dist: 3.15,
+      seatPos: this.swing.seatPos,
+      seatYaw: this.swing.seatYaw,
+      swingAng: this.swing.angle,
       spot: this.swing.spot,
+      onKey: (code) => {
+        if (code === "Space") {
+          const dir = this.swing.vel >= 0 ? 1 : -1;
+          this.swing.vel = Math.max(-2.1, Math.min(2.1, this.swing.vel + dir * 0.72));
+          this.chime([783.99, 1046.5, 1318.5], 0.055, 0.11);
+          this.spawnStarBurst(this.swing.focus.x, this.swing.focus.y - 0.4, this.swing.focus.z, 10, 2.0);
+        }
+      },
       exit: () => this.leaveSwing()
     };
-    p.yaw = viewYaw + Math.PI;
-    p.pitch = 0.04;
+    // Scenic 3/4 3rd-person orbit angle showing the cat sitting right on the crescent moon swing!
+    p.yaw = viewYaw + Math.PI - 0.58;
+    p.pitch = -0.14;
     g.character?.stop(0.1);
-    g.ui.toast("荡起星月猫耳秋千啦！雪花迎面飘过来，按 E 随时下来喵～", 4.5);
+    g.ui.toast("荡起星月猫耳秋千啦！拖动鼠标可360°看猫猫，按 空格 荡更高，按 E 随时下来喵～", 4.8);
   }
 
   leaveSwing() {
@@ -2344,7 +2372,10 @@ export class CatHome {
         this.swing.angle += this.swing.vel * dt;
         this.swing.pivot.rotation.x = this.swing.angle;
         this.swing.pivot.updateMatrixWorld(true);
-        this.swing.seatAnchor.getWorldPosition(this.swing.eye);
+        this.swing.seatAnchor.getWorldPosition(this.swing.focus);
+        this.swing.eye.copy(this.swing.focus);
+        if (this.swing.riderAnchor) this.swing.riderAnchor.getWorldPosition(this.swing.seatPos);
+        if (p && p.seat && p.seat.swing) p.seat.swingAng = this.swing.angle;
 
         // Chime softly at swing apex + trail cyan/pink stardust!
         const side = this.swing.angle > 0.30 ? 1 : this.swing.angle < -0.30 ? -1 : 0;
