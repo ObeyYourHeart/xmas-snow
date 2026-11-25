@@ -2,7 +2,7 @@
 // 仅对 assets/ 下的大体积不可变静态资源 (.glb/.jpg/.png/.mp3/.wasm) 使用 Stale-While-Revalidate，
 // 二次访问秒开免重下 36MB 资源；HTML / JS / CSS 始终走网络直连，确保代码更新立刻生效永不卡旧缓存。
 
-const CACHE_NAME = "xmas-snow-assets-v7";
+const CACHE_NAME = "xmas-snow-assets-v8";
 const ASSET_RE = /\/assets\/.*\.(?:glb|gltf|jpg|jpeg|png|webp|mp3|ogg|wav|wasm)$/i;
 
 self.addEventListener("install", (event) => {
