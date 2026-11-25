@@ -1235,7 +1235,8 @@ export function installChemGun(tools, game, helpers, ymRef) {
       }
       // Only show the special knockdown badge when genuinely knocking down a perched roof / balloon Clawd!
       if (wasPerched) {
-        hitLabel = hitRef.mode === "float" || (hitRef.sp && hitRef.sp.id === "balloon") ? "🎈 打落气球龙虾！" : "🦞 打下屋顶龙虾！";
+        const petName = hitRef.name || (hitRef.sp && hitRef.sp.name ? `${hitRef.sp.name} Clawd` : "Clawd");
+        hitLabel = hitRef.mode === "float" || (hitRef.sp && hitRef.sp.id === "balloon") ? `🎈 打落${petName}!` : `✦ 打下${petName}!`;
         hitCrit = true;
       }
     } else if (hitKind === "friend" && hitRef) {

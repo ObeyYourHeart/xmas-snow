@@ -464,6 +464,13 @@ export class SkyMissileSystem {
     return this;
   }
 
+  _petLabel(p) {
+    if (!p) return "Clawd";
+    if (p.name) return p.name;
+    if (p.sp && p.sp.name) return `${p.sp.name} Clawd`;
+    return "Clawd";
+  }
+
   // Gather live world target position for any locked target descriptor
   _getTargetPos(t, out) {
     if (!t || !t.ref) return false;
@@ -475,8 +482,8 @@ export class SkyMissileSystem {
     }
     if (t.kind === "pet") {
       const r = t.ref;
-      if (!r.root || !r.root.visible || r.mode === "gone" || r.mode === "caught") return false;
-      const by = r.root.position.y + (r.balloon && !r.popped ? 1.45 : 0.45);
+      if (!r.root || !r.root.visible || r.tame || r.mode === "gone" || r.mode === "caught" || r.mode === "air") return false;
+      const by = r.root.position.y + (r.balloon && !r.popped ? 1.55 : 0.42);
       out.set(r.x, by, r.z);
       return true;
     }
@@ -493,16 +500,19 @@ export class SkyMissileSystem {
     }
     if (t.kind === "snowman") {
       const r = t.ref;
+      if (r.g && !r.g.visible) return false;
       out.set(r.x, r.y + 1.0 * (r.s || 1), r.z);
       return true;
     }
     if (t.kind === "clawd") {
       const r = t.ref;
+      if (!r.root || !r.root.visible) return false;
       out.set(r.x, r.y + (r.air || 0) + 0.45, r.z);
       return true;
     }
     if (t.kind === "friend") {
       const r = t.ref;
+      if (!r.obj || !r.obj.visible || r.mode === "castleIndoor") return false;
       out.set(r.x + (r.kx || 0), r.y + (r.h || 1.4) * 0.55, r.z + (r.kz || 0));
       return true;
     }
@@ -528,9 +538,9 @@ export class SkyMissileSystem {
       const dot = (dx * camDir.x + dy * camDir.y + dz * camDir.z) / dist;
       // Forward ~50° cone (cos 50° ≈ 0.64)
       if (dot < 0.64) return;
-      // Lower score is better: prioritize targets near center crosshair, closer distance, and sky balloons!
+      // Lower score is better: prioritize targets near center crosshair & closer distance
       const angleErr = 1 - dot;
-      const score = angleErr * 95 + dist * 0.14 - priorityBoost;
+      const score = angleErr * 145 + dist * 0.16 - priorityBoost;
       item.dist = dist;
       item.score = score;
       cand.push(item);
@@ -538,27 +548,29 @@ export class SkyMissileSystem {
 
     if (game.heli && game.heli.balloons) {
       game.heli.balloons.forEach((b, i) => {
-        if (!b.got) consider("balloon", b, "礼物气球", "b" + i, 18);
+        if (!b.got) consider("balloon", b, "礼物气球", "b" + i, 6.5);
       });
     }
     if (game.pets && game.pets.all) {
       game.pets.all.forEach((p, i) => {
-        consider("pet", p, "小龙虾", "p" + i, 6);
+        if (p.tame) return;
+        const boost = (p.mode === "float" || p.mode === "perch") ? 6.5 : 5.0;
+        consider("pet", p, this._petLabel(p), "p" + i, boost);
       });
     }
     if (game.explore && game.explore.targets) {
       game.explore.targets.forEach((tg, i) => {
-        consider("target", tg, "靶牌", "t" + i, 5);
+        consider("target", tg, "靶牌", "t" + i, 4.0);
       });
     }
     if (game.folk && game.folk.snowmen) {
       game.folk.snowmen.forEach((sm, i) => {
-        consider("snowman", sm, "雪人", "s" + i, 2);
+        consider("snowman", sm, "雪人", "s" + i, 1.5);
       });
     }
     if (game.folk && game.folk.clawds) {
       game.folk.clawds.forEach((cl, i) => {
-        if (cl.kind !== "ride") consider("clawd", cl, "小龙虾", "c" + i, 2);
+        if (cl.kind !== "ride" && cl.root && cl.root.visible) consider("clawd", cl, "雪境 Clawd", "c" + i, 1.5);
       });
     }
     if (game.friends && game.friends.list) {
@@ -627,7 +639,7 @@ export class SkyMissileSystem {
     m.trailAcc = 0;
     m.side = side;
     m.target = target || null;
-    m.turnRate = isSalvo ? 6.6 : 5.4;
+    m.turnRate = isSalvo ? 8.2 : 8.8;
     m.speedMax = isSalvo ? 54 : 50;
     m.pos.copy(launchPos);
 
@@ -639,12 +651,12 @@ export class SkyMissileSystem {
     m.vel.copy(camDir).multiplyScalar(initSpeed);
     if (isSalvo) {
       const fanX = (spreadOrder % 2 === 0 ? -1 : 1) * (5.5 + Math.floor(spreadOrder / 2) * 3.8);
-      const fanY = spreadOrder < 2 ? 3.2 : -1.8;
+      const fanY = spreadOrder < 2 ? 3.2 : -1.0;
       m.vel.addScaledVector(right, fanX);
       m.vel.y += fanY;
     } else {
-      m.vel.addScaledVector(right, side * 1.9);
-      m.vel.y -= 1.2;
+      m.vel.addScaledVector(right, side * 1.5);
+      m.vel.y += m.target ? 0.6 : -0.6;
     }
 
     m.grp.position.copy(m.pos);
@@ -743,14 +755,25 @@ export class SkyMissileSystem {
     } else if (hitKind === "folk" && hitRef && game.folk) {
       game.folk.hit(hitRef, "kick", dir.x, dir.z);
     } else if (hitKind === "pet" && game.pets) {
-      game.pets.ballHit(pos, this._v2.copy(dir).multiplyScalar(32));
+      const pt = hitRef;
+      const snapPos = pt && pt.root
+        ? this._v3.set(pt.x, pt.root.position.y + (pt.balloon && !pt.popped ? 1.62 : 0.30), pt.z)
+        : pos;
+      const wasAerial = pt && (pt.mode === "perch" || pt.mode === "float");
+      const wasHide = pt && pt.mode === "hide";
+      const ok = game.pets.ballHit(snapPos, this._v2.copy(dir).multiplyScalar(32));
+      if (ok && pt && !pt.tame && game.ui && game.ui.toast) {
+        const nm = this._petLabel(pt);
+        if (wasHide) game.ui.toast(`✦ 追踪飞弹炸出了藏在雪里的 ${nm}！`, 3.6);
+        else if (!wasAerial) game.ui.toast(`✦ 追踪飞弹精准击晕了 ${nm}！`, 3.0);
+      }
     } else if (hitKind === "thing" && game.explore) {
       game.explore.ballHit(pos);
     } else if ((hitKind === "tree" || hitKind === "trunk") && hitRef && game.player) {
       game.player.dumpSnow(hitRef, pos.x, pos.y, pos.z, 90);
     }
 
-    // 2) Generous Splash Airburst AoE (radius 3.8m) — pops adjacent sky balloons, knocks snowmen, shakes snow!
+    // 2) Generous Splash Airburst AoE (radius 4.0m) — pops adjacent sky balloons, aerial Clawds, snowmen!
     if (game.heli && game.heli.balloons) {
       for (const bl of game.heli.balloons) {
         if (bl.got) continue;
@@ -758,6 +781,17 @@ export class SkyMissileSystem {
         if (Math.hypot(pos.x - bl.x, pos.y - by, pos.z - bl.z) < 4.0) {
           this._popBalloon(bl);
           isBalloon = true;
+        }
+      }
+    }
+    if (game.pets && game.pets.all) {
+      for (const pt of game.pets.all) {
+        if (!pt || pt.tame || !pt.root || !pt.root.visible) continue;
+        if (pt.mode !== "perch" && pt.mode !== "float") continue;
+        const py = pt.root.position.y + (pt.balloon && !pt.popped ? 1.55 : 0.35);
+        if (Math.hypot(pos.x - pt.x, pos.y - py, pos.z - pt.z) < 5.6) {
+          const snapPos = this._v3.set(pt.x, pt.root.position.y + (pt.balloon && !pt.popped ? 1.62 : 0.30), pt.z);
+          game.pets.ballHit(snapPos, this._v2.copy(dir).multiplyScalar(32));
         }
       }
     }
@@ -1031,15 +1065,28 @@ export class SkyMissileSystem {
             }
           }
         }
-        // 2) Direct proximity fuse on locked non-balloon target
+        // 2) Direct proximity fuse on locked non-balloon target (generous 2.4m fuse!)
         if (!hitKind && m.target && m.target.kind !== "balloon" && this._getTargetPos(m.target, this._v2)) {
-          if (m.pos.distanceTo(this._v2) < 1.95) {
+          if (m.pos.distanceTo(this._v2) < 2.45) {
             hitKind = m.target.kind === "snowman" || m.target.kind === "clawd" ? "folk"
               : m.target.kind === "target" || m.target.kind === "crystal" ? "thing"
               : m.target.kind;
             hitRef = m.target.kind === "snowman" ? { snowman: m.target.ref }
               : m.target.kind === "clawd" ? { clawd: m.target.ref }
               : m.target.ref;
+          }
+        }
+        // 2b) Wild aerial / rooftop Clawd proximity fuse (even on unlocked free-fire!)
+        if (!hitKind && game.pets && game.pets.all) {
+          for (const pt of game.pets.all) {
+            if (!pt || pt.tame || !pt.root || !pt.root.visible) continue;
+            if (pt.mode !== "perch" && pt.mode !== "float") continue;
+            const py = pt.root.position.y + (pt.balloon && !pt.popped ? 1.55 : 0.35);
+            if (Math.hypot(m.pos.x - pt.x, m.pos.y - py, m.pos.z - pt.z) < 2.35) {
+              hitKind = "pet";
+              hitRef = pt;
+              break;
+            }
           }
         }
         // 3) Terrain / trees / walls / snowmen / friends probe
