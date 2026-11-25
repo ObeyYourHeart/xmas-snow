@@ -3,6 +3,14 @@
 //   （精雕石砖墙、鱼鳞瓦片屋顶、木纹墙板、八角拼花地砖、清晰高对比彩绘/木棂亮窗、猫咪玫瑰花窗）
 // - 提供真实 3D 凹陷窗框、凸起窗棂、覆雪窗台、雕花牛腿、百叶窗板与精致木门构建函数，彻底告别模糊贴片与纯色方块！
 
+const TEX_CACHE = new Map();
+function cachedTex(key, buildFn) {
+  if (TEX_CACHE.has(key)) return TEX_CACHE.get(key);
+  const t = buildFn();
+  TEX_CACHE.set(key, t);
+  return t;
+}
+
 function setCrisp(tex, T, renderer, rx = 1, ry = 1) {
   tex.colorSpace = T.SRGBColorSpace;
   tex.anisotropy = Math.min(8, renderer?.capabilities?.getMaxAnisotropy?.() || 4);
@@ -15,6 +23,7 @@ function setCrisp(tex, T, renderer, rx = 1, ry = 1) {
 
 // 1. Carved Winter Ashlar Stone Masonry (512x512)
 export function makeStoneMasonryTex(T, renderer, baseHex = "#ebe7df", rx = 2.4, ry = 1.6) {
+  return cachedTex(`stone|${baseHex}|${rx}|${ry}`, () => {
   const cv = document.createElement("canvas");
   cv.width = cv.height = 512;
   const c = cv.getContext("2d");
@@ -39,10 +48,12 @@ export function makeStoneMasonryTex(T, renderer, baseHex = "#ebe7df", rx = 2.4, 
     }
   }
   return setCrisp(new T.CanvasTexture(cv), T, renderer, rx, ry);
+  });
 }
 
 // 2. Scalloped Fish-Scale Winter Roof Shingles (512x512, indigo-teal or alpine-red!)
 export function makeShingleRoofTex(T, renderer, theme = "indigo", rx = 3, ry = 2.2) {
+  return cachedTex(`shingle|${theme}|${rx}|${ry}`, () => {
   const cv = document.createElement("canvas");
   cv.width = cv.height = 512;
   const c = cv.getContext("2d");
@@ -87,10 +98,12 @@ export function makeShingleRoofTex(T, renderer, theme = "indigo", rx = 3, ry = 2
     }
   }
   return setCrisp(new T.CanvasTexture(cv), T, renderer, rx, ry);
+  });
 }
 
 // 3. Warm Alpine Cedar Timber Plank Wall (512x512)
 export function makeTimberWallTex(T, renderer, dark = false, rx = 2.2, ry = 1.6) {
+  return cachedTex(`timber|${dark}|${rx}|${ry}`, () => {
   const cv = document.createElement("canvas");
   cv.width = cv.height = 512;
   const c = cv.getContext("2d");
@@ -119,10 +132,12 @@ export function makeTimberWallTex(T, renderer, dark = false, rx = 2.2, ry = 1.6)
     c.fillRect(0, y, 512, 2);
   }
   return setCrisp(new T.CanvasTexture(cv), T, renderer, rx, ry);
+  });
 }
 
 // 4. Spiced Gingerbread & Piped Sugar-Icing Wall (512x512)
 export function makeGingerbreadTex(T, renderer, rx = 2, ry = 2) {
+  return cachedTex(`ginger|${rx}|${ry}`, () => {
   const cv = document.createElement("canvas");
   cv.width = cv.height = 512;
   const c = cv.getContext("2d");
@@ -143,10 +158,12 @@ export function makeGingerbreadTex(T, renderer, rx = 2, ry = 2) {
     }
   }
   return setCrisp(new T.CanvasTexture(cv), T, renderer, rx, ry);
+  });
 }
 
 // 5. Laboratory Octagonal Slate & Inlaid Brass Tile Floor (512x512)
 export function makeLabFloorTex(T, renderer, rx = 6, ry = 5) {
+  return cachedTex(`labfloor|${rx}|${ry}`, () => {
   const cv = document.createElement("canvas");
   cv.width = cv.height = 512;
   const c = cv.getContext("2d");
@@ -171,11 +188,13 @@ export function makeLabFloorTex(T, renderer, rx = 6, ry = 5) {
     }
   }
   return setCrisp(new T.CanvasTexture(cv), T, renderer, rx, ry);
+  });
 }
 
 // 6. ULTRA-CRISP 512x768 HIGH-CONTRAST ILLUMINATED WINDOW GLASS TEXTURES (ZERO BLUR!)
 //    theme: "alchemy" (glowing starlight potion bay), "cozy" (warm hearth curtains), "nightsky" (cathedral pine/aurora view)
 export function makeCrispWindowTex(T, renderer, theme = "alchemy") {
+  return cachedTex(`win|${theme}`, () => {
   const cv = document.createElement("canvas");
   cv.width = 512;
   cv.height = 768;
@@ -363,10 +382,12 @@ export function makeCrispWindowTex(T, renderer, theme = "alchemy") {
   c.beginPath(); c.moveTo(498, 754); c.lineTo(394, 754); c.quadraticCurveTo(466, 726, 498, 650); c.closePath(); c.fill();
 
   return setCrisp(new T.CanvasTexture(cv), T, renderer, 1, 1);
+  });
 }
 
 // 7. Cat-Silhouette Stained-Glass Rose Window (512x512 — signature centerpiece of 极其猫实验室!)
 export function makeCatRoseWindowTex(T, renderer) {
+  return cachedTex("catrose", () => {
   const cv = document.createElement("canvas");
   cv.width = cv.height = 512;
   const c = cv.getContext("2d");
@@ -448,6 +469,7 @@ export function makeCatRoseWindowTex(T, renderer) {
   c.beginPath(); c.arc(cx, cy, 224, 0, Math.PI * 2); c.stroke();
 
   return setCrisp(new T.CanvasTexture(cv), T, renderer, 1, 1);
+  });
 }
 
 // 8. CLEAN, SIMPLE, RAZOR-SHARP ARCHITECTURAL SIGNBOARD (e.g. "极其猫实验室", "极其猫乐园"!)

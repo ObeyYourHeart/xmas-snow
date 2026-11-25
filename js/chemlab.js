@@ -16,7 +16,7 @@ import {
   makeCatRoseWindowTex,
   makeCleanSignTex,
   buildCrispWindow
-} from "./archcraft.js?v=11242125";
+} from "./archcraft.js?v=11251205";
 
 export const LAB_ORIGIN = { x: 1500, y: 1500, z: 1500 };
 

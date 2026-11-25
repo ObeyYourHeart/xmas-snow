@@ -9,7 +9,7 @@ import {
   makeCleanSignTex,
   buildCrispWindow,
   buildCrispDoor
-} from "./archcraft.js?v=11242125";
+} from "./archcraft.js?v=11251205";
 
 const POSTCARDS = [
   "📮 来自 Gemini 的明信片：「主人在雪地里逛累了记得来极其猫星港听听灯塔号角、打打药水瓶靶子喵！本喵给你留了热棉花糖！」",

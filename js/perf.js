@@ -125,7 +125,7 @@ export class PerfOptimizer {
   _collectProtected(owner, skipRoots, outSet) {
     if (!owner || typeof owner !== "object") return;
     const seen = new Set();
-    const skipKeys = new Set(["game", "scene", "THREE", "world", "player", "camera", "renderer", "audio", "ui", "env", "forest", "mats", "wrapMat", "ext", "intGroup", "group", "root", "_sceneRoots"]);
+    const skipKeys = new Set(["game", "scene", "THREE", "world", "player", "camera", "renderer", "audio", "ui", "env", "forest", "mats", "wrapMat", "ext", "intGroup", "group", "root", "_sceneRoots", "staticPlats"]);
 
     const walk = (val, depth) => {
       if (!val || typeof val !== "object" || depth > 5 || seen.has(val)) return;
@@ -281,10 +281,11 @@ export class PerfOptimizer {
               centerTmp.copy(geo.boundingSphere ? geo.boundingSphere.center : obj.position).applyMatrix4(obj.matrixWorld);
               const cx = opts.singleCell ? 0 : Math.floor(centerTmp.x / cellSize);
               const cz = opts.singleCell ? 0 : Math.floor(centerTmp.z / cellSize);
-              const key = `${cx}|${cz}|${mat.uuid}|${aKeys.join(",")}|${obj.castShadow ? 1 : 0}|${obj.receiveShadow ? 1 : 0}`;
+              const ro = obj.renderOrder || 0;
+              const key = `${cx}|${cz}|${mat.uuid}|${aKeys.join(",")}|${obj.castShadow ? 1 : 0}|${obj.receiveShadow ? 1 : 0}|${ro}`;
               let b = buckets.get(key);
               if (!b) {
-                b = { mat, attrNames: aKeys, castShadow: !!obj.castShadow, receiveShadow: !!obj.receiveShadow, items: [] };
+                b = { mat, attrNames: aKeys, castShadow: !!obj.castShadow, receiveShadow: !!obj.receiveShadow, renderOrder: ro, items: [] };
                 buckets.set(key, b);
               }
               b.items.push({ mesh: obj, geo, matWorld: obj.matrixWorld.clone() });
@@ -302,9 +303,32 @@ export class PerfOptimizer {
 
     const batchParent = opts.attachTo || scene;
     const invParent = opts.attachTo ? new T.Matrix4().copy(opts.attachTo.matrixWorld).invert() : null;
+    const scaleTmp = new T.Vector3();
 
     for (const b of buckets.values()) {
-      if (b.items.length < 2) continue;
+      if (b.items.length < 2) {
+        // Register static unmerged singletons (signposts, lanterns, stalls, ski racks, props) for indoor/distance/frustum culling!
+        if (b.items.length === 1 && !opts.skipCellCull && !opts.attachTo) {
+          const it = b.items[0];
+          const bs = it.geo.boundingSphere;
+          if (bs) {
+            const wc = bs.center.clone().applyMatrix4(it.matWorld);
+            scaleTmp.setFromMatrixScale(it.matWorld);
+            const maxS = Math.max(Math.abs(scaleTmp.x), Math.abs(scaleTmp.y), Math.abs(scaleTmp.z)) || 1;
+            this.batchCells.push({
+              obj: it.mesh,
+              zoneId,
+              x: wc.x,
+              y: wc.y,
+              z: wc.z,
+              r: bs.radius * maxS,
+              indoor: opts.indoor || false,
+              skyline: !!opts.skyline
+            });
+          }
+        }
+        continue;
+      }
 
       const entries = b.items.map((it) => ({
         geo: it.geo,
@@ -318,12 +342,13 @@ export class PerfOptimizer {
       mergedMesh.name = `batch_${zoneId}`;
       mergedMesh.castShadow = b.castShadow;
       mergedMesh.receiveShadow = b.receiveShadow;
+      if (b.renderOrder) mergedMesh.renderOrder = b.renderOrder;
       mergedMesh.matrixAutoUpdate = false;
       mergedMesh.updateMatrix();
       batchParent.add(mergedMesh);
 
       const bs = mergedGeo.boundingSphere;
-      if (bs) {
+      if (bs && !opts.skipCellCull) {
         const wc = bs.center.clone();
         if (opts.attachTo) wc.applyMatrix4(opts.attachTo.matrixWorld);
         this.batchCells.push({
@@ -407,6 +432,43 @@ export class PerfOptimizer {
     }
   }
 
+  // Disable shadow-casting on tiny decorative clutter (<0.42m radius) inside static roots:
+  // unreadable sub-pixel noise in a 140m shadow map, yet shrinks shadow-pass draw calls & merges more static buckets!
+  _pruneTinyShadows(rootLists) {
+    const T = this.THREE;
+    const scaleTmp = new T.Vector3();
+    const tinyRe = /signpost|ski_rack|gate_pole|banner_post|bulb|lampglass|garland|ribbon|ornament/i;
+    let pruned = 0;
+    for (const roots of rootLists) {
+      if (!roots || !roots.length) continue;
+      for (const root of roots) {
+        if (!root) continue;
+        root.updateMatrixWorld(true);
+        root.traverse((o) => {
+          if (!o.isMesh || !o.castShadow || o.isInstancedMesh || o.isSkinnedMesh) return;
+          const nm = (o.name || "") + " " + (o.parent && o.parent.name ? o.parent.name : "");
+          if (tinyRe.test(nm)) {
+            o.castShadow = false;
+            pruned++;
+            return;
+          }
+          const geo = o.geometry;
+          if (!geo) return;
+          if (!geo.boundingSphere) geo.computeBoundingSphere();
+          if (geo.boundingSphere) {
+            scaleTmp.setFromMatrixScale(o.matrixWorld);
+            const maxS = Math.max(Math.abs(scaleTmp.x), Math.abs(scaleTmp.y), Math.abs(scaleTmp.z));
+            if (geo.boundingSphere.radius * maxS < 0.42) {
+              o.castShadow = false;
+              pruned++;
+            }
+          }
+        });
+      }
+    }
+    this.stats.prunedShadows = pruned;
+  }
+
   optimize(extRoots = {}) {
     const g = this.game;
 
@@ -414,9 +476,23 @@ export class PerfOptimizer {
     this._installLifecycleHooks();
     this._registerAssetCache();
 
+    // 0) Prune unreadable sub-pixel shadow casters on tiny decorative clutter before batching
+    this._pruneTinyShadows([
+      extRoots.world, extRoots.ski, extRoots.places, extRoots.wonders,
+      extRoots.explore, extRoots.cathome, extRoots.skiPlus,
+      g.worldPlus && g.worldPlus.group ? [g.worldPlus.group] : null,
+      g.harbor && g.harbor.group ? [g.harbor.group] : null,
+      g.gameplay && g.gameplay.group ? [g.gameplay.group] : null,
+      g.parkour && g.parkour.group ? [g.parkour.group] : null,
+      g.chemlab && g.chemlab.ext ? [g.chemlab.ext] : null
+    ]);
+
     // 1) Batch static architectural meshes across core clearing + all heavy extension modules!
     if (extRoots.world && extRoots.world.length) {
       this._batchZone("core_world", [g.world, g.logic, g.cabin, g.castle, g.explore], extRoots.world, { cellSize: 48 });
+    }
+    if (extRoots.ski && extRoots.ski.length) {
+      this._batchZone("core_ski", [g.ski, g.skiPlus], extRoots.ski, { cellSize: 56 });
     }
     if (extRoots.places && extRoots.places.length) {
       this._batchZone("core_places", [g.places, g.explore, g.worldPlus], extRoots.places, { cellSize: 48 });
@@ -440,6 +516,12 @@ export class PerfOptimizer {
     if (g.worldPlus && g.worldPlus.group) {
       this._batchZone("worldplus", g.worldPlus, [g.worldPlus.group], { cellSize: 56 });
     }
+    if (g.harbor && g.harbor.group) {
+      this._batchZone("harbor", g.harbor, [g.harbor.group], { cellSize: 48 });
+    }
+    if (g.gameplay && g.gameplay.group) {
+      this._batchZone("gameplay", g.gameplay, [g.gameplay.group], { cellSize: 56 });
+    }
     if (g.ballroom && g.ballroom.group) {
       this._batchZone("ballroom", g.ballroom, [g.ballroom.group], { singleCell: true });
     }
@@ -451,6 +533,19 @@ export class PerfOptimizer {
     }
     if (g.ferris && g.ferris.root) {
       this._batchZone("ferris", g.ferris, [g.ferris.root], { singleCell: true, skyline: true });
+      // Rigidly batch the 150 rotating wheel spokes/rims/bulbs inside wheelGroup (protecting counter-rotating hubStar!)
+      if (g.ferris.wheelGroup) {
+        this._batchZone("ferris_wheel", { h: g.ferris.hubStar }, [g.ferris.wheelGroup], { singleCell: true, attachTo: g.ferris.wheelGroup, skipCellCull: true });
+      }
+      // Rigidly batch each of the 12 moving gondola cabins (cuts 240 cabin draw calls -> ~48!)
+      if (g.ferris.cabins && g.ferris.cabins.length) {
+        for (let i = 0; i < g.ferris.cabins.length; i++) {
+          const cab = g.ferris.cabins[i];
+          if (cab && cab.group) {
+            this._batchZone(`ferris_cab_${i}`, null, [cab.group], { singleCell: true, attachTo: cab.group, skipCellCull: true });
+          }
+        }
+      }
     }
     if (g.pondFx && g.pondFx.group) {
       this._batchZone("pond", g.pondFx, [g.pondFx.group], { singleCell: true });
@@ -466,21 +561,56 @@ export class PerfOptimizer {
       this._batchZone("chemlab_int", g.chemlab, [g.chemlab.intGroup], { singleCell: true, indoor: "chemlab", attachTo: g.chemlab.intGroup });
       g.chemlab.intGroup.visible = !!(g.chemlab && g.chemlab.inside);
     }
+    // Batch rigid static parts of the Starlight Cat-Ear Element Gun (keeps all 7 animated parts intact, cuts +80 calls -> ~14!)
+    if (g.tools && g.tools.items && g.tools.items.chemgun && g.tools.items.chemgun.root) {
+      const cg = g.tools.items.chemgun;
+      const wasVis = cg.root.visible;
+      cg.root.visible = true;
+      this._batchZone("chemgun_static", cg, [cg.root], { singleCell: true, attachTo: cg.root, skipCellCull: true });
+      cg.root.visible = wasVis;
+    }
+    // Batch rigid static hull meshes of Claude Helicopter (protects spinning rotors, nose_spin, yoke & blur discs: 127 -> ~15 calls!)
+    if (g.heli && g.heli.claudeModel) {
+      const hm = g.heli.claudeModel;
+      const wasVis = hm.visible;
+      hm.visible = true;
+      this._batchZone(
+        "heli_hull",
+        { a: g.heli.rotorG, b: g.heli.tailG, c: g.heli.noseG, d: g.heli.yoke, e: g.heli.disc, f: g.heli.tdisc },
+        [hm],
+        { singleCell: true, attachTo: hm, skipCellCull: true }
+      );
+      hm.visible = wasVis;
+    }
+    // Batch rigid static body meshes of Train engine & carriages (protects spinning wheels & whistle: 96 -> ~18 calls!)
+    if (g.train && g.train.engine && g.train.engine.inner) {
+      const tProt = { wheels: g.train.wheels, w: g.train.whistle };
+      this._batchZone("train_engine", tProt, [g.train.engine.inner], { singleCell: true, attachTo: g.train.engine.inner, skipCellCull: true });
+      if (g.train.cars && g.train.cars.length) {
+        for (let i = 0; i < g.train.cars.length; i++) {
+          const car = g.train.cars[i];
+          if (car && car.inner) {
+            this._batchZone(`train_car_${i}`, tProt, [car.inner], { singleCell: true, attachTo: car.inner, skipCellCull: true });
+          }
+        }
+      }
+    }
 
     this.stats.drawCallsSaved = Math.max(0, this.stats.mergedSourceMeshes - this.stats.mergedOutputMeshes);
     this.stats.totalCells = this.batchCells.length;
 
     // 2) Register large dynamic outer landmark groups for indoor/outdoor, distance & frustum culling
     this.outerDynamicGroups = [];
-    if (g.ballroom && g.ballroom.group) this.outerDynamicGroups.push({ obj: g.ballroom.group, x: g.ballroom.cx ?? -64, y: 4, z: g.ballroom.cz ?? 94, r: 20, maxD: 205 });
-    if (g.parkour && g.parkour.group) this.outerDynamicGroups.push({ obj: g.parkour.group, x: g.parkour.cx ?? -74, y: 6, z: g.parkour.cz ?? -44, r: 30, maxD: 205 });
+    if (g.ballroom && g.ballroom.group) this.outerDynamicGroups.push({ obj: g.ballroom.group, x: g.ballroom.cx ?? -64, y: 4, z: g.ballroom.cz ?? 94, r: 20, maxD: 135 });
+    if (g.parkour && g.parkour.group) this.outerDynamicGroups.push({ obj: g.parkour.group, x: g.parkour.cx ?? -74, y: 6, z: g.parkour.cz ?? -44, r: 30, maxD: 112 });
+    if (g.harbor && g.harbor.group) this.outerDynamicGroups.push({ obj: g.harbor.group, x: g.harbor.cx ?? 134, y: 5, z: g.harbor.cz ?? 126, r: 36, maxD: 225 });
     if (g.pondFx && g.pondFx.group) {
       const px = g.pondFx.pond ? g.pondFx.pond.x : -41;
       const pz = g.pondFx.pond ? g.pondFx.pond.z : 36;
       const py = Number.isFinite(g.pondFx.iceY) ? g.pondFx.iceY : 0;
       this.outerDynamicGroups.push({ obj: g.pondFx.group, x: px, y: py, z: pz, r: 34, maxD: 220 });
     }
-    if (g.chemlab && g.chemlab.ext) this.outerDynamicGroups.push({ obj: g.chemlab.ext, x: g.chemlab.cx ?? 76, y: 4, z: g.chemlab.cz ?? 102, r: 16, maxD: 210 });
+    if (g.chemlab && g.chemlab.ext) this.outerDynamicGroups.push({ obj: g.chemlab.ext, x: g.chemlab.cx ?? 76, y: 4, z: g.chemlab.cz ?? 102, r: 16, maxD: 205 });
 
     // 3) Collect & tune MeshPhysicalMaterials + CSS compositor + shadow cadence
     this._collectPhysicalMaterials();
@@ -495,8 +625,11 @@ export class PerfOptimizer {
     return this;
   }
 
-  // Called right before rendering each frame so ?perf=1 reports TRUE total scene calls & triangles across all passes!
+  // Called right before rendering each frame (AFTER all entity .update() calls!):
+  // 1) Runs accurate pre-render frustum + distance + indoor culling (zero flicker, eliminates off-screen GPU skinning!)
+  // 2) Resets renderer.info when ?perf=1 so metrics report TRUE full-frame draw calls & triangles.
   beginFrame() {
+    this._updateCulling();
     if (this.perfMode && this.game.renderer && this.game.renderer.info) {
       this.game.renderer.info.reset();
     }
@@ -559,6 +692,9 @@ export class PerfOptimizer {
       }
     }
     if (g.snow && g.snow.points) g.snow.points.visible = !inside;
+    if (g.tower && g.tower.root) g.tower.root.visible = !inside;
+    if (g.worldPlus && g.worldPlus.group) g.worldPlus.group.visible = !inside;
+    if (g.gameplay && g.gameplay.group) g.gameplay.group.visible = !inside;
 
     const q = g.quality || "medium";
     const baseCull = g.touch ? 128 : q === "low" ? 145 : q === "medium" ? 185 : 265;
@@ -566,11 +702,38 @@ export class PerfOptimizer {
     const cz = cam.position.z;
     let culled = 0;
 
-    // Update camera frustum once per culling pass for accurate behind-camera culling!
+    // Update camera frustum once per frame right before render() for accurate behind-camera culling!
     cam.updateMatrixWorld();
     this._projScreen.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse);
     this._frustum.setFromProjectionMatrix(this._projScreen);
     const sph = this._sphere;
+
+    // Ferris Wheel + 12 cabins: hide indoors, and frustum/distance cull when not riding! (Saves ~90 calls when facing away)
+    if (g.ferris && g.ferris.root) {
+      const ridingFerris = !!(g.player && g.player.riding && g.player.ride && g.player.ride.kind === "ferris");
+      let fVis = !inside;
+      if (fVis && !ridingFerris) {
+        const fx = g.ferris.cx ?? 20;
+        const fz = g.ferris.cz ?? 125;
+        const fy = (g.ferris.baseY ?? 0) + 22;
+        const fMax = g.touch ? 175 : q === "low" ? 195 : 275;
+        const fdx = fx - cx;
+        const fdz = fz - cz;
+        const fd2 = fdx * fdx + fdz * fdz;
+        fVis = fd2 <= fMax * fMax;
+        if (fVis && fd2 > 2200) {
+          sph.center.set(fx, fy, fz);
+          sph.radius = 35;
+          fVis = this._frustum.intersectsSphere(sph);
+        }
+      }
+      g.ferris.root.visible = fVis;
+      if (g.ferris.cabins) {
+        for (let i = 0; i < g.ferris.cabins.length; i++) {
+          if (g.ferris.cabins[i].group) g.ferris.cabins[i].group.visible = fVis;
+        }
+      }
+    }
 
     for (let i = 0; i < this.batchCells.length; i++) {
       const c = this.batchCells[i];
@@ -585,15 +748,16 @@ export class PerfOptimizer {
         culled++;
         continue;
       }
-      const maxD = c.skyline ? (g.touch ? 240 : 340) : baseCull + c.r;
+      const smallCull = g.touch ? 78 : q === "low" ? 90 : q === "medium" ? 115 : 155;
+      const maxD = c.skyline ? (g.touch ? 240 : 340) : (c.r < 3.5 ? smallCull : baseCull + c.r);
       const dx = c.x - cx;
       const dz = c.z - cz;
       const d2 = dx * dx + dz * dz;
       let vis = d2 <= maxD * maxD;
-      // Keep cells within 52m shadow caster zone always eligible, frustum-cull farther cells cleanly!
-      if (vis && d2 > 2704) {
+      // Shadow-casting cells stay eligible within 52m shadow zone; non-shadow-casting cells frustum-cull immediately behind camera!
+      if (vis && (!c.obj.castShadow || d2 > 2704)) {
         sph.center.set(c.x, c.y, c.z);
-        sph.radius = c.r + 14;
+        sph.radius = c.r + (c.obj.castShadow ? 14 : 6);
         vis = this._frustum.intersectsSphere(sph);
       }
       c.obj.visible = vis;
@@ -606,17 +770,215 @@ export class PerfOptimizer {
         d.obj.visible = false;
         continue;
       }
-      const lim = g.touch ? d.maxD * 0.7 : q === "low" ? d.maxD * 0.8 : q === "high" ? 310 : d.maxD;
+      const lim = g.touch ? d.maxD * 0.7 : q === "low" ? d.maxD * 0.8 : q === "high" ? Math.min(265, d.maxD * 1.18) : d.maxD;
       const dx = d.x - cx;
       const dz = d.z - cz;
       const d2 = dx * dx + dz * dz;
       let vis = d2 <= lim * lim;
-      if (vis && d2 > 2704) {
+      const safeR = (d.r || 22) + 10;
+      if (vis && d2 > safeR * safeR) {
         sph.center.set(d.x, d.y ?? 4, d.z);
-        sph.radius = (d.r || 22) + 18;
+        sph.radius = (d.r || 22) + 14;
         vis = this._frustum.intersectsSphere(sph);
       }
       d.obj.visible = vis;
+    }
+
+    // Dynamic entity frustum & indoor culling (runs right after entity .update(), eliminates 200K-380K off-screen skinned triangles!)
+    // 1) AI Friends (SkinnedMesh has frustumCulled=false; without this, all 12 friends within 70m are GPU-skinned even behind camera!)
+    if (g.friends && g.friends.list) {
+      const fList = g.friends.list;
+      const party = g.friends.party;
+      const maxFD = g.touch ? 42 : q === "low" ? 46 : q === "medium" ? 58 : 70;
+      for (let i = 0; i < fList.length; i++) {
+        const f = fList[i];
+        if (!f || !f.obj) continue;
+        if (inside) {
+          f.obj.visible = false;
+          continue;
+        }
+        if (!f.obj.visible) continue;
+        const inParty = party && party.includes(f);
+        if (!inParty && f.dist > maxFD) {
+          f.obj.visible = false;
+          continue;
+        }
+        if (f.dist > 5.0) {
+          const p = f.obj.position;
+          sph.center.set(p.x, p.y + 0.95, p.z);
+          sph.radius = 2.6;
+          if (!this._frustum.intersectsSphere(sph)) {
+            f.obj.visible = false;
+          }
+        }
+      }
+    }
+
+    // 2) Animals (8 hares + 5 penguins = 75 meshes / 69K tris)
+    if (g.animals) {
+      const aMax = g.touch ? 36 : q === "low" ? 42 : q === "medium" ? 52 : 64;
+      const aMax2 = aMax * aMax;
+      const cullAnimArr = (arr) => {
+        if (!arr) return;
+        for (let i = 0; i < arr.length; i++) {
+          const a = arr[i];
+          if (!a || !a.root) continue;
+          if (inside) { a.root.visible = false; continue; }
+          const p = a.root.position;
+          const dx = p.x - cx;
+          const dz = p.z - cz;
+          const d2 = dx * dx + dz * dz;
+          let vis = d2 <= aMax2;
+          if (vis && d2 > 20) {
+            sph.center.set(p.x, p.y + 0.5, p.z);
+            sph.radius = 1.9;
+            vis = this._frustum.intersectsSphere(sph);
+          }
+          a.root.visible = vis;
+        }
+      };
+      cullAnimArr(g.animals.hares);
+      cullAnimArr(g.animals.penguins);
+      // Reindeer & Sled rig (63 meshes right near Spawn): hide indoors or behind camera when not riding!
+      const rig = g.animals.rig;
+      if (rig && rig.deer && rig.deer.root && rig.sled) {
+        let rVis = !inside;
+        if (rVis && !g.animals.onSled) {
+          const rx = rig.sled.position.x;
+          const ry = rig.sled.position.y + 1.0;
+          const rz = rig.sled.position.z;
+          const dx = rx - cx;
+          const dz = rz - cz;
+          const d2 = dx * dx + dz * dz;
+          rVis = d2 <= 19600; // 140m
+          if (rVis && d2 > 20) {
+            sph.center.set(rx, ry, rz);
+            sph.radius = 3.4;
+            rVis = this._frustum.intersectsSphere(sph);
+          }
+        }
+        rig.deer.root.visible = rVis;
+        rig.sled.visible = rVis;
+        if (rig.lines) rig.lines.visible = rVis;
+      }
+    }
+
+    // 2b) Pets (19 wild pets + 2 fakes = ~170 meshes, 26 skinned!): preserve caught/hidden state via _perfHidden flag
+    if (g.pets && g.pets.all) {
+      const pList = g.pets.all;
+      const pParty = g.pets.party;
+      const pMax = g.touch ? 40 : q === "low" ? 46 : q === "medium" ? 58 : 74;
+      const pMax2 = pMax * pMax;
+      for (let i = 0; i < pList.length; i++) {
+        const pt = pList[i];
+        if (!pt || !pt.root) continue;
+        // If game logic hid this pet (caught/inactive) and we didn't hide it, leave it hidden!
+        if (!pt.root.visible && !pt._perfHidden) continue;
+        let pVis = !inside;
+        if (pVis) {
+          const inParty = pParty && pParty.includes(pt);
+          const p = pt.root.position;
+          const dx = p.x - cx;
+          const dz = p.z - cz;
+          const d2 = dx * dx + dz * dz;
+          if (!inParty && d2 > pMax2) {
+            pVis = false;
+          } else if (d2 > 20) {
+            sph.center.set(p.x, p.y + 0.65, p.z);
+            sph.radius = 2.0;
+            pVis = this._frustum.intersectsSphere(sph);
+          }
+        }
+        pt.root.visible = pVis;
+        pt._perfHidden = !pVis;
+      }
+    }
+
+    // 3) Folk (8 snowmen + 8 clawds = 142 meshes / 32K tris)
+    if (g.folk) {
+      const kMax = g.touch ? 42 : q === "low" ? 48 : q === "medium" ? 60 : 76;
+      const kMax2 = kMax * kMax;
+      if (g.folk.snowmen) {
+        for (let i = 0; i < g.folk.snowmen.length; i++) {
+          const s = g.folk.snowmen[i];
+          if (!s || !s.group) continue;
+          if (inside) { s.group.visible = false; continue; }
+          const p = s.group.position;
+          const dx = p.x - cx;
+          const dz = p.z - cz;
+          const d2 = dx * dx + dz * dz;
+          let vis = d2 <= kMax2;
+          if (vis && d2 > 36) {
+            sph.center.set(p.x, p.y + 1.0, p.z);
+            sph.radius = 2.4;
+            vis = this._frustum.intersectsSphere(sph);
+          }
+          s.group.visible = vis;
+        }
+      }
+      if (g.folk.clawds) {
+        for (let i = 0; i < g.folk.clawds.length; i++) {
+          const c = g.folk.clawds[i];
+          if (!c || !c.obj) continue;
+          if (c.kind === "ride" && g.player && g.player.riding) { c.obj.visible = true; continue; }
+          if (inside) { c.obj.visible = false; continue; }
+          const p = c.obj.position;
+          const dx = p.x - cx;
+          const dz = p.z - cz;
+          const d2 = dx * dx + dz * dz;
+          let vis = d2 <= kMax2;
+          if (vis && d2 > 25) {
+            sph.center.set(p.x, p.y + 0.5, p.z);
+            sph.radius = 2.0;
+            vis = this._frustum.intersectsSphere(sph);
+          }
+          c.obj.visible = vis;
+        }
+      }
+    }
+
+    // 4) Parked Helicopter & Train frustum + indoor culling
+    if (g.heli && g.heli.root) {
+      if (inside) {
+        g.heli.root.visible = false;
+      } else if (g.heli.driven) {
+        g.heli.root.visible = true;
+      } else {
+        const p = g.heli.root.position;
+        const dx = p.x - cx;
+        const dz = p.z - cz;
+        const d2 = dx * dx + dz * dz;
+        let vis = d2 <= 28900; // 170m
+        if (vis && d2 > 144) {
+          sph.center.set(p.x, p.y + 1.8, p.z);
+          sph.radius = 6.5;
+          vis = this._frustum.intersectsSphere(sph);
+        }
+        g.heli.root.visible = vis;
+      }
+    }
+    if (g.train && g.train.engine) {
+      const tDriven = !!g.train.driven;
+      const cullUnit = (u) => {
+        if (!u || !u.root) return;
+        if (inside) { u.root.visible = false; return; }
+        if (tDriven) { u.root.visible = true; return; }
+        const p = u.root.position;
+        const dx = p.x - cx;
+        const dz = p.z - cz;
+        const d2 = dx * dx + dz * dz;
+        let vis = d2 <= 25600; // 160m
+        if (vis && d2 > 100) {
+          sph.center.set(p.x, p.y + 1.4, p.z);
+          sph.radius = 5.5;
+          vis = this._frustum.intersectsSphere(sph);
+        }
+        u.root.visible = vis;
+      };
+      cullUnit(g.train.engine);
+      if (g.train.cars) {
+        for (let i = 0; i < g.train.cars.length; i++) cullUnit(g.train.cars[i]);
+      }
     }
 
     this.stats.culledCells = culled;
@@ -648,10 +1010,10 @@ export class PerfOptimizer {
     if (fps < targetLow) {
       this.lowFpsSec++;
       this.highFpsSec = 0;
-      if (this.lowFpsSec >= 3) {
+      if (this.lowFpsSec >= 2) {
         this.lowFpsSec = 0;
-        if (this.resScale > 0.76) {
-          this.resScale = Math.max(0.74, +(this.resScale - 0.13).toFixed(2));
+        if (this.resScale > 0.72) {
+          this.resScale = Math.max(0.70, +(this.resScale - 0.12).toFixed(2));
           if (g.applyResScale) g.applyResScale(this.resScale);
         } else if (g.quality !== "low") {
           const nextQ = g.quality === "high" ? "medium" : "low";
@@ -715,8 +1077,6 @@ export class PerfOptimizer {
 
   update(dt) {
     this._updateSnowDrawRange();
-    this.cullTick++;
-    if (this.cullTick % 2 === 1) this._updateCulling();
     this._updateAdaptivePerf(dt);
     if (this.perfMode) this._updatePerfHud(dt);
   }

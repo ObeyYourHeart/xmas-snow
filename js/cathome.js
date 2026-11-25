@@ -7,7 +7,7 @@ import {
   makeTimberWallTex,
   makeCrispWindowTex,
   buildCrispWindow
-} from "./archcraft.js?v=11242125";
+} from "./archcraft.js?v=11251205";
 
 const CAT_SNACKS = [
   "烤得外酥里嫩的黄金小鱼干配热乎乎的草莓星奶，本喵极其极其幸福喵～",

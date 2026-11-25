@@ -12,7 +12,7 @@ import {
   makeCrispWindowTex,
   buildCrispWindow,
   buildCrispDoor
-} from "./archcraft.js?v=11242125";
+} from "./archcraft.js?v=11251205";
 
 export class WorldPlus {
   constructor(game, helpers) {

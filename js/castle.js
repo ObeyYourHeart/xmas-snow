@@ -3,7 +3,7 @@
 // colliders, platforms, chimney smoke, swinging doorbell, decor crate, roof Clawd perch,
 // window lights, and all interior interactions.
 
-import { makeCrispWindowTex } from "./archcraft.js?v=11242125";
+import { makeCrispWindowTex } from "./archcraft.js?v=11251205";
 
 export class ClaudeCastle {
   constructor(game, helpers) {

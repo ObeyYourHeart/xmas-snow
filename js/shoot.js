@@ -150,15 +150,20 @@ export function installShootingSystem(gun, tools, game, helpers) {
     };
   }
 
+  const _lzCol = new T.Color();
   // Upgrade gun.probe() so SnowGun, Starlight Bow & ChemGun ALL detect airborne balloons & game.shootTargets!
   const origProbe = gun.probe.bind(gun);
   gun.probe = function (pos) {
     // 1. Check airborne Gift Balloons first (snipeable by ALL 3 ranged weapons!)
-    if (game.heli && game.heli.balloons) {
+    if (pos.y > 3.0 && game.heli && game.heli.balloons) {
       for (const b of game.heli.balloons) {
         if (b.got) continue;
-        const by = b.grp ? b.grp.position.y : b.y;
-        if (Math.hypot(pos.x - b.x, pos.y - by, pos.z - b.z) < 1.38) {
+        const dx = pos.x - b.x;
+        if (dx > 1.4 || dx < -1.4) continue;
+        const dz = pos.z - b.z;
+        if (dz > 1.4 || dz < -1.4) continue;
+        const dy = pos.y - (b.grp ? b.grp.position.y : b.y);
+        if (dx * dx + dy * dy + dz * dz < 1.90) {
           this._hit.kind = "balloon";
           this._hit.ref = b;
           return this._hit;
@@ -168,11 +173,14 @@ export function installShootingSystem(gun, tools, game, helpers) {
     // 2. Check global interactive shootable props & Harbor Shooting Gallery targets!
     if (game.shootTargets && game.shootTargets.length) {
       for (const tg of game.shootTargets) {
-        if (tg.alive && !tg.alive()) continue;
         const tp = tg.pos;
-        const dx = pos.x - tp.x, dy = pos.y - tp.y, dz = pos.z - tp.z;
         const rr = tg.r || 0.72;
-        if (dx * dx + dy * dy + dz * dz < rr * rr) {
+        const dx = pos.x - tp.x;
+        if (dx > rr || dx < -rr) continue;
+        const dz = pos.z - tp.z;
+        if (dz > rr || dz < -rr) continue;
+        const dy = pos.y - tp.y;
+        if (dx * dx + dy * dy + dz * dz < rr * rr && (!tg.alive || tg.alive())) {
           this._hit.kind = "shootTarget";
           this._hit.ref = tg;
           return this._hit;
@@ -811,7 +819,7 @@ export function installShootingSystem(gun, tools, game, helpers) {
         laserBeam.quaternion.setFromUnitVectors(UP, _lzDir);
         laserDot.position.copy(this.aim);
         const colHex = this.chemActive && tools._getChemSightState
-          ? new T.Color(tools._getChemSightState().css).getHex()
+          ? _lzCol.set(tools._getChemSightState().css).getHex()
           : (isHot ? 0xff9a3c : 0x62e8ff);
         laserMat.color.setHex(colHex);
         laserMat.opacity = (isHot ? 0.50 : 0.28) * Math.max(0.45, this.ads);
