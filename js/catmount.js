@@ -29,6 +29,10 @@ export class CatMount {
     this.emissives = [];
 
     this.flapPhase = 0;
+    this.tailPhase = 0;
+    this.tailPhaseY = 0;
+    this.smoothSpeed = 0;
+    this.smoothSteer = 0;
     this.flightBlend = 0;
     this.trailAcc = 0;
 
@@ -602,29 +606,37 @@ export class CatMount {
     const climbRatio = Math.max(0, Math.min(1, heli.vy / 6));
     const liftPower = Math.max(heli.rotor, airborne ? 1 : 0);
 
-    // Smooth transition between landed idle pose (0) and soaring flight pose (1)
+    // Smooth transition between landed idle pose (0) and soaring flight pose (1),
+    // plus damped speed/steer so low-altitude hovering & micro-bumps never jitter the head or tail!
+    const safeDt = Math.max(dt, 0.001);
     const targetFly = airborne ? 1 : Math.min(1, heli.rotor * 0.85);
-    this.flightBlend += (targetFly - this.flightBlend) * (1 - Math.exp(-7 * Math.max(dt, 0.001)));
+    this.flightBlend += (targetFly - this.flightBlend) * (1 - Math.exp(-7 * safeDt));
     const fb = this.flightBlend;
+    const damp = 1 - Math.exp(-6.5 * safeDt);
+    this.smoothSpeed += (speedRatio - this.smoothSpeed) * damp;
+    const rawSteer = driven ? (heli.turn || 0) : 0;
+    this.smoothSteer += (rawSteer - this.smoothSteer) * damp;
+    const sp = this.smoothSpeed;
+    const st = this.smoothSteer;
 
     // 1) Dynamic organic feathered wingbeat animation!
-    const flapFreq = airborne ? 4.4 + climbRatio * 3.8 + speedRatio * 1.4 : 1.6 + heli.rotor * 3.8;
+    const flapFreq = airborne ? 4.4 + climbRatio * 3.8 + sp * 1.4 : 1.6 + heli.rotor * 3.8;
     this.flapPhase += Math.max(dt, 0) * flapFreq;
     const flapWave = Math.sin(this.flapPhase);
     const flapLag = Math.sin(this.flapPhase - 0.65);
 
-    const baseSweepY = (1 - fb) * 0.56 + fb * (0.10 + speedRatio * 0.22);
-    const flapAmp = (1 - fb) * 0.055 + fb * (0.32 + climbRatio * 0.22 - speedRatio * 0.06);
+    const baseSweepY = (1 - fb) * 0.56 + fb * (0.10 + sp * 0.22);
+    const flapAmp = (1 - fb) * 0.055 + fb * (0.32 + climbRatio * 0.22 - sp * 0.06);
     const baseUpZ = (1 - fb) * 0.30 + fb * 0.06;
 
     // Positive Y on left (-X) and negative Y on right (+X) sweeps wings gracefully BACKWARD (+Z)!
     this.wingL.rotation.set(
-      (1 - fb) * 0.14 + fb * (0.06 + speedRatio * 0.08),
+      (1 - fb) * 0.14 + fb * (0.06 + sp * 0.08),
       baseSweepY,
       -baseUpZ - flapWave * flapAmp
     );
     this.wingR.rotation.set(
-      (1 - fb) * 0.14 + fb * (0.06 + speedRatio * 0.08),
+      (1 - fb) * 0.14 + fb * (0.06 + sp * 0.08),
       -baseSweepY,
       baseUpZ + flapWave * flapAmp
     );
@@ -634,13 +646,12 @@ export class CatMount {
     this.wingOuterR.rotation.z = outerFlex;
 
     // 2) Expressive cat head looks gently into turns & climbs + cute ear twitches!
-    const steer = driven ? (heli.turn || 0) : 0;
     const idleLook = driven ? 0 : Math.sin(time * 0.7) * 0.14;
-    this.headG.rotation.y = Math.max(-0.42, Math.min(0.42, -steer * 0.24 + idleLook));
+    this.headG.rotation.y = Math.max(-0.42, Math.min(0.42, -st * 0.24 + idleLook));
     this.headG.rotation.x = Math.max(-0.24, Math.min(0.28, (heli.vy || 0) * 0.032 + Math.sin(time * 1.9) * 0.035));
 
     const earTwitch = Math.pow(Math.max(0, Math.sin(time * 2.1 + 1.3)), 18) * 0.22;
-    const earSweep = speedRatio * 0.26;
+    const earSweep = sp * 0.26;
     this.earL.rotation.x = 0.14 - earSweep;
     this.earL.rotation.z = 0.34 + earTwitch;
     this.earR.rotation.x = 0.14 - earSweep;
@@ -648,25 +659,27 @@ export class CatMount {
 
     // Collar golden bell swings subtly with speed & hover bob
     if (this.bellG) {
-      this.bellG.rotation.x = 0.18 + speedRatio * 0.42 + Math.sin(time * 5.2) * 0.08 * liftPower;
-      this.bellG.rotation.z = steer * 0.22;
+      this.bellG.rotation.x = 0.18 + sp * 0.42 + Math.sin(time * 5.2) * 0.08 * liftPower;
+      this.bellG.rotation.z = st * 0.22;
     }
 
     // 3) Four cat paws smoothly tuck into soaring sky-kitty pose when airborne!
     const pawBob = Math.sin(this.flapPhase - 0.3) * 0.08 * fb;
-    this.paws.fl.rotation.x = fb * (-0.72 - speedRatio * 0.22) + pawBob;
-    this.paws.fr.rotation.x = fb * (-0.72 - speedRatio * 0.22) - pawBob;
-    this.paws.bl.rotation.x = fb * (0.86 + speedRatio * 0.28) - pawBob;
-    this.paws.br.rotation.x = fb * (0.86 + speedRatio * 0.28) + pawBob;
+    this.paws.fl.rotation.x = fb * (-0.72 - sp * 0.22) + pawBob;
+    this.paws.fr.rotation.x = fb * (-0.72 - sp * 0.22) - pawBob;
+    this.paws.bl.rotation.x = fb * (0.86 + sp * 0.28) - pawBob;
+    this.paws.br.rotation.x = fb * (0.86 + sp * 0.28) + pawBob;
 
-    // 4) Flowing sinusoidal starlight cat tail wave!
-    const tailFreq = 2.6 + speedRatio * 2.4;
-    const tailAmp = 0.11 + speedRatio * 0.06;
+    // 4) Flowing sinusoidal starlight cat tail wave (incrementally integrated phase — ZERO time*freq strobe!)
+    const tailFreq = 2.2 + sp * 1.9;
+    this.tailPhase += Math.max(dt, 0) * tailFreq;
+    this.tailPhaseY += Math.max(dt, 0) * (tailFreq * 0.82);
+    const tailAmp = 0.10 + sp * 0.055;
     for (let i = 0; i < this.tailSegs.length; i++) {
       const seg = this.tailSegs[i];
       const baseArc = i === 0 ? (0.28 - fb * 0.22) : (0.14 - i * 0.025) * (1 - fb * 0.45);
-      seg.rotation.x = baseArc + Math.sin(time * tailFreq - i * 0.72) * 0.08;
-      seg.rotation.y = Math.sin(time * (tailFreq * 0.85) - i * 0.68) * tailAmp + steer * 0.08;
+      seg.rotation.x = baseArc + Math.sin(this.tailPhase - i * 0.72) * 0.075;
+      seg.rotation.y = Math.sin(this.tailPhaseY - i * 0.68) * tailAmp + st * 0.07;
     }
     if (this.tailOrb) {
       this.tailOrb.rotation.z = time * 2.4;

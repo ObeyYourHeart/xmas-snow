@@ -282,7 +282,20 @@ export class AlpineSkiUpgrade {
     this.windSock = sock;
 
     scene.add(chG);
-    world.circles.push({ x: cx, z: cz, r: 2.1 });
+    chG.updateMatrixWorld(true);
+    // Tight rotated colliders covering Summit Chalet walls, tea counter, chimney, brazier & windsock pole!
+    const addChCol = (lx, lz, r, top) => {
+      const wp = new T.Vector3(lx, 0, lz).applyMatrix4(chG.matrixWorld);
+      world.circles.push({ x: wp.x, z: wp.z, r, top });
+    };
+    for (const lx of [-1.55, -0.52, 0.52, 1.55]) addChCol(lx, -1.25, 0.72, 4.4); // Rear wall & tea counter
+    for (const lz of [-0.45, 0.55, 1.35]) {
+      addChCol(-1.85, lz, 0.50, 4.4); // West wall & front-left post
+      addChCol(1.85, lz, 0.50, 4.4);  // East wall & front-right post
+    }
+    addChCol(2.15, -0.75, 0.58, 4.5); // Stone chimney
+    addChCol(2.65, 0.60, 0.50, 0.85); // Outdoor warming brazier
+    addChCol(-2.60, 1.00, 0.22, 3.8); // Summit windsock pole
     this.warmZones.push({ x: cx, z: cz, r: 6.0, w: 20 });
     this.addLight(cx, cy + 2.4, cz, 0xffcc7a, 13, 18);
 
@@ -469,7 +482,20 @@ export class AlpineSkiUpgrade {
     ], 0, 3.12, 1.98));
 
     scene.add(lg);
-    world.circles.push({ x: lx, z: lz, r: 2.6 });
+    lg.updateMatrixWorld(true);
+    // Tight rotated multi-circle footprint covering the entire 5.3x4.0 Base Ski Lodge + chimney + brazier + cedar benches!
+    const addLgCol = (lx, lz, r, top) => {
+      const wp = new T.Vector3(lx, 0, lz).applyMatrix4(lg.matrixWorld);
+      world.circles.push({ x: wp.x, z: wp.z, r, top });
+    };
+    for (const lx of [-1.85, -0.62, 0.62, 1.85]) {
+      for (const lz of [-1.15, 0, 1.15]) {
+        addLgCol(lx, lz, 0.96, 5.2);
+      }
+    }
+    addLgCol(1.85, -1.55, 0.62, 5.4);  // Hearth chimney stack
+    addLgCol(0, 3.15, 0.54, 0.85);     // Outdoor warming brazier
+    for (const bx of [-2.55, -1.65, 1.65, 2.55]) addLgCol(bx, 3.05, 0.34, 0.58); // Grounded cedar benches
     this.warmZones.push({ x: lx, z: lz, r: 6.5, w: 18 });
     this.addLight(lx, ly + 2.4, lz, 0xffca7a, 14, 18);
 

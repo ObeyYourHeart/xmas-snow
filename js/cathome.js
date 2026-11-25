@@ -752,7 +752,7 @@ export class CatHome {
       const bell = this.mkCatBell(0.75);
       bell.position.set(side * 1.75, 3.12, 0);
       g.add(bell);
-      world.circles.push({ x: ax, z: az - side * 2.1, r: 0.36 });
+      world.circles.push({ x: ax, z: az - side * 2.1, r: 0.40, top: 5.4 });
     }
 
     // Sweeping golden crescent arch
@@ -1038,13 +1038,13 @@ export class CatHome {
       g.add(this.mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts), 14, 0.06, 8, false), this.m.gold));
     }
 
-    // Wall colliders ONLY along the solid rear/side arc (front doorway stays 100% open!)
-    for (let i = 0; i <= 12; i++) {
-      const a = openHalf + (wallSpan * i) / 12;
+    // Tight overlapping wall colliders ONLY along the solid rear/side arc (28 circles = zero gaps; front 104° doorway stays 100% open!)
+    for (let i = 0; i <= 27; i++) {
+      const a = openHalf + (wallSpan * i) / 27;
       const lx = Math.sin(a) * domeR, lz = Math.cos(a) * domeR;
       const wx = dx + lx * cosY + lz * sinY;
       const wz = dz - lx * sinY + lz * cosY;
-      world.circles.push({ x: wx, z: wz, r: 0.42 });
+      world.circles.push({ x: wx, z: wz, r: 0.48, top: 5.8 });
     }
 
     // Grand Arched Doorway Frame & Cat Bells at the open front!
@@ -1192,6 +1192,7 @@ export class CatHome {
     addDenCol(1.95, -0.15, 0.54, deckH + 0.78);  // Mini Kitty Hearth
     addDenCol(1.45, 1.15, 0.56, deckH + 0.52);   // Strawberry-Milk Snack Table
     addDenCol(-2.15, -0.35, 0.62, deckH + 1.45); // Starry Bookshelf
+    addDenCol(0, -2.35, 0.56, deckH + 0.95);     // Cat-Ear Bed Headboard Back (keeps front bed edge cozy & reachable!)
 
     // Cozy Visible 3rd-Person Cat-Bed Nap Seat Interaction (watch Gemini curled up sleeping on the bed!)
     this.denBed.eye.set(0, deckH + 1.05, -1.25).applyMatrix4(g.matrixWorld);
@@ -1907,10 +1908,10 @@ export class CatHome {
         this.mesh(new T.SphereGeometry(0.16, 12, 10), this.m.gold, px, 3.76, 0),
         this.mesh(this.starSm, side < 0 ? this.m.cyan : this.m.pink, px, 3.98, 0)
       );
-      // Colliders for leg bases
+      // Colliders for leg bases (with full swing height so flying cat respects the frame too!)
       const cosY = Math.cos(yaw), sinY = Math.sin(yaw);
       for (const lz of [-0.95, 0.95]) {
-        world.circles.push({ x: sx + px * cosY + lz * sinY, z: sz - px * sinY + lz * cosY, r: 0.22 });
+        world.circles.push({ x: sx + px * cosY + lz * sinY, z: sz - px * sinY + lz * cosY, r: 0.24, top: 4.3 });
       }
     }
 
@@ -2152,13 +2153,19 @@ export class CatHome {
     this.grillPos.set(0.68, 1.42, 0.05).applyMatrix4(g.matrixWorld);
     this.addLight(bx, by + 2.25, bz + 0.75, 0xffc88a, 8.5, 12, false);
 
-    world.circles.push(
-      { x: bx - 0.85, z: bz, r: 0.95 },
-      { x: bx + 0.85, z: bz, r: 0.95 },
-      // Jumpable colliders for the 2 cute cat-ear barstools out front (prevent clipping!)
-      { x: bx - 0.78, z: bz + 1.22, r: 0.30, top: 0.64 },
-      { x: bx + 0.78, z: bz + 1.22, r: 0.30, top: 0.64 }
-    );
+    // Full rotated multi-circle footprint matching the 3.4m × 1.6m Snack Bar chalet + rotated cat-ear barstools!
+    const addBarCol = (lx, lz, r, top) => {
+      const wp = new T.Vector3(lx, 0, lz).applyMatrix4(g.matrixWorld);
+      world.circles.push({ x: wp.x, z: wp.z, r, top });
+    };
+    for (const lx of [-1.25, 0, 1.25]) {
+      for (const lz of [-0.35, 0.35]) {
+        addBarCol(lx, lz, 0.68, 3.6);
+      }
+    }
+    // Jumpable colliders for the 2 cute cat-ear barstools out front (rotated to exact world positions!)
+    addBarCol(-0.78, 1.22, 0.30, 0.64);
+    addBarCol(0.78, 1.22, 0.30, 0.64);
     world.spots.push({
       id: "cathome_snackbar",
       pos: new T.Vector3(bx, by + 1.15, bz + 1.1),
