@@ -195,18 +195,20 @@ export function installShootingSystem(gun, tools, game, helpers) {
         }
       }
     }
-    // 2b. Generous anti-tunnel hitbox for wild perched roof Clawds, floating balloon Clawds (full body+string+balloon), & hidden snow/gift Clawds!
+    // 2b. Unified real-time hitbox for ALL wild Clawds (no region limits — checks live world position of every active wild Clawd!)
     if (game.pets && game.pets.all) {
       for (const pt of game.pets.all) {
-        if (!pt.root || !pt.root.visible || pt.tame) continue;
-        if (pt.mode !== "perch" && pt.mode !== "float" && pt.mode !== "hide") continue;
+        if (!pt.root || !pt.root.visible || pt.tame || pt.mode === "gone" || pt.mode === "caught" || pt.mode === "air") continue;
+        const isAerial = pt.mode === "perch" || pt.mode === "float";
+        const isHide = pt.mode === "hide";
+        const maxR = isAerial ? 0.75 : (isHide ? 0.62 : 0.46);
         const dx = pos.x - pt.x;
-        if (dx > 0.78 || dx < -0.78) continue;
+        if (dx > maxR || dx < -maxR) continue;
         const dz = pos.z - pt.z;
-        if (dz > 0.78 || dz < -0.78) continue;
+        if (dz > maxR || dz < -maxR) continue;
         const py = pt.root.position.y;
         const r2 = dx * dx + dz * dz;
-        const hitBody = r2 < 0.56 && pos.y > py - 0.24 && pos.y < py + 0.96;
+        const hitBody = r2 < maxR * maxR && pos.y > py - 0.18 && pos.y < py + (isAerial ? 0.96 : 0.82);
         const hitBalloon = pt.balloon && !pt.popped && r2 < 0.58 && pos.y > py + 0.65 && pos.y < py + 2.30;
         if (hitBody || hitBalloon) {
           this._hit.kind = "pet";
@@ -339,10 +341,11 @@ export function installShootingSystem(gun, tools, game, helpers) {
       const ok = game.pets.ballHit(_petSnap, _petVel);
       // Let origLand play snow-burst particles, ring, sparks & splat audio without calling ballHit a second time
       origLand(shot, { kind: "petDone", ref: pt });
-      if (ok) {
+      if (ok && !pt.tame) {
+        const petName = pt.name || ((pt.sp && pt.sp.name) ? `${pt.sp.name} Clawd` : "Clawd");
         const lbl = wasAerial
-          ? (wasBalloon ? "🎈 击落气球 Clawd!" : "❄ 击落屋顶 Clawd!")
-          : (wasHide ? "❄ 炸出雪堆 Clawd!" : "✦ 击晕小龙虾");
+          ? (wasBalloon ? `🎈 击落${petName}!` : `❄ 击落${petName}!`)
+          : (wasHide ? `❄ 炸出${petName}!` : `✦ 击晕${petName}!`);
         gun.registerHit(wasAerial || wasHide, lbl, shot.p);
       }
       return;
@@ -629,9 +632,15 @@ export function installShootingSystem(gun, tools, game, helpers) {
         ? _petSnap.set(pt.x, pt.root.position.y + (pt.balloon && !pt.popped ? 1.62 : 0.30), pt.z)
         : pos;
       const wasAerial = pt && (pt.mode === "perch" || pt.mode === "float");
+      const wasHide = pt && pt.mode === "hide";
+      const petName = (pt && pt.name) || "Clawd";
       game.pets.ballHit(hitPos, _stepV.copy(dir).multiplyScalar(ar.full ? 34 : 26));
       confirm = wasAerial ? 2 : 1;
-      if (wasAerial) ar._hitLabel = pt.mode === "float" ? "🎈 一箭击落气球 Clawd!" : "🏹 击落屋顶 Clawd!";
+      if (pt && !pt.tame) {
+        ar._hitLabel = wasAerial
+          ? (pt.mode === "float" ? `🎈 一箭击落${petName}!` : `🏹 击落${petName}!`)
+          : (wasHide ? `❄ 炸出${petName}!` : `✦ 击晕${petName}!`);
+      }
     } else if (kind === "balloon" && ref && !ref.got) {
       ref.got = true;
       ref.pop = 0;

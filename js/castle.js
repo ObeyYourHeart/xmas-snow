@@ -50,6 +50,32 @@ export class ClaudeCastle {
       hudEl: null,
       barEl: null
     };
+
+    // 3rd-Person Interactive Royal Salon Seating System (Sofa, Armchairs, Grand Piano Bench, Window Seat & Bed Bench!)
+    this.castleSeat = {
+      active: false,
+      seatId: null,
+      def: null,
+      pose: "relax",
+      poseT: 0,
+      musicOn: false,
+      musicSong: 0,
+      musicT: 0,
+      musicStep: 0,
+      sparkT: 0,
+      seats: {},
+      eye: new this.THREE.Vector3(),
+      focus: new this.THREE.Vector3(),
+      sitPos: new this.THREE.Vector3(),
+      noteOrigin: new this.THREE.Vector3(),
+      _handTmp: new this.THREE.Vector3(),
+      _quatTmp: new this.THREE.Quaternion(),
+      cocoaProp: null,
+      bookProp: null,
+      notes: [],
+      hudEl: null,
+      barEl: null
+    };
   }
 
   mesh(geo, mat, x = 0, y = 0, z = 0) {
@@ -2037,22 +2063,134 @@ export class ClaudeCastle {
         if (r !== undefined) sp.r = r;
         if (label !== undefined) sp.label = label;
       };
-      moveSpot("in_fire", -4.85, 1.0, 0, 2.6, "在皇室雕花大壁炉前烤火");
-      moveSpot("in_cocoa", -3.45, 0.85, 0, 2.2, "品尝城堡热可可与冬日马卡龙");
-      moveSpot("in_bed", bedX - 0.15, daisH + 0.85, bedZ + 1.25, 2.6, "躺上太阳花公主幔帐床小憩（盖被子·听摇篮曲·切换昼夜）");
+      moveSpot("in_fire", -5.20, 1.0, 0, 2.0, "在皇室雕花大壁炉前烤火");
+      moveSpot("in_cocoa", -3.45, 0.85, 0, 1.45, "品尝城堡热可可与冬日马卡龙");
+      moveSpot("in_bed", bedX - 0.15, daisH + 0.85, bedZ + 1.25, 2.4, "躺上太阳花公主幔帐床小憩（盖被子·听摇篮曲·切换昼夜）");
       moveSpot("in_music", 1.85, 1.05, 4.70, 2.2, "摇响古董金号角留声机");
       moveSpot("in_book", -4.25, 1.05, 4.35, 2.0, "翻阅城堡宾客留言簿");
       moveSpot("in_door", -1.0, 1.2, HD - 0.35, 2.2, "推开城堡大门回到雪境");
 
-      // Bonus interactive Grand Concert Piano!
-      world.spots.push({
-        id: "in_piano",
-        pos: new T.Vector3(origin.x - 4.05, origin.y + 1.05, origin.z - 3.50),
-        r: 2.3,
-        label: "弹奏一段城堡冬夜钢琴曲",
-        can: () => !!(this.game.cabin && this.game.cabin.inside && !this.game.player.seat),
-        act: () => this.playCastlePiano()
-      });
+      // Register ALL 6 Interactive Sit-Down Royal Salon Seats (with pose actions, 3D handheld props & piano concert!)
+      const cs = this.castleSeat;
+      // 3D Royal Hot-Cocoa Mug Prop (appears cleanly in hand during "cocoa" pose!)
+      const cocoaProp = new T.Group();
+      cocoaProp.add(
+        this.mesh(new T.CylinderGeometry(0.056, 0.048, 0.11, 12), this.m.terracotta, 0, 0, 0),
+        this.mesh(new T.TorusGeometry(0.056, 0.008, 6, 16).rotateX(Math.PI / 2), this.m.gold, 0, 0.052, 0),
+        this.mesh(new T.TorusGeometry(0.036, 0.009, 6, 12), this.m.gold, 0.055, 0.0, 0),
+        this.mesh(new T.CylinderGeometry(0.048, 0.048, 0.022, 12), this.m.snow, 0, 0.050, 0),
+        this.mesh(new T.SphereGeometry(0.018, 8, 6), this.m.silkCream, -0.014, 0.068, 0.010),
+        this.mesh(new T.SphereGeometry(0.015, 8, 6), this.m.silkCream, 0.016, 0.066, -0.010)
+      );
+      cocoaProp.visible = false;
+      scene.add(cocoaProp);
+      cs.cocoaProp = cocoaProp;
+
+      // 3D Open Gilded Winter Storybook Prop (held gently in both hands during "read" pose!)
+      const bookProp = new T.Group();
+      const lCover = this.mesh(new T.BoxGeometry(0.18, 0.014, 0.24), this.m.velvet, -0.095, 0, 0);
+      lCover.rotation.z = 0.26;
+      const rCover = this.mesh(new T.BoxGeometry(0.18, 0.014, 0.24), this.m.velvet, 0.095, 0, 0);
+      rCover.rotation.z = -0.26;
+      const lPage = this.mesh(new T.BoxGeometry(0.165, 0.016, 0.22), this.m.silkCream, -0.088, 0.014, 0);
+      lPage.rotation.z = 0.26;
+      const rPage = this.mesh(new T.BoxGeometry(0.165, 0.016, 0.22), this.m.silkCream, 0.088, 0.014, 0);
+      rPage.rotation.z = -0.26;
+      const spine = this.mesh(new T.CylinderGeometry(0.014, 0.014, 0.24, 8).rotateX(Math.PI / 2), this.m.gold, 0, -0.015, 0);
+      bookProp.add(lCover, rCover, lPage, rPage, spine);
+      bookProp.visible = false;
+      scene.add(bookProp);
+      cs.bookProp = bookProp;
+
+      // Floating Musical Note Sprites for Grand Piano Concert & Happy Seated Actions!
+      cs.notes = [
+        { sp: mkZzz("♪", "#ffe28a", 0.30), ph: 0.0 },
+        { sp: mkZzz("♫", "#ff9cd6", 0.28), ph: 0.33 },
+        { sp: mkZzz("✦", "#9cf4ff", 0.22), ph: 0.66 }
+      ];
+      cs.noteOrigin.set(origin.x - 4.38, origin.y + 1.05, origin.z - 4.02);
+
+      const regSeat = (id, title, spotLabel, spotPos, spotR, sitPos, sitYaw, focusPos, exitPos, camYaw, isPiano = false) => {
+        const def = {
+          id, title, isPiano,
+          sitPos: new T.Vector3(origin.x + sitPos[0], origin.y + sitPos[1], origin.z + sitPos[2]),
+          sitYaw,
+          focus: new T.Vector3(origin.x + focusPos[0], origin.y + focusPos[1], origin.z + focusPos[2]),
+          exitPos: new T.Vector3(origin.x + exitPos[0], origin.y, origin.z + exitPos[1]),
+          camYaw,
+          spotExit: {
+            id: `castle_seat_exit_${id}`,
+            label: `起身 · 离开${title}`,
+            can: () => true,
+            act: () => this.leaveCastleSeat()
+          }
+        };
+        cs.seats[id] = def;
+        world.spots.push({
+          id: `in_seat_${id}`,
+          pos: new T.Vector3(origin.x + spotPos[0], origin.y + spotPos[1], origin.z + spotPos[2]),
+          r: spotR,
+          label: spotLabel,
+          can: () => !!(this.game.cabin && this.game.cabin.inside && !this.game.player.seat),
+          act: () => this.enterCastleSeat(id)
+        });
+      };
+
+      // 1. Chesterfield Velvet Sofa (facing SE fireplace & hot-cocoa table)
+      regSeat(
+        "sofa", "法式天鹅绒沙发",
+        "坐上法式天鹅绒沙发（喝可可·读童话·晃腿·伸懒腰）",
+        [-3.35, 0.85, -1.65], 2.05,
+        [-3.38, 0.34, -1.68], Math.PI - 0.26,
+        [-3.38, 1.02, -1.68], [-2.45, -0.78],
+        -0.68, false
+      );
+      // 2. South-West Louis-XVI Medallion Armchair
+      regSeat(
+        "chair_sw", "壁炉南侧雕花扶手椅",
+        "坐上壁炉雕花扶手椅（烤火·品可可·互动动作）",
+        [-3.55, 0.85, 2.25], 1.75,
+        [-3.55, 0.33, 2.20], 0.16 * Math.PI,
+        [-3.55, 1.00, 2.20], [-2.65, 2.55],
+        -2.25, false
+      );
+      // 3. Inner Salon Louis-XVI Medallion Armchair
+      regSeat(
+        "chair_in", "茶几旁雕花扶手椅",
+        "坐上热可可茶桌扶手椅（品可可·读绘本·互动动作）",
+        [-1.95, 0.85, 1.35], 1.65,
+        [-1.95, 0.33, 1.30], 0.34 * Math.PI,
+        [-1.95, 1.00, 1.30], [-1.05, 1.45],
+        -1.55, false
+      );
+      // 4. NW Ebony Concert Grand Piano Bench (Sit & Play 3 Winter Classics!)
+      regSeat(
+        "piano", "黑檀大三角钢琴",
+        "坐上大三角钢琴弹奏冬夜名曲（3首曲目·实时弹奏动作）",
+        [-4.05, 0.95, -3.50], 2.25,
+        [-4.07, 0.32, -3.57], 0.56,
+        [-4.22, 1.05, -3.80], [-3.22, -2.92],
+        1.78, true
+      );
+      // 5. Center-North Gothic Window Royal Cushioned Seat
+      regSeat(
+        "winseat", "观雪哥特窗台软座",
+        "坐上观雪窗台软座（赏殿·读童话·喝可可）",
+        [0.0, 0.85, -5.25], 1.85,
+        [0.0, 0.38, -5.36], Math.PI,
+        [0.0, 1.06, -5.36], [0.0, -4.35],
+        -0.48, false
+      );
+      // 6. Princess Canopy Bed-Foot Velvet Bench (on elevated dais!)
+      regSeat(
+        "bedbench", "公主床尾贵妃凳",
+        "坐上公主床尾贵妃凳（歇脚·伸懒腰·互动动作）",
+        [bedX - 1.78, daisH + 0.85, bedZ], 1.75,
+        [bedX - 1.78, daisH + 0.27, bedZ], Math.PI / 2,
+        [bedX - 1.78, daisH + 0.96, bedZ], [bedX - 2.68, bedZ],
+        -0.95, false
+      );
+      this._ensureCastleSeatUI();
     }
 
     g.updateMatrixWorld(true);
@@ -2302,6 +2440,240 @@ export class ClaudeCastle {
     }
   }
 
+  _ensureCastleSeatUI() {
+    if (this.castleSeat.hudEl) return;
+    if (!document.getElementById("castleSeatCss")) {
+      const st = document.createElement("style");
+      st.id = "castleSeatCss";
+      st.textContent = `
+        #castleSeatHud{position:fixed;top:66px;left:50%;transform:translateX(-50%) translateY(-10px);z-index:26;pointer-events:none;opacity:0;transition:opacity .32s,transform .32s;display:flex;flex-direction:column;align-items:center;gap:4px;max-width:min(90vw,510px);padding:10px 20px;border-radius:20px;background:rgba(46,23,16,.84);border:1.5px solid rgba(246,204,116,.62);box-shadow:0 10px 30px rgba(24,10,6,.46);color:#fff6e8;text-align:center}
+        #castleSeatHud.show{opacity:1;transform:translateX(-50%) translateY(0)}
+        #castleSeatHud .cst-tag{font-size:12px;letter-spacing:.08em;color:#ffd885;font-weight:700}
+        #castleSeatHud .cst-line{font-size:14px;line-height:1.45;color:#fff6ea}
+        #castleSeatBar{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(16px);z-index:32;opacity:0;pointer-events:none;transition:opacity .28s,transform .28s;display:flex;flex-wrap:wrap;justify-content:center;gap:8px;padding:9px 12px;border-radius:18px;background:rgba(42,20,14,.90);border:1.5px solid rgba(246,204,116,.58);box-shadow:0 10px 28px rgba(18,8,4,.55)}
+        #castleSeatBar.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+        #castleSeatBar button{border:1px solid rgba(255,224,160,.36);background:rgba(255,232,190,.12);color:#fff6e8;font:inherit;font-size:13px;font-weight:600;padding:8px 12px;border-radius:12px;cursor:pointer;transition:transform .12s,background .2s,border-color .2s;display:flex;align-items:center;gap:6px;white-space:nowrap}
+        #castleSeatBar button:hover{background:rgba(246,184,96,.28);border-color:#ffd982;transform:translateY(-1px)}
+        #castleSeatBar button.on{background:linear-gradient(135deg,rgba(232,126,58,.48),rgba(246,204,116,.40));border-color:#ffe092;color:#fff}
+        #castleSeatBar button.wake{background:rgba(236,112,82,.26);border-color:rgba(255,172,148,.6)}
+        #castleSeatBar kbd{font:700 11px/1 ui-monospace,monospace;padding:2px 5px;border-radius:5px;background:rgba(255,255,255,.16);color:#ffe4a6}
+      `;
+      document.head.appendChild(st);
+    }
+    const hud = document.createElement("div");
+    hud.id = "castleSeatHud";
+    hud.innerHTML = `<div class="cst-tag">✦ 城堡皇家雅座 ✦</div><div class="cst-line">拖鼠标可 360° 欣赏坐姿，按下方数字键随时切换优雅互动动作～</div>`;
+    const bar = document.createElement("div");
+    bar.id = "castleSeatBar";
+    bar.addEventListener("click", (ev) => {
+      const btn = ev.target.closest("button[data-act]");
+      if (!btn) return;
+      btn.blur();
+      this._handleCastleSeatAction(btn.dataset.act);
+    });
+    document.body.appendChild(hud);
+    document.body.appendChild(bar);
+    this.castleSeat.hudEl = hud;
+    this.castleSeat.barEl = bar;
+  }
+
+  _updateCastleSeatUI(customTag, customLine) {
+    const cs = this.castleSeat;
+    if (!cs.hudEl || !cs.barEl || !cs.def) return;
+    const isP = cs.def.isPiano;
+    cs.hudEl.querySelector(".cst-tag").textContent = customTag || `✦ ${cs.def.title} · 城堡悠闲时光 ✦`;
+    if (customLine) cs.hudEl.querySelector(".cst-line").textContent = customLine;
+    if (isP) {
+      cs.barEl.innerHTML = `
+        <button data-act="song0" class="${cs.musicOn && cs.musicSong === 0 ? "on" : ""}"><kbd>1</kbd><span>🎹 平安夜</span></button>
+        <button data-act="song1" class="${cs.musicOn && cs.musicSong === 1 ? "on" : ""}"><kbd>2</kbd><span>🎹 冬夜圆舞曲</span></button>
+        <button data-act="song2" class="${cs.musicOn && cs.musicSong === 2 ? "on" : ""}"><kbd>3</kbd><span>🎹 铃儿响叮当</span></button>
+        <button data-act="wave" class="${cs.pose === "wave" ? "on" : ""}"><kbd>4</kbd><span>✨ 致谢挥手</span></button>
+        <button data-act="toggleMusic" class="${!cs.musicOn ? "on" : ""}"><kbd>5</kbd><span>${cs.musicOn ? "⏸ 暂停琴声" : "▶ 继续弹奏"}</span></button>
+        <button data-act="exit" class="wake"><kbd>E</kbd><span>起身</span></button>
+      `;
+    } else {
+      cs.barEl.innerHTML = `
+        <button data-act="cocoa" class="${cs.pose === "cocoa" ? "on" : ""}"><kbd>1</kbd><span>☕ 品热可可</span></button>
+        <button data-act="read" class="${cs.pose === "read" ? "on" : ""}"><kbd>2</kbd><span>📖 读冬日童话</span></button>
+        <button data-act="wave" class="${cs.pose === "wave" ? "on" : ""}"><kbd>3</kbd><span>✨ 挥手晃腿</span></button>
+        <button data-act="stretch" class="${cs.pose === "stretch" ? "on" : ""}"><kbd>4</kbd><span>🥱 伸个懒腰</span></button>
+        <button data-act="relax" class="${cs.pose === "relax" ? "on" : ""}"><kbd>5</kbd><span>🌸 惬意静坐</span></button>
+        <button data-act="exit" class="wake"><kbd>E</kbd><span>起身</span></button>
+      `;
+    }
+  }
+
+  _handleCastleSeatAction(act) {
+    const cs = this.castleSeat;
+    if (!cs.active) return;
+    if (act === "exit") { this.leaveCastleSeat(); return; }
+    if (act === "song0") { this.playCastlePianoSong(0); return; }
+    if (act === "song1") { this.playCastlePianoSong(1); return; }
+    if (act === "song2") { this.playCastlePianoSong(2); return; }
+    if (act === "toggleMusic") {
+      cs.musicOn = !cs.musicOn;
+      cs.pose = cs.musicOn ? "piano" : "relax";
+      cs.poseT = 0;
+      if (this.game.player && this.game.player.seat) {
+        this.game.player.seat.pose = cs.pose;
+        this.game.player.seat.poseT = 0;
+      }
+      this._updateCastleSeatUI(
+        cs.musicOn ? "✦ 黑檀大三角钢琴 · 继续演奏 ✦" : "✦ 黑檀大三角钢琴 · 轻憩片刻 ✦",
+        cs.musicOn ? "指尖重新落回象牙琴键，悠扬的琴声在宫殿穹顶下回荡～" : "双手轻轻收回膝上，享受片刻安静的城堡炉火声～"
+      );
+      return;
+    }
+    this.setCastleSeatPose(act);
+  }
+
+  playCastlePianoSong(idx) {
+    const cs = this.castleSeat;
+    if (!cs.active) return;
+    const NAMES = ["《平安夜·星光变奏》", "《冬夜城堡圆舞曲》", "《铃儿响叮当·八音盒版》"];
+    cs.musicSong = idx % 3;
+    cs.musicOn = true;
+    cs.musicStep = 0;
+    cs.musicT = 0.05;
+    cs.pose = "piano";
+    cs.poseT = 0;
+    if (this.game.player && this.game.player.seat) {
+      this.game.player.seat.pose = "piano";
+      this.game.player.seat.poseT = 0;
+    }
+    this.game.friends && this.game.friends.cheer && this.game.friends.cheer("happy");
+    this._updateCastleSeatUI(
+      `✦ 正在弹奏 ${NAMES[cs.musicSong]} ✦`,
+      "十指在黑白琴键上轻快跃动，金色音符飘满了整座太阳花城堡大殿～"
+    );
+  }
+
+  setCastleSeatPose(pose) {
+    const cs = this.castleSeat;
+    if (!cs.active) return;
+    if (cs.def && cs.def.isPiano && pose !== "piano") cs.musicOn = false;
+    cs.pose = pose;
+    cs.poseT = 0;
+    if (this.game.player && this.game.player.seat) {
+      this.game.player.seat.pose = pose;
+      this.game.player.seat.poseT = 0;
+    }
+    if (pose === "cocoa") {
+      this._playCastleTone([523.25, 659.25, 783.99], 0.07, 0.07);
+      this.game.cold && this.game.cold.warm(100);
+      this._updateCastleSeatUI(`✦ ${cs.def.title} · 热可可下午茶 ✦`, "捧起暖呼呼的棉花糖热可可轻抿一口，整个人从心底暖融融的～");
+    } else if (pose === "read") {
+      this._playCastleTone([440, 554.37, 659.25], 0.08, 0.065);
+      this._updateCastleSeatUI(`✦ ${cs.def.title} · 翻阅冬日童话 ✦`, "摊开鎏金精装冬日绘本静静阅读，壁炉噼啪作响，金尘在书页间闪烁～");
+    } else if (pose === "wave") {
+      this._playCastleTone([587.33, 783.99, 987.77], 0.07, 0.075);
+      this.game.friends && this.game.friends.cheer && this.game.friends.cheer("wave");
+      this._updateCastleSeatUI(`✦ ${cs.def.title} · 开心挥手晃腿 ✦`, "欢快地晃着双腿挥挥小手，欢迎随时来做客玩呀～");
+    } else if (pose === "stretch") {
+      this._playCastleTone([392, 493.88, 587.33, 783.99], 0.09, 0.065);
+      this._updateCastleSeatUI(`✦ ${cs.def.title} · 惬意伸懒腰 ✦`, "舒舒服服地举起双臂伸个大懒腰，在自己家的柔软丝绒上最放松啦～");
+    } else {
+      this._playCastleTone([523.25, 659.25], 0.08, 0.055);
+      this._updateCastleSeatUI(`✦ ${cs.def.title} · 城堡悠闲时光 ✦`, "优雅地端坐休息，轻轻晃着脚尖欣赏窗外雪景与壁炉暖光～");
+    }
+  }
+
+  enterCastleSeat(id) {
+    const g = this.game, p = g.player, cs = this.castleSeat;
+    const def = cs.seats[id];
+    if (!def || cs.active) return;
+    if (this.castleBed.riding) this.leaveCastleBed(true);
+    cs.active = true;
+    cs.seatId = id;
+    cs.def = def;
+    cs.sitPos.copy(def.sitPos);
+    cs.focus.copy(def.focus);
+    cs.eye.copy(def.focus);
+    cs.pose = def.isPiano ? "piano" : "relax";
+    cs.poseT = 0;
+    cs.musicOn = !!def.isPiano;
+    cs.musicSong = 0;
+    cs.musicStep = 0;
+    cs.musicT = 0.12;
+    cs.sparkT = 0;
+
+    g.cold && g.cold.warm(60);
+    this._playCastleTone(def.isPiano ? [392, 493.88, 587.33, 783.99] : [523.25, 659.25, 783.99], 0.08, 0.075);
+
+    p.seat = {
+      pos: cs.eye,
+      tp: true,
+      sit: true,
+      pose: cs.pose,
+      poseT: 0,
+      focus: cs.focus,
+      dist: def.isPiano ? 2.65 : 2.55,
+      sitPos: cs.sitPos,
+      sitYaw: def.sitYaw,
+      spot: def.spotExit,
+      onKey: (code) => {
+        if (def.isPiano) {
+          if (code === "Digit1" || code === "Numpad1") this._handleCastleSeatAction("song0");
+          else if (code === "Digit2" || code === "Numpad2") this._handleCastleSeatAction("song1");
+          else if (code === "Digit3" || code === "Numpad3") this._handleCastleSeatAction("song2");
+          else if (code === "Digit4" || code === "Numpad4") this._handleCastleSeatAction("wave");
+          else if (code === "Digit5" || code === "Numpad5") this._handleCastleSeatAction("toggleMusic");
+        } else {
+          if (code === "Digit1" || code === "Numpad1") this._handleCastleSeatAction("cocoa");
+          else if (code === "Digit2" || code === "Numpad2") this._handleCastleSeatAction("read");
+          else if (code === "Digit3" || code === "Numpad3") this._handleCastleSeatAction("wave");
+          else if (code === "Digit4" || code === "Numpad4") this._handleCastleSeatAction("stretch");
+          else if (code === "Digit5" || code === "Numpad5") this._handleCastleSeatAction("relax");
+        }
+      },
+      exit: () => this.leaveCastleSeat()
+    };
+
+    // Scenic 3/4 front-facing orbit framing showing character face, seated dress & interactive props!
+    p.yaw = def.camYaw;
+    p.pitch = -0.14;
+    g.character && g.character.stop && g.character.stop(0.1);
+    document.body.classList.add("sleeping");
+    this._updateCastleSeatUI(
+      def.isPiano ? "✦ 黑檀大三角钢琴 · 正在弹奏《平安夜·星光变奏》 ✦" : `✦ ${def.title} · 落座小憩 ✦`,
+      def.isPiano
+        ? "已优雅落座琴凳！按 1/2/3 切换三首冬夜钢琴曲，按 4 致谢挥手，拖鼠标 360° 观赏演奏～"
+        : "已舒舒服服坐下啦～按 1 喝热可可、2 读童话书、3 挥手晃腿、4 伸懒腰，拖鼠标 360° 观赏！"
+    );
+    cs.hudEl && cs.hudEl.classList.add("show");
+    cs.barEl && cs.barEl.classList.add("show");
+  }
+
+  leaveCastleSeat(silent = false) {
+    const cs = this.castleSeat;
+    if (!cs.active) return;
+    const g = this.game, p = g.player, def = cs.def;
+    cs.active = false;
+    cs.seatId = null;
+    cs.def = null;
+    cs.musicOn = false;
+    cs.pose = "relax";
+    if (cs.cocoaProp) cs.cocoaProp.visible = false;
+    if (cs.bookProp) cs.bookProp.visible = false;
+    for (const n of cs.notes) {
+      n.sp.visible = false;
+      n.sp.material.opacity = 0;
+    }
+    document.body.classList.remove("sleeping");
+    cs.hudEl && cs.hudEl.classList.remove("show");
+    cs.barEl && cs.barEl.classList.remove("show");
+    p.seat = null;
+    if (!silent && def) {
+      p.pos.set(def.exitPos.x, 0, def.exitPos.z);
+      p.vel.set(0, 0);
+      p.yaw = def.sitYaw;
+      p.pitch = -0.06;
+      g.audio && g.audio.pick && g.audio.pick();
+      g.character && g.character.play && g.character.play("happy");
+    }
+  }
+
   update(dt, time) {
     const night = this.game.env ? this.game.env.night || 0 : 0;
     const lamps = this.game.env && this.game.env.state ? this.game.env.state.lamps : 0;
@@ -2336,6 +2708,118 @@ export class ClaudeCastle {
     }
     if (this.recordMesh && this.game.cabin && this.game.cabin.inside) {
       this.recordMesh.rotation.y = time * 2.8;
+    }
+
+    // 3rd-Person Royal Salon Seating Animations (3D Hot Cocoa Mug, Gilded Storybook, 3 Piano Classics & Floating Notes!)
+    const cs = this.castleSeat;
+    if (cs.active && cs.def) {
+      cs.poseT += dt;
+      if (this.game.player && this.game.player.seat && this.game.player.seat.sit) {
+        this.game.player.seat.pose = cs.pose;
+        this.game.player.seat.poseT = cs.poseT;
+      }
+      const ch = this.game.character;
+      const yaw = cs.def.sitYaw;
+      const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+      const rx = Math.cos(yaw), rz = -Math.sin(yaw);
+
+      // Handheld 3D Hot-Cocoa Mug tracking RightHand bone smoothly + cozy steam puffs!
+      if (cs.cocoaProp) {
+        const showCocoa = cs.pose === "cocoa";
+        cs.cocoaProp.visible = showCocoa;
+        if (showCocoa) {
+          const rh = ch && ch.bone ? ch.bone("RightHand") : null;
+          if (rh) {
+            rh.getWorldPosition(cs._handTmp);
+            cs.cocoaProp.position.set(cs._handTmp.x + fx * 0.04, cs._handTmp.y + 0.02, cs._handTmp.z + fz * 0.04);
+          } else {
+            cs.cocoaProp.position.set(cs.sitPos.x + fx * 0.28 + rx * 0.14, cs.sitPos.y + 0.68, cs.sitPos.z + fz * 0.28 + rz * 0.14);
+          }
+          cs.cocoaProp.rotation.set(0, yaw, 0);
+          if ((cs.sparkT -= dt) <= 0) {
+            cs.sparkT = 0.26;
+            const mp = cs.cocoaProp.position;
+            this.game.puffs && this.game.puffs.spawn(
+              mp.x + (Math.random() - 0.5) * 0.04, mp.y + 0.08, mp.z + (Math.random() - 0.5) * 0.04,
+              (Math.random() - 0.5) * 0.08, 0.34, (Math.random() - 0.5) * 0.08,
+              0.04, 0.45, 0.85, 1.0, 0.96, 0.90, -0.05, 0.4
+            );
+          }
+        }
+      }
+      // Handheld 3D Open Gilded Storybook held warmly in front of torso + subtle golden stardust!
+      if (cs.bookProp) {
+        const showBook = cs.pose === "read";
+        cs.bookProp.visible = showBook;
+        if (showBook) {
+          const bob = Math.sin(cs.poseT * 2.0) * 0.014;
+          cs.bookProp.position.set(cs.sitPos.x + fx * 0.32, cs.sitPos.y + 0.62 + bob, cs.sitPos.z + fz * 0.32);
+          cs.bookProp.rotation.set(0.45, yaw, 0, "YXZ");
+          if ((cs.sparkT -= dt) <= 0) {
+            cs.sparkT = 0.52;
+            const bp = cs.bookProp.position;
+            this.game.sparks && this.game.sparks.spawn(
+              bp.x + (Math.random() - 0.5) * 0.25, bp.y + 0.08, bp.z + (Math.random() - 0.5) * 0.25,
+              0, 0.28, 0, 0.038, 0.85, 0.75, 2.0, 1.55, 0.7, -0.04, 0.5
+            );
+          }
+        }
+      }
+      // Sparkles for joyful wave or cozy stretch!
+      if ((cs.pose === "wave" || cs.pose === "stretch") && (cs.sparkT -= dt) <= 0) {
+        cs.sparkT = 0.42;
+        this.game.sparks && this.game.sparks.spawn(
+          cs.focus.x + (Math.random() - 0.5) * 0.7, cs.focus.y + 0.15, cs.focus.z + (Math.random() - 0.5) * 0.7,
+          (Math.random() - 0.5) * 0.25, 0.38, (Math.random() - 0.5) * 0.25,
+          0.045, 0.85, 0.7, 2.0, 1.5, 0.85, -0.05, 0.5
+        );
+      }
+      // Live Grand Piano 3-Song Concert Sequencer + Floating Musical Notes!
+      if (cs.musicOn && cs.pose === "piano") {
+        const SONGS = [
+          // 0: Silent Night (平安夜)
+          [392, 440, 392, 329.63, 0, 392, 440, 392, 329.63, 0, 587.33, 587.33, 493.88, 0, 523.25, 523.25, 392, 0],
+          // 1: Winter Château Waltz (冬夜圆舞曲)
+          [523.25, 659.25, 783.99, 659.25, 587.33, 698.46, 880, 698.46, 659.25, 783.99, 1046.5, 783.99, 587.33, 493.88, 523.25, 0],
+          // 2: Jingle Bells Music-Box (铃儿响叮当)
+          [659.25, 659.25, 659.25, 0, 659.25, 659.25, 659.25, 0, 659.25, 783.99, 523.25, 587.33, 659.25, 0, 698.46, 698.46, 698.46, 659.25, 587.33, 783.99, 0]
+        ];
+        const seq = SONGS[cs.musicSong % SONGS.length];
+        cs.musicT -= dt;
+        if (cs.musicT <= 0) {
+          cs.musicT = cs.musicSong === 2 ? 0.30 : 0.42;
+          const f = seq[cs.musicStep++ % seq.length];
+          if (f > 0) this._playCastleTone([f, f * 0.5], 0.01, 0.06);
+        }
+      }
+      const showNotes = (cs.musicOn && cs.pose === "piano") || cs.pose === "wave";
+      if (showNotes) {
+        const no = cs.def.isPiano ? cs.noteOrigin : cs.focus;
+        for (const item of cs.notes) {
+          const u = (time * 0.44 + item.ph) % 1;
+          item.sp.visible = true;
+          item.sp.position.set(
+            no.x + Math.sin(u * Math.PI * 2 + item.ph * 6) * 0.24,
+            no.y + 0.12 + u * 0.88,
+            no.z + Math.cos(u * Math.PI * 2 + item.ph * 6) * 0.18
+          );
+          item.sp.material.opacity = Math.sin(u * Math.PI) * 0.94;
+        }
+      } else if (cs.notes.length && cs.notes[0].sp.visible) {
+        for (const item of cs.notes) {
+          item.sp.visible = false;
+          item.sp.material.opacity = 0;
+        }
+      }
+    } else {
+      if (cs.cocoaProp && cs.cocoaProp.visible) cs.cocoaProp.visible = false;
+      if (cs.bookProp && cs.bookProp.visible) cs.bookProp.visible = false;
+      if (cs.notes.length && cs.notes[0].sp.visible) {
+        for (const item of cs.notes) {
+          item.sp.visible = false;
+          item.sp.material.opacity = 0;
+        }
+      }
     }
 
     // 3rd-Person Royal Princess Bed Sleep Animations (3D quilted duvet, floating ZZZ & celesta lullaby!)
