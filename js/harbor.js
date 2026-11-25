@@ -183,6 +183,10 @@ export class StarlightHarbor {
     const root = this.group = new T.Group();
     root.name = "starlight_harbor";
     this.game.scene.add(root);
+    this.worldPropsGroup = new T.Group();
+    this.worldPropsGroup.name = "starlight_world_props";
+    this.game.scene.add(this.worldPropsGroup);
+    this._targetGroup = root;
 
     // 1. Guiding Starlight Trail & Grand Entrance Arch linking 极其猫实验室 -> 极其猫星港
     this.buildTrailAndArch();
@@ -791,7 +795,7 @@ export class StarlightHarbor {
       this.mesh(new T.TorusGeometry(0.36, 0.03, 6, 16).rotateX(Math.PI / 2), this.m.iron, 0, 0.72, 0.82),
       this.mesh(new T.BoxGeometry(0.56, 0.10, 2.35), this.m.darkWood, 0, 0.96, 0)
     );
-    this.group.add(g);
+    (this._targetGroup || this.group).add(g);
     this.game.world.circles.push(
       { x: rx, z: rz - 0.82, r: 0.44, top: 1.05 },
       { x: rx, z: rz, r: 0.44, top: 1.05 },
@@ -807,7 +811,7 @@ export class StarlightHarbor {
         this.mesh(new T.CylinderGeometry(0.055, 0.08, 0.14, 8), this.m.glass, 0, 0.42, 0),
         this.mesh(new T.CylinderGeometry(0.06, 0.06, 0.07, 8), this.m.gold, 0, 0.50, 0)
       );
-      this.group.add(bg);
+      (this._targetGroup || this.group).add(bg);
       const bState = { g: bg, brokenT: 0, pos: new T.Vector3(rx, ry + 1.24, rz + dz) };
       this.bottles.push(bState);
       this.registerTarget({
@@ -871,7 +875,7 @@ export class StarlightHarbor {
     }
     blades.add(this.mesh(new T.SphereGeometry(0.09, 10, 8), this.m.gold, 0, 0, 0.03));
     g.add(blades);
-    this.group.add(g);
+    (this._targetGroup || this.group).add(g);
     this.game.world.circles.push({ x, z, r: 0.24 });
 
     const st = { obj: blades, speed: 1.6, boost: 0, axis: "z" };
@@ -923,7 +927,7 @@ export class StarlightHarbor {
       );
     }
     g.add(piv);
-    this.group.add(g);
+    (this._targetGroup || this.group).add(g);
     g.updateMatrixWorld(true);
     for (const px of [-0.78, 0.78]) {
       const wp = new T.Vector3(px, 0, 0).applyMatrix4(g.matrixWorld);
@@ -974,7 +978,7 @@ export class StarlightHarbor {
       this.mesh(new T.OctahedronGeometry(0.06, 0), this.m.goldGlow, 0, 0.46, 0)
     );
     g.add(inner);
-    this.group.add(g);
+    (this._targetGroup || this.group).add(g);
     this.game.world.circles.push({ x, z, r: 0.58, top: 1.48 });
 
     const st = { inner, spin: 0.7, swirlT: 0, pos: new T.Vector3(x, y + 1.24, z) };
@@ -1016,7 +1020,7 @@ export class StarlightHarbor {
       this.mesh(new T.SphereGeometry(0.06, 8, 6), this.m.gold, 0, 1.50, 0),
       this.mesh(new T.SphereGeometry(0.18, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.45), this.m.snow, 0, 1.32, 0)
     );
-    this.group.add(g);
+    (this._targetGroup || this.group).add(g);
     this.game.world.circles.push({ x, z, r: 0.32, top: 1.48 });
     this.game.world.spots.push({
       id, pos: new T.Vector3(x, y + 1.0, z), r: 2.3,
@@ -1057,7 +1061,7 @@ export class StarlightHarbor {
       this.mesh(new T.CylinderGeometry(0.065, 0.065, 0.12, 10), this.m.cream, 0.56, 1.24, 0.08),
       this.mesh(new T.SphereGeometry(0.11, 10, 8), this.m.goldGlow, 0.82, 2.15, 0.42)
     );
-    this.group.add(g);
+    (this._targetGroup || this.group).add(g);
     this.game.world.circles.push({ x, z, r: 1.05, top: 1.35 });
     this.addLight(x, y + 2.0, z, 0xffbe74, 6.5, 10, false);
 
@@ -1096,11 +1100,12 @@ export class StarlightHarbor {
       this.mesh(new T.ConeGeometry(0.05, 0.11, 4), this.m.pinkGlow, 0.55, 0.55, -0.42),
       this.mesh(new T.ConeGeometry(0.05, 0.11, 4), this.m.cyanGlow, 0.69, 0.55, -0.42)
     );
-    this.group.add(g);
+    (this._targetGroup || this.group).add(g);
   }
 
   buildWorldSmallObjects() {
-    // A. Inside 「极其猫星港」 Territory
+    // A. Inside 「极其猫星港」 Territory (stays inside harbor.group for tight harbor distance culling!)
+    this._targetGroup = this.group;
     this.addPinwheel(this.cx - 4.5, this.cz - 3.5, "pw_harbor_1");
     this.addPinwheel(this.cx + 3.5, this.cz + 4.8, "pw_harbor_2");
     this.addWindChime(this.cx + 1.8, this.cz - 5.6, 0.35, "chime_harbor_1");
@@ -1108,6 +1113,8 @@ export class StarlightHarbor {
     this.addMarshmallowCart(this.cx + 2.2, this.cz + 6.8, -0.45, "cart_harbor");
     this.addCozyPicnicSpot(this.cx + 6.5, this.cz + 2.2, 0.4);
 
+    // B & C. World-scattered props live in worldPropsGroup so harbor.group can cull cleanly when player is far from Harbor!
+    this._targetGroup = this.worldPropsGroup;
     // B. Right outside 「极其猫实验室」 Porch (so freshly unlocked ChemGun can IMMEDIATELY plink glowing bottles & spin pinwheels!)
     const lab = (this.re && this.re.chemlab) || { x: 76, z: 102 };
     const labBottleSpecs = [
@@ -1130,6 +1137,7 @@ export class StarlightHarbor {
     this.addMarshmallowCart(8.5, 9.8, -0.75, "cart_clearing");
     this.addPinwheel(-11.8, 14.5, "pw_clearing");
     this.addWindChime(-14.2, -2.5, 0.6, "chime_clearing");
+    this._targetGroup = this.group;
   }
 
   // =========================================================================

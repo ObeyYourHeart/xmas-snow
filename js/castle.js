@@ -761,102 +761,129 @@ export class ClaudeCastle {
     this.bell = bellPivot;
     g.add(bellPivot);
 
-    // 12. Royal Rear Snow-Viewing Staircase & Walkable Rooftop Platforms (zero turret/roof clipping + solid colliders!)
-    // Rear wall is at z = -3.00, terracotta roof eave starts at z = -3.25 (y = 4.22),
-    // rear turrets tBL/tBR sit at x = ±3.78, z = -2.98 (r = 0.82..1.02), merlon i=+2 is open at x ∈ [1.31, 2.85].
+    // 12. Royal Rear Grand Snow-Viewing Staircase & Walkable Rooftop Platforms
+    // Carefully engineered clearances:
+    //   Rear keep wall z = -3.00 | Rear cornice z = -3.50 (y = 2.54) | Rear turrets tBL/tBR max outer z = -4.00
+    //   Terracotta roof eave starts at z = -3.25 (y = 4.22) | Open merlon gateway i=+2 spans x ∈ [1.31, 2.85]
+    //   West gift sits at local (-5.8, -4.4) -> stair foot at stX0 = -4.25 leaves 1.55m clear snow margin!
     const stairG = new T.Group();
-    const stX0 = -2.75, stX1 = 1.45, stTopY = 4.24, stZ = -4.22, stW = 1.08;
-    const steps = 18;
+    const stX0 = -4.25, stX1 = 1.45, stTopY = 4.26, stZ = -4.65, stW = 1.24;
+    const steps = 20;
     const stepDx = (stX1 - stX0) / steps;
     const stepDy = stTopY / steps;
+    const riserDepth = stepDy + 0.22; // Deep solid interlocking risers (zero diagonal daylight slivers!)
     for (let i = 0; i < steps; i++) {
       const sx = stX0 + (i + 0.5) * stepDx;
       const sy = (i + 1) * stepDy;
-      // Solid interlocking marble riser + recessed walnut tread (cleanly inside side stringers, zero floating gaps!)
+      const hThis = Math.min(sy, riserDepth);
       stairG.add(
-        this.mesh(new T.BoxGeometry(stepDx + 0.03, stepDy + 0.06, stW - 0.10), this.m.marble, sx, sy - (stepDy + 0.06) * 0.5, stZ),
-        this.mesh(new T.BoxGeometry(stepDx - 0.02, 0.032, stW - 0.16), this.m.walnut, sx, sy + 0.014, stZ)
+        this.mesh(new T.BoxGeometry(stepDx + 0.035, hThis, stW - 0.12), this.m.marble, sx, sy - hThis * 0.5, stZ),
+        this.mesh(new T.BoxGeometry(stepDx - 0.015, 0.034, stW - 0.18), this.m.walnut, sx, sy + 0.015, stZ)
       );
     }
-    // Sturdy marble support columns seated cleanly UNDER the staircase stringers (never poking through treads!)
+    // Continuous sloped marble carriage beams + sturdy grounded columns cleanly underneath (never poking through treads!)
+    const railLen = Math.hypot(stX1 - stX0, stTopY);
+    const railAng = Math.atan2(stTopY, stX1 - stX0);
+    const railDz = stW * 0.50; // ±0.62 -> z = -5.27 (North) and -4.03 (South, clear of z = -4.00 turrets & -3.50 cornice!)
     for (const colFrac of [1 / 3, 2 / 3, 1.0]) {
       const cx = stX0 + (stX1 - stX0) * colFrac;
       const sy = stTopY * colFrac;
-      const colH = Math.max(0.4, sy - 0.26);
-      for (const dz of [-stW * 0.42, stW * 0.42]) {
+      const colH = Math.max(0.4, sy - 0.30);
+      for (const dz of [-stW * 0.44, stW * 0.44]) {
         stairG.add(
-          this.mesh(new T.CylinderGeometry(0.07, 0.085, colH, 10), this.m.marble, cx, colH * 0.5, stZ + dz),
-          this.mesh(new T.BoxGeometry(0.20, 0.07, 0.20), this.m.plinth, cx, 0.035, stZ + dz),
-          this.mesh(new T.BoxGeometry(0.20, 0.06, 0.20), this.m.gold, cx, colH, stZ + dz)
+          this.mesh(new T.CylinderGeometry(0.075, 0.09, colH, 10), this.m.marble, cx, colH * 0.5, stZ + dz),
+          this.mesh(new T.BoxGeometry(0.22, 0.08, 0.22), this.m.plinth, cx, 0.04, stZ + dz),
+          this.mesh(new T.BoxGeometry(0.22, 0.06, 0.22), this.m.gold, cx, colH, stZ + dz)
         );
       }
     }
-    // Sloped marble side stringers, golden handrails & tidy vertical balusters terminating cleanly at stX1 = +1.45!
-    const railLen = Math.hypot(stX1 - stX0, stTopY);
-    const railAng = Math.atan2(stTopY, stX1 - stX0);
-    for (const dz of [-stW * 0.48, stW * 0.48]) {
-      const hr = this.mesh(new T.BoxGeometry(railLen, 0.065, 0.065), this.m.gold, (stX0 + stX1) * 0.5, stTopY * 0.5 + 0.74, stZ + dz);
-      hr.rotation.z = railAng;
-      const str = this.mesh(new T.BoxGeometry(railLen, 0.22, 0.08), this.m.marble, (stX0 + stX1) * 0.5, stTopY * 0.5 - 0.10, stZ + dz);
+    // Helper for clean square marble newel posts capped with golden finials (sloped & horizontal rails terminate INSIDE them — ZERO sharp protruding tips!)
+    const addNewel = (nx, baseY, nz) => {
+      stairG.add(
+        this.mesh(new T.BoxGeometry(0.13, 0.84, 0.13), this.m.marble, nx, baseY + 0.42, nz),
+        this.mesh(new T.BoxGeometry(0.155, 0.05, 0.155), this.m.gold, nx, baseY + 0.84, nz),
+        this.mesh(new T.SphereGeometry(0.08, 10, 8), this.m.gold, nx, baseY + 0.93, nz)
+      );
+    };
+    for (const dz of [-railDz, railDz]) {
+      // Sloped side stringer & golden handrail cleanly spanning between bottom & top newel posts
+      const str = this.mesh(new T.BoxGeometry(railLen, 0.28, 0.09), this.m.marble, (stX0 + stX1) * 0.5, stTopY * 0.5 - 0.12, stZ + dz);
       str.rotation.z = railAng;
-      stairG.add(hr, str);
-      for (let k = 0; k <= 5; k++) {
-        const px = stX0 + (stX1 - stX0) * (k / 5);
-        const py = stTopY * (k / 5);
-        stairG.add(this.mesh(new T.CylinderGeometry(0.028, 0.034, 0.68, 8), this.m.marble, px, py + 0.38, stZ + dz));
+      const hr = this.mesh(new T.BoxGeometry(railLen - 0.06, 0.065, 0.068), this.m.gold, (stX0 + stX1) * 0.5, stTopY * 0.5 + 0.78, stZ + dz);
+      hr.rotation.z = railAng;
+      stairG.add(str, hr);
+      // Square newel posts at stair foot (stX0) and top transition (stX1)
+      addNewel(stX0, 0.0, stZ + dz);
+      addNewel(stX1, stTopY, stZ + dz);
+      // Interior balusters cleanly between stringer top and handrail underside
+      for (let k = 1; k <= 5; k++) {
+        const px = stX0 + (stX1 - stX0) * (k / 6);
+        const py = stTopY * (k / 6);
+        stairG.add(this.mesh(new T.CylinderGeometry(0.028, 0.034, 0.72, 8), this.m.marble, px, py + 0.40, stZ + dz));
       }
-      // Golden newel finial orbs at stair foot
-      stairG.add(this.mesh(new T.SphereGeometry(0.065, 8, 8), this.m.gold, stX0, 0.80, stZ + dz));
     }
     // Warm golden beacon lantern beside the staircase foot so players spot the roof stairs right away!
     stairG.add(
-      this.mesh(new T.CylinderGeometry(0.055, 0.075, 1.35, 8), this.m.obsidian, stX0 - 0.28, 0.68, stZ - 0.62),
-      this.mesh(new T.CylinderGeometry(0.12, 0.09, 0.24, 6), this.m.lantern, stX0 - 0.28, 1.44, stZ - 0.62),
-      this.mesh(new T.ConeGeometry(0.17, 0.18, 6), this.m.gold, stX0 - 0.28, 1.62, stZ - 0.62)
+      this.mesh(new T.CylinderGeometry(0.055, 0.075, 1.35, 8), this.m.obsidian, stX0 - 0.34, 0.68, stZ - 0.72),
+      this.mesh(new T.CylinderGeometry(0.12, 0.09, 0.24, 6), this.m.lantern, stX0 - 0.34, 1.44, stZ - 0.72),
+      this.mesh(new T.ConeGeometry(0.17, 0.18, 6), this.m.gold, stX0 - 0.34, 1.62, stZ - 0.72)
     );
-    // Top Rooftop Balcony Landing: x ∈ [1.45, 2.65] (0.31m clear of rear-east turret!), z ∈ [-4.76, -3.26] (flush with roof eave at -3.25 — ZERO clipping!)
-    const landX = 2.05, landW = 1.20, landZ = -4.01, landD = 1.50;
+    // Top Rooftop Balcony Landing: x ∈ [1.45, 2.65] (0.31m clear of tBR!), z ∈ [-5.27, -3.25] (flush with roof eave at -3.25 — ZERO clipping!)
+    const landX = 2.05, landW = 1.20, landZ = -4.26, landD = 2.02;
     const landColH = stTopY - 0.16;
     stairG.add(
       this.mesh(new T.BoxGeometry(landW, 0.16, landD), this.m.marble, landX, stTopY - 0.08, landZ),
       this.mesh(new T.BoxGeometry(landW + 0.04, 0.05, landD + 0.04), this.m.gold, landX, stTopY - 0.035, landZ),
       // Clean walnut threshold lip bridging onto the roof eave gateway (merlon i=+2 omitted!)
-      this.mesh(new T.BoxGeometry(landW - 0.14, 0.032, 0.16), this.m.walnut, landX, stTopY + 0.016, -3.26),
-      // Twin east support columns seated cleanly under the balcony slab
-      this.mesh(new T.CylinderGeometry(0.075, 0.095, landColH, 10), this.m.marble, 2.57, landColH * 0.5, -4.68),
-      this.mesh(new T.BoxGeometry(0.22, 0.08, 0.22), this.m.plinth, 2.57, 0.04, -4.68),
-      this.mesh(new T.CylinderGeometry(0.075, 0.095, landColH, 10), this.m.marble, 2.57, landColH * 0.5, -3.36),
-      this.mesh(new T.BoxGeometry(0.22, 0.08, 0.22), this.m.plinth, 2.57, 0.04, -3.36),
-      // Exposed-edge balcony golden handrails (North outer edge & East edge only — roof gateway stays 100% open!)
-      this.mesh(new T.BoxGeometry(landW + 0.04, 0.065, 0.065), this.m.gold, landX, stTopY + 0.74, -4.74),
-      this.mesh(new T.BoxGeometry(0.065, 0.065, landD - 0.04), this.m.gold, 2.62, stTopY + 0.74, -4.02),
-      // Neat vertical balcony balusters & golden corner finials (all terminating at z = -3.30, clear of terracotta roof!)
-      this.mesh(new T.CylinderGeometry(0.03, 0.036, 0.70, 8), this.m.marble, 2.05, stTopY + 0.37, -4.74),
-      this.mesh(new T.CylinderGeometry(0.034, 0.04, 0.72, 8), this.m.marble, 2.62, stTopY + 0.37, -4.74),
-      this.mesh(new T.CylinderGeometry(0.03, 0.036, 0.70, 8), this.m.marble, 2.62, stTopY + 0.37, -4.02),
-      this.mesh(new T.CylinderGeometry(0.034, 0.04, 0.72, 8), this.m.marble, 2.62, stTopY + 0.37, -3.30),
-      this.mesh(new T.SphereGeometry(0.08, 8, 8), this.m.gold, 1.45, stTopY + 0.80, -3.70),
-      this.mesh(new T.SphereGeometry(0.08, 8, 8), this.m.gold, 2.62, stTopY + 0.80, -4.74),
-      this.mesh(new T.SphereGeometry(0.08, 8, 8), this.m.gold, 2.62, stTopY + 0.80, -3.30)
+      this.mesh(new T.BoxGeometry(landW - 0.16, 0.034, 0.18), this.m.walnut, landX, stTopY + 0.017, -3.26),
+      // Twin east support columns seated cleanly under the balcony slab (inner-east at z = -3.66 is 16cm CLEAR of z = -3.50 rear cornice!)
+      this.mesh(new T.CylinderGeometry(0.078, 0.095, landColH, 10), this.m.marble, 2.57, landColH * 0.5, -5.18),
+      this.mesh(new T.BoxGeometry(0.22, 0.08, 0.22), this.m.plinth, 2.57, 0.04, -5.18),
+      this.mesh(new T.BoxGeometry(0.22, 0.06, 0.22), this.m.gold, 2.57, landColH, -5.18),
+      this.mesh(new T.CylinderGeometry(0.078, 0.095, landColH, 10), this.m.marble, 2.57, landColH * 0.5, -3.66),
+      this.mesh(new T.BoxGeometry(0.22, 0.08, 0.22), this.m.plinth, 2.57, 0.04, -3.66),
+      this.mesh(new T.BoxGeometry(0.22, 0.06, 0.22), this.m.gold, 2.57, landColH, -3.66),
+      // Exposed-edge balcony golden handrails connecting cleanly into square newel posts!
+      this.mesh(new T.BoxGeometry(landW - 0.04, 0.065, 0.068), this.m.gold, landX, stTopY + 0.78, -5.27),
+      this.mesh(new T.BoxGeometry(0.068, 0.065, landD - 0.08), this.m.gold, 2.62, stTopY + 0.78, -4.28),
+      // Short West balcony return rail connecting stair inner newel (1.45, -4.03) to roof eave post (1.45, -3.30)
+      this.mesh(new T.BoxGeometry(0.068, 0.065, 0.73), this.m.gold, 1.45, stTopY + 0.78, -3.665),
+      // Interior balcony balusters
+      this.mesh(new T.CylinderGeometry(0.03, 0.036, 0.72, 8), this.m.marble, 2.05, stTopY + 0.39, -5.27),
+      this.mesh(new T.CylinderGeometry(0.03, 0.036, 0.72, 8), this.m.marble, 2.62, stTopY + 0.39, -4.62),
+      this.mesh(new T.CylinderGeometry(0.03, 0.036, 0.72, 8), this.m.marble, 2.62, stTopY + 0.39, -3.96),
+      this.mesh(new T.CylinderGeometry(0.03, 0.036, 0.72, 8), this.m.marble, 1.45, stTopY + 0.39, -3.66)
     );
+    addNewel(2.62, stTopY, -5.27);
+    addNewel(2.62, stTopY, -3.30);
+    addNewel(1.45, stTopY, -3.30);
     g.add(stairG);
 
-    // Real physical colliders for staircase underside, outer railings & lantern post (blocks walking underneath/through!)
+    // Real physical colliders:
+    // Every underside box strictly obeys h <= sy(x0 - 0.50m), guaranteeing >= +0.43m clearance while walking/sprinting up
+    // (ZERO snagging, ZERO forced jumping!) while solidly blocking ground-level walking underneath the stairs!
     if (this.game && this.game.world) {
       if (this.game.world.boxes) {
         this.game.world.boxes.push(
-          // Stepped underside masonry blockers (ground player blocked; stair walker clears h cleanly!)
-          { x0: wx - 1.90, x1: wx - 0.85, z0: wz - 4.78, z1: wz - 3.66, h: 0.72 },
-          { x0: wx - 0.85, x1: wx + 0.30, z0: wz - 4.78, z1: wz - 3.66, h: 1.72 },
-          { x0: wx + 0.30, x1: wx + 1.45, z0: wz - 4.78, z1: wz - 3.66, h: 2.92 },
-          { x0: wx + 1.45, x1: wx + 2.68, z0: wz - 4.78, z1: wz - 3.24, h: 3.92 },
-          // Outer North & East railing guard strips outside the walkable tread
-          { x0: wx - 2.75, x1: wx + 2.74, z0: wz - 4.98, z1: wz - 4.80, h: 5.2 },
-          { x0: wx + 2.68, x1: wx + 2.86, z0: wz - 4.86, z1: wz - 3.28, h: 5.2 }
+          // Stepped underside masonry blockers (ground blocked; stair walker clears h with +0.43m..+0.60m safety margin!)
+          { x0: wx - 2.40, x1: wx - 1.10, z0: wz - 5.26, z1: wz - 4.04, h: 0.85 },
+          { x0: wx - 1.10, x1: wx + 0.20, z0: wz - 5.26, z1: wz - 4.04, h: 1.75 },
+          { x0: wx + 0.20, x1: wx + 1.45, z0: wz - 5.26, z1: wz - 4.04, h: 2.70 },
+          { x0: wx + 1.45, x1: wx + 2.68, z0: wz - 5.26, z1: wz - 3.28, h: 3.55 },
+          // Outer North & inner South stair guardrails strictly OUTSIDE the 1.24m walkable tread (smooth 0.66m lane!)
+          { x0: wx - 4.00, x1: wx + 2.74, z0: wz - 5.50, z1: wz - 5.32, h: 5.2 },
+          { x0: wx - 4.00, x1: wx + 1.35, z0: wz - 3.98, z1: wz - 3.80, h: 5.2 },
+          // East & West-return balcony guardrails leaving central 1.32m rooftop gateway wide open!
+          { x0: wx + 2.70, x1: wx + 2.86, z0: wz - 5.36, z1: wz - 3.28, h: 5.2 },
+          { x0: wx + 1.22, x1: wx + 1.38, z0: wz - 3.98, z1: wz - 3.30, h: 5.2 }
         );
       }
       if (this.game.world.circles) {
-        this.game.world.circles.push({ x: wx + stX0 - 0.28, z: wz + stZ - 0.62, r: 0.22, top: 1.8 });
+        this.game.world.circles.push(
+          { x: wx + stX0 - 0.34, z: wz + stZ - 0.72, r: 0.22, top: 1.8 },
+          // Central Rooftop Belfry Spire collider (inside ground keep box, keeps rooftop walkers cleanly around spire!)
+          { x: wx, z: wz, r: 0.94, top: 9.7 }
+        );
       }
     }
 
@@ -866,23 +893,32 @@ export class ClaudeCastle {
         const pl = this.game.player;
         return pl ? pl.y - pl.eye + pl.air : wy;
       };
+      const roofSurfaceY = (pz) => {
+        const lz = pz - wz;
+        // Exact outer envelope of mainRoofGeo (4.22..6.47) + snowCapGeo (up to 6.53 at |lz|<=1.18) + 3cm shoe clearance!
+        return wy + 4.26 + 2.30 * Math.max(0, Math.min(1, (3.25 - Math.abs(lz)) / 2.07));
+      };
       this.game.world.platforms.push(
-        // (a) Rear Roof Staircase ramp (walkable smoothly from ground up to y = 4.24!)
+        // (a) Rear Roof Grand Staircase ramp (walk/sprint smoothly from snow y = 0 up to y = 4.26 without jumping!)
         {
           test: (px, pz) => {
             const lx = px - wx, lz = pz - wz;
-            if (lx < stX0 - 0.25 || lx > stX1 + 0.16 || lz < stZ - 0.60 || lz > stZ + 0.60) return false;
+            if (lx < stX0 - 0.35 || lx > stX1 + 0.22 || lz < stZ - 0.68 || lz > stZ + 0.68) return false;
             const sy = wy + stTopY * Math.max(0, Math.min(1, (lx - stX0) / (stX1 - stX0)));
-            return footY() >= sy - 0.80;
+            return footY() >= sy - 1.10;
           },
           y: (px) => wy + stTopY * Math.max(0, Math.min(1, (px - wx - stX0) / (stX1 - stX0))),
           wood: true
         },
-        // (b) Top Rooftop Balcony Landing (flush onto roof eave gateway!)
+        // (b) Top Rooftop Balcony Landing (seamless 0.00m transition onto roof eave gateway!)
         {
           test: (px, pz) => {
             const lx = px - wx, lz = pz - wz;
-            return lx >= 1.40 && lx <= 2.70 && lz >= -4.80 && lz <= -3.18 && footY() >= wy + stTopY - 0.85;
+            return lx >= 1.35 && lx <= 2.74 && lz >= -5.32 && lz <= -3.14 && footY() >= wy + stTopY - 1.15;
+          },
+          camTest: (px, pz, py) => {
+            const lx = px - wx, lz = pz - wz;
+            return lx >= 1.35 && lx <= 2.74 && lz >= -5.32 && lz <= -3.14 && py >= wy + 3.2;
           },
           y: () => wy + stTopY,
           wood: true
@@ -893,23 +929,24 @@ export class ClaudeCastle {
             const lx = px - wx, lz = pz - wz;
             if (lx < -4.08 || lx > 4.08 || lz < 2.85 || lz > 5.30) return false;
             const cy = wy + 2.86 - (lz - 4.10) * 0.22;
-            return footY() >= cy - 0.65;
+            return footY() >= cy - 0.70;
           },
           y: (px, pz) => wy + 2.86 - (pz - wz - 4.10) * 0.22,
           wood: false
         },
-        // (d) Entire Walkable Main Castle Terracotta & Snow Roof (y = 4.24 at eaves -> 6.52 along snowy ridge!)
+        // (d) Entire Walkable Main Castle Terracotta & Snow Roof (4.26m at eaves -> 6.56m snowy terrace; solidRoof keeps 3rd-person cam cleanly above roof!)
         {
           test: (px, pz) => {
             const lx = px - wx, lz = pz - wz;
-            if (lx < -3.86 || lx > 3.86 || lz < -3.26 || lz > 3.26) return false;
-            const ry = wy + 4.24 + 2.28 * Math.max(0, Math.min(1, (3.25 - Math.abs(lz)) / 2.10));
-            return footY() >= ry - 0.90;
+            if (lx < -3.88 || lx > 3.88 || lz < -3.30 || lz > 3.30) return false;
+            return footY() >= roofSurfaceY(pz) - 1.25;
           },
-          y: (px, pz) => {
-            const lz = pz - wz;
-            return wy + 4.24 + 2.28 * Math.max(0, Math.min(1, (3.25 - Math.abs(lz)) / 2.10));
+          camTest: (px, pz, py) => {
+            const lx = px - wx, lz = pz - wz;
+            return lx >= -3.96 && lx <= 3.96 && lz >= -3.36 && lz <= 3.36 && py >= wy + 3.2;
           },
+          y: (px, pz) => roofSurfaceY(pz),
+          solidRoof: true,
           wood: false
         }
       );

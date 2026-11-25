@@ -428,9 +428,9 @@ export class PerfOptimizer {
     }
     this.stats.physDowngraded = downgraded;
 
-    // 3) Tune directional shadow map refresh cadence (eliminates 1s periodic shadow hitches)
+    // 3) Tune directional shadow map refresh cadence (eliminates periodic shadow hitches)
     if (g.env) {
-      g.env.shadowInterval = g.touch ? 3600 : q === "low" ? 3200 : q === "medium" ? 2400 : 1600;
+      g.env.shadowInterval = g.touch ? 4200 : q === "low" ? 3800 : q === "medium" ? 3000 : 2200;
     }
   }
 
@@ -521,6 +521,9 @@ export class PerfOptimizer {
     if (g.harbor && g.harbor.group) {
       this._batchZone("harbor", g.harbor, [g.harbor.group], { cellSize: 48 });
     }
+    if (g.harbor && g.harbor.worldPropsGroup) {
+      this._batchZone("harbor_worldprops", g.harbor, [g.harbor.worldPropsGroup], { cellSize: 48 });
+    }
     if (g.gameplay && g.gameplay.group) {
       this._batchZone("gameplay", g.gameplay, [g.gameplay.group], { cellSize: 56 });
     }
@@ -589,6 +592,38 @@ export class PerfOptimizer {
       );
       hm.visible = wasVis;
     }
+    // Batch rigid animated sub-groups of Gemini's Winged Sky-Cat Mount (cuts ~135 -> ~24 calls with 100% animations intact!)
+    if (g.heli && g.heli.catMount && g.heli.catMount.root) {
+      const cm = g.heli.catMount;
+      const wasVis = cm.root.visible;
+      const haloWasVis = cm.hoverHalo ? cm.hoverHalo.visible : false;
+      cm.root.visible = true;
+      if (cm.hoverHalo) cm.hoverHalo.visible = true;
+      this._batchZone(
+        "catmount_body",
+        { h: cm.headG, wl: cm.wingL, wr: cm.wingR, p: cm.paws, ts: cm.tailSegs, b: cm.bellG, hh: cm.hoverHalo },
+        [cm.root],
+        { singleCell: true, attachTo: cm.root, skipCellCull: true }
+      );
+      if (cm.headG) this._batchZone("catmount_head", { el: cm.earL, er: cm.earR }, [cm.headG], { singleCell: true, attachTo: cm.headG, skipCellCull: true });
+      if (cm.earL) this._batchZone("catmount_earL", null, [cm.earL], { singleCell: true, attachTo: cm.earL, skipCellCull: true });
+      if (cm.earR) this._batchZone("catmount_earR", null, [cm.earR], { singleCell: true, attachTo: cm.earR, skipCellCull: true });
+      if (cm.bellG) this._batchZone("catmount_bell", null, [cm.bellG], { singleCell: true, attachTo: cm.bellG, skipCellCull: true });
+      if (cm.wingL) this._batchZone("catmount_wL", { o: cm.wingOuterL }, [cm.wingL], { singleCell: true, attachTo: cm.wingL, skipCellCull: true });
+      if (cm.wingOuterL) this._batchZone("catmount_wOL", null, [cm.wingOuterL], { singleCell: true, attachTo: cm.wingOuterL, skipCellCull: true });
+      if (cm.wingR) this._batchZone("catmount_wR", { o: cm.wingOuterR }, [cm.wingR], { singleCell: true, attachTo: cm.wingR, skipCellCull: true });
+      if (cm.wingOuterR) this._batchZone("catmount_wOR", null, [cm.wingOuterR], { singleCell: true, attachTo: cm.wingOuterR, skipCellCull: true });
+      if (cm.paws) {
+        for (const k of ["fl", "fr", "bl", "br"]) {
+          if (cm.paws[k]) this._batchZone(`catmount_paw_${k}`, null, [cm.paws[k]], { singleCell: true, attachTo: cm.paws[k], skipCellCull: true });
+        }
+      }
+      if (cm.hoverHalo) {
+        this._batchZone("catmount_halo", null, [cm.hoverHalo], { singleCell: true, attachTo: cm.hoverHalo, skipCellCull: true });
+        cm.hoverHalo.visible = haloWasVis;
+      }
+      cm.root.visible = wasVis;
+    }
     // Batch rigid static body meshes of Train engine & carriages (protects spinning wheels & whistle: 96 -> ~18 calls!)
     if (g.train && g.train.engine && g.train.engine.inner) {
       const tProt = { wheels: g.train.wheels, w: g.train.whistle };
@@ -608,16 +643,16 @@ export class PerfOptimizer {
 
     // 2) Register large dynamic outer landmark groups for indoor/outdoor, distance & frustum culling
     this.outerDynamicGroups = [];
-    if (g.ballroom && g.ballroom.group) this.outerDynamicGroups.push({ obj: g.ballroom.group, x: g.ballroom.cx ?? -64, y: 4, z: g.ballroom.cz ?? 94, r: 20, maxD: 135 });
-    if (g.parkour && g.parkour.group) this.outerDynamicGroups.push({ obj: g.parkour.group, x: g.parkour.cx ?? -74, y: 6, z: g.parkour.cz ?? -44, r: 30, maxD: 112 });
-    if (g.harbor && g.harbor.group) this.outerDynamicGroups.push({ obj: g.harbor.group, x: g.harbor.cx ?? 134, y: 5, z: g.harbor.cz ?? 126, r: 36, maxD: 225 });
+    if (g.ballroom && g.ballroom.group) this.outerDynamicGroups.push({ obj: g.ballroom.group, x: g.ballroom.cx ?? -64, y: 4, z: g.ballroom.cz ?? 94, r: 20, maxD: 120 });
+    if (g.parkour && g.parkour.group) this.outerDynamicGroups.push({ obj: g.parkour.group, x: g.parkour.cx ?? -74, y: 6, z: g.parkour.cz ?? -44, r: 30, maxD: 105 });
+    if (g.harbor && g.harbor.group) this.outerDynamicGroups.push({ obj: g.harbor.group, x: g.harbor.cx ?? 134, y: 5, z: g.harbor.cz ?? 126, r: 32, maxD: 135 });
     if (g.pondFx && g.pondFx.group) {
       const px = g.pondFx.pond ? g.pondFx.pond.x : -41;
       const pz = g.pondFx.pond ? g.pondFx.pond.z : 36;
       const py = Number.isFinite(g.pondFx.iceY) ? g.pondFx.iceY : 0;
-      this.outerDynamicGroups.push({ obj: g.pondFx.group, x: px, y: py, z: pz, r: 34, maxD: 220 });
+      this.outerDynamicGroups.push({ obj: g.pondFx.group, x: px, y: py, z: pz, r: 34, maxD: 215 });
     }
-    if (g.chemlab && g.chemlab.ext) this.outerDynamicGroups.push({ obj: g.chemlab.ext, x: g.chemlab.cx ?? 76, y: 4, z: g.chemlab.cz ?? 102, r: 16, maxD: 205 });
+    if (g.chemlab && g.chemlab.ext) this.outerDynamicGroups.push({ obj: g.chemlab.ext, x: g.chemlab.cx ?? 76, y: 4, z: g.chemlab.cz ?? 102, r: 16, maxD: 165 });
 
     // 3) Collect & tune MeshPhysicalMaterials + CSS compositor + shadow cadence
     this._collectPhysicalMaterials();
@@ -720,12 +755,25 @@ export class PerfOptimizer {
     if (g.tower && g.tower.root) g.tower.root.visible = !inside;
     if (g.worldPlus && g.worldPlus.group) g.worldPlus.group.visible = !inside;
     if (g.gameplay && g.gameplay.group) g.gameplay.group.visible = !inside;
+    if (g.harbor && g.harbor.worldPropsGroup) g.harbor.worldPropsGroup.visible = !inside;
 
     const q = g.quality || "medium";
-    const baseCull = g.touch ? 128 : q === "low" ? 145 : q === "medium" ? 185 : 265;
+    const baseCull = g.touch ? 108 : q === "low" ? 118 : q === "medium" ? 148 : 215;
     const cx = cam.position.x;
     const cz = cam.position.z;
     let culled = 0;
+
+    // Distance-cull CrystalPond's 65+ tiny underwater kelp/bubbles/fish/floes when camera is >54m from pond center
+    // (keeps the large lake surface/ice visible up to 215m while saving ~60 draw calls across the rest of the map!)
+    if (g.pondFx && g.pondFx.group) {
+      const px = g.pondFx.pond ? g.pondFx.pond.x : -41;
+      const pz = g.pondFx.pond ? g.pondFx.pond.z : 36;
+      const nearPond = !inside && ((px - cx) ** 2 + (pz - cz) ** 2) <= 54 * 54;
+      if (g.pondFx.kelp) for (let i = 0; i < g.pondFx.kelp.length; i++) g.pondFx.kelp[i].m.visible = nearPond;
+      if (g.pondFx.bubbles) for (let i = 0; i < g.pondFx.bubbles.length; i++) g.pondFx.bubbles[i].m.visible = nearPond;
+      if (g.pondFx.fish) for (let i = 0; i < g.pondFx.fish.length; i++) g.pondFx.fish[i].g.visible = nearPond;
+      if (g.pondFx.floes) for (let i = 0; i < g.pondFx.floes.length; i++) g.pondFx.floes[i].m.visible = nearPond;
+    }
 
     // Update camera frustum once per frame right before render() for accurate behind-camera culling!
     cam.updateMatrixWorld();
@@ -773,7 +821,7 @@ export class PerfOptimizer {
         culled++;
         continue;
       }
-      const smallCull = g.touch ? 78 : q === "low" ? 90 : q === "medium" ? 115 : 155;
+      const smallCull = g.touch ? 66 : q === "low" ? 74 : q === "medium" ? 90 : 126;
       const maxD = c.skyline ? (g.touch ? 240 : 340) : (c.r < 3.5 ? smallCull : baseCull + c.r);
       const dx = c.x - cx;
       const dz = c.z - cz;
@@ -814,24 +862,27 @@ export class PerfOptimizer {
     if (g.friends && g.friends.list) {
       const fList = g.friends.list;
       const party = g.friends.party;
-      const maxFD = g.touch ? 42 : q === "low" ? 46 : q === "medium" ? 58 : 70;
+      const maxFD = g.touch ? 30 : q === "low" ? 34 : q === "medium" ? 42 : 52;
+      const heavyMaxFD = g.touch ? 24 : q === "low" ? 28 : q === "medium" ? 34 : 42;
       for (let i = 0; i < fList.length; i++) {
         const f = fList[i];
         if (!f || !f.obj) continue;
         if (inside) {
-          f.obj.visible = false;
+          // Keep indoor castle host NPC Claude visible when inside Claude Castle!
+          f.obj.visible = f.mode === "castleIndoor";
           continue;
         }
         if (!f.obj.visible) continue;
         const inParty = party && party.includes(f);
-        if (!inParty && f.dist > maxFD) {
+        const lim = (f.id === "gemini" && g.avatar === "gemini") ? heavyMaxFD : maxFD;
+        if (!inParty && f.dist > lim) {
           f.obj.visible = false;
           continue;
         }
-        if (f.dist > 5.0) {
+        if (f.dist > 4.0) {
           const p = f.obj.position;
           sph.center.set(p.x, p.y + 0.95, p.z);
-          sph.radius = 2.6;
+          sph.radius = 2.4;
           if (!this._frustum.intersectsSphere(sph)) {
             f.obj.visible = false;
           }
@@ -1031,19 +1082,23 @@ export class PerfOptimizer {
       return;
     }
 
-    const targetLow = g.touch ? 28 : 36;
+    const targetLow = g.touch ? 28 : (g.quality === "high" ? 42 : 38);
     if (fps < targetLow) {
       this.lowFpsSec++;
       this.highFpsSec = 0;
       if (this.lowFpsSec >= 2) {
         this.lowFpsSec = 0;
-        if (this.resScale > 0.72) {
-          this.resScale = Math.max(0.70, +(this.resScale - 0.12).toFixed(2));
+        if (g.quality === "high") {
+          // Drop expensive Bloom + 1.5x HiDPI immediately before shrinking resolution so visuals stay razor-crisp!
+          this.resScale = 1.0;
+          g.setQuality("medium");
+          g.ui && g.ui.toast("检测到 GPU 负载较高，已自动切换至流畅均衡画质喵～", 4.2);
+        } else if (this.resScale > 0.72) {
+          this.resScale = Math.max(0.70, +(this.resScale - 0.14).toFixed(2));
           if (g.applyResScale) g.applyResScale(this.resScale);
         } else if (g.quality !== "low") {
-          const nextQ = g.quality === "high" ? "medium" : "low";
           this.resScale = 1.0;
-          g.setQuality(nextQ);
+          g.setQuality("low");
           g.ui && g.ui.toast("检测到 GPU 负载较高，已自动切换更流畅画质", 4.5);
         }
       }
