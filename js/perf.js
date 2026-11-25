@@ -53,7 +53,9 @@ export class PerfOptimizer {
     style.id = "perfCss";
     style.textContent = `
       body.perf-lite .glass,
-      body.perf-lite #missileBar {
+      body.perf-lite #missileBar,
+      body.perf-lite #chemBar,
+      body.perf-lite #shootCombo {
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
       }
@@ -561,12 +563,17 @@ export class PerfOptimizer {
       this._batchZone("chemlab_int", g.chemlab, [g.chemlab.intGroup], { singleCell: true, indoor: "chemlab", attachTo: g.chemlab.intGroup });
       g.chemlab.intGroup.visible = !!(g.chemlab && g.chemlab.inside);
     }
-    // Batch rigid static parts of the Starlight Cat-Ear Element Gun (keeps all 7 animated parts intact, cuts +80 calls -> ~14!)
+    // Batch rigid static parts + rigid animated sub-groups of the Starlight Cat-Ear Element Gun (cuts +56 calls -> ~18 while keeping ALL 7 animations 100% intact!)
     if (g.tools && g.tools.items && g.tools.items.chemgun && g.tools.items.chemgun.root) {
       const cg = g.tools.items.chemgun;
       const wasVis = cg.root.visible;
       cg.root.visible = true;
       this._batchZone("chemgun_static", cg, [cg.root], { singleCell: true, attachTo: cg.root, skipCellCull: true });
+      if (cg.drumSpin) this._batchZone("chemgun_drum", null, [cg.drumSpin], { singleCell: true, attachTo: cg.drumSpin, skipCellCull: true });
+      if (cg.earL) this._batchZone("chemgun_earL", null, [cg.earL], { singleCell: true, attachTo: cg.earL, skipCellCull: true });
+      if (cg.earR) this._batchZone("chemgun_earR", null, [cg.earR], { singleCell: true, attachTo: cg.earR, skipCellCull: true });
+      if (cg.bell) this._batchZone("chemgun_bell", null, [cg.bell], { singleCell: true, attachTo: cg.bell, skipCellCull: true });
+      if (cg.muzzleSpin) this._batchZone("chemgun_mz", { rb: cg.ringB }, [cg.muzzleSpin], { singleCell: true, attachTo: cg.muzzleSpin, skipCellCull: true });
       cg.root.visible = wasVis;
     }
     // Batch rigid static hull meshes of Claude Helicopter (protects spinning rotors, nose_spin, yoke & blur discs: 127 -> ~15 calls!)
@@ -615,6 +622,24 @@ export class PerfOptimizer {
     // 3) Collect & tune MeshPhysicalMaterials + CSS compositor + shadow cadence
     this._collectPhysicalMaterials();
     this.applyQualityTuning(g.quality);
+
+    // 3b) Pre-compile hidden weapon & VFX shaders behind the loading card so equipping / firing Cat Gun has ZERO shader-compile stutter!
+    if (g.renderer && g.scene && g.camera) {
+      const prewarmList = [];
+      if (g.tools && g.tools.items && g.tools.items.chemgun) {
+        if (g.tools.items.chemgun.root) prewarmList.push(g.tools.items.chemgun.root);
+        if (g.tools.items.chemgun._prewarmMeshes) prewarmList.push(...g.tools.items.chemgun._prewarmMeshes);
+      }
+      if (g.tools && g.tools.gun && g.tools.gun._prewarmMeshes) {
+        prewarmList.push(...g.tools.gun._prewarmMeshes);
+      }
+      if (prewarmList.length) {
+        const saved = prewarmList.map((o) => [o, o.visible]);
+        for (const [o] of saved) o.visible = true;
+        try { g.renderer.compile(g.scene, g.camera); } catch {}
+        for (const [o, v] of saved) o.visible = v;
+      }
+    }
 
     // 4) Enable accurate full-frame WebGL metering ONLY when ?perf=1 is explicitly active
     if (this.perfMode) {

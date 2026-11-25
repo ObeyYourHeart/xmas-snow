@@ -461,8 +461,8 @@ export function buildChemGunMesh(T, wrapMat) {
   const mNeon = std(0xff6a3c, 0.10, { emissive: new T.Color(1.0, 0.36, 0.14), emissiveIntensity: 1.55 });
   const mArgon = std(0xae7cff, 0.10, { emissive: new T.Color(0.62, 0.32, 1.0), emissiveIntensity: 1.55 });
   const mOg = std(0xff64dc, 0.10, { emissive: new T.Color(1.0, 0.34, 0.84), emissiveIntensity: 1.55 });
-  const mGlass = plain(new T.MeshPhysicalMaterial({
-    color: 0xeafaff, roughness: 0.05, metalness: 0.08, transparent: true, opacity: 0.30, depthWrite: false
+  const mGlass = plain(new T.MeshStandardMaterial({
+    color: 0xeafaff, roughness: 0.05, metalness: 0.12, transparent: true, opacity: 0.30, depthWrite: false
   }));
   const mSakuraGlass = plain(new T.MeshStandardMaterial({
     color: 0xff8ad8, emissive: new T.Color(0.96, 0.34, 0.76), emissiveIntensity: 0.75,
@@ -534,7 +534,7 @@ export function buildChemGunMesh(T, wrapMat) {
   stockShape.quadraticCurveTo(-0.10, 0.042, -0.01, 0.026);
   stockShape.closePath();
   const stockGeo = new T.ExtrudeGeometry(stockShape, {
-    depth: 0.032, bevelEnabled: true, bevelThickness: 0.007, bevelSize: 0.006, bevelSegments: 2
+    depth: 0.032, bevelEnabled: true, bevelThickness: 0.007, bevelSize: 0.006, bevelSegments: 1, curveSegments: 6
   });
   stockGeo.translate(0, 0, -0.016);
   stockGeo.rotateY(-Math.PI / 2);
@@ -573,7 +573,7 @@ export function buildChemGunMesh(T, wrapMat) {
   bodyShape.quadraticCurveTo(-0.06, 0.082, -0.03, 0.022);
   bodyShape.closePath();
   const bodyGeo = new T.ExtrudeGeometry(bodyShape, {
-    depth: 0.050, bevelEnabled: true, bevelThickness: 0.010, bevelSize: 0.009, bevelSegments: 2
+    depth: 0.050, bevelEnabled: true, bevelThickness: 0.010, bevelSize: 0.009, bevelSegments: 1, curveSegments: 6
   });
   bodyGeo.translate(0, 0, -0.025);
   bodyGeo.rotateY(-Math.PI / 2);
@@ -661,7 +661,7 @@ export function buildChemGunMesh(T, wrapMat) {
   earOuterShape.quadraticCurveTo(0.046, 0.062, 0.048, 0);
   earOuterShape.closePath();
   const earOuterGeo = new T.ExtrudeGeometry(earOuterShape, {
-    depth: 0.020, bevelEnabled: true, bevelThickness: 0.006, bevelSize: 0.005, bevelSegments: 2, curveSegments: 10
+    depth: 0.020, bevelEnabled: true, bevelThickness: 0.006, bevelSize: 0.005, bevelSegments: 1, curveSegments: 6
   });
   earOuterGeo.translate(0, 0, -0.010);
 
@@ -671,7 +671,7 @@ export function buildChemGunMesh(T, wrapMat) {
   earInnerShape.quadraticCurveTo(0.028, 0.056, 0.030, 0.014);
   earInnerShape.closePath();
   const earInnerGeo = new T.ExtrudeGeometry(earInnerShape, {
-    depth: 0.009, bevelEnabled: true, bevelThickness: 0.0025, bevelSize: 0.0025, bevelSegments: 1, curveSegments: 8
+    depth: 0.009, bevelEnabled: true, bevelThickness: 0.0025, bevelSize: 0.0025, bevelSegments: 1, curveSegments: 6
   });
   earInnerGeo.translate(0, 0, -0.0045);
 
@@ -722,7 +722,7 @@ export function buildChemGunMesh(T, wrapMat) {
   upperWingShape.lineTo(0.03, 0.048);
   upperWingShape.closePath();
   const upperWingGeo = new T.ExtrudeGeometry(upperWingShape, {
-    depth: 0.024, bevelEnabled: true, bevelThickness: 0.005, bevelSize: 0.004, bevelSegments: 2
+    depth: 0.024, bevelEnabled: true, bevelThickness: 0.005, bevelSize: 0.004, bevelSegments: 1, curveSegments: 6
   });
   upperWingGeo.translate(0, 0, -0.012);
   upperWingGeo.rotateY(-Math.PI / 2);
@@ -734,7 +734,7 @@ export function buildChemGunMesh(T, wrapMat) {
   lowerWingShape.lineTo(0.02, -0.040);
   lowerWingShape.closePath();
   const lowerWingGeo = new T.ExtrudeGeometry(lowerWingShape, {
-    depth: 0.022, bevelEnabled: true, bevelThickness: 0.005, bevelSize: 0.004, bevelSegments: 2
+    depth: 0.022, bevelEnabled: true, bevelThickness: 0.005, bevelSize: 0.004, bevelSegments: 1, curveSegments: 6
   });
   lowerWingGeo.translate(0, 0, -0.011);
   lowerWingGeo.rotateY(-Math.PI / 2);
@@ -817,9 +817,9 @@ export function installChemGun(tools, game, helpers, ymRef) {
   const novas = [];
 
   const whiteCoreMat = plain(new T.MeshBasicMaterial({ color: 0xffffff, fog: false }));
-  const hShellMat = plain(new T.MeshPhysicalMaterial({
+  const hShellMat = plain(new T.MeshStandardMaterial({
     color: 0x7ef8ff, emissive: new T.Color(0x22d8ff), emissiveIntensity: 0.9,
-    roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.56, depthWrite: false
+    roughness: 0.05, metalness: 0.14, transparent: true, opacity: 0.56, depthWrite: false
   }));
   const hTailMat = plain(new T.MeshBasicMaterial({ color: 0x52f4ff, transparent: true, opacity: 0.52, depthWrite: false, fog: false }));
   const cCrystalMat = plain(new T.MeshStandardMaterial({
@@ -1060,6 +1060,11 @@ export function installChemGun(tools, game, helpers, ymRef) {
     game.scene.add(bmMesh);
     bubbles.push({ on: false, mesh: bmMesh, vx: 0, vy: 0, vz: 0, life: 0, ph: i * 0.9 });
   }
+  // Expose 1 prototype of each pooled VFX mesh so perf.js pre-compiles their shaders behind the loading card (0ms first-shot stall!)
+  item._prewarmMeshes = [
+    shots[0].g, shots[0].rigH, shots[0].rigC, shots[0].rigNe, shots[0].rigAr, shots[0].rigOg,
+    arcs[0].grp, novas[0].m, rings[0].m, bubbles[0].mesh
+  ];
 
   function spawnRing(x, y, z, r0, r1, dur, hex) {
     const s = rings.find((r) => !r.on) || rings[0];
@@ -1475,6 +1480,7 @@ export function installChemGun(tools, game, helpers, ymRef) {
     return true;
   };
 
+  let chemBarShown = false;
   tools._updateChemGun = function (dt, time) {
     if (cool > 0) cool = Math.max(0, cool - dt);
     if (this.kick > 0 && this.held === "chemgun") {
@@ -1482,7 +1488,10 @@ export function installChemGun(tools, game, helpers, ymRef) {
     }
 
     const active = !!(this.gun && this.gun.chemActive);
-    if (chemBar) chemBar.classList.toggle("show", active);
+    if (chemBar && active !== chemBarShown) {
+      chemBarShown = active;
+      chemBar.classList.toggle("show", active);
+    }
 
     // Animate held Starlight Cat-Ear & Stars Gun: floating 4-point star crown, gentle ear recoil, swaying star charm, stock star, muzzle halo & 5-element drum!
     if (this.held === "chemgun" && item.root.visible) {

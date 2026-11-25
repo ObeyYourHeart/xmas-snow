@@ -386,7 +386,7 @@ html, body { overscroll-behavior: none; }
 #gunsight.bow u { width: 7px; height: 7px; left: -3.5px; top: -3.5px; transform: rotate(45deg); border-radius: 2px; background: #74f5ff; }
 #gunsight.bow.full { --c: #ffe46b; }
 #gunsight.bow.full u { background: #ffe46b; box-shadow: 0 0 10px #ff8ae2, 0 0 16px #4ceeff; }
-#gunsight.bow.full .tank .fg { stroke: #ffe46b; filter: drop-shadow(0 0 5px #ff7ce5); }
+#gunsight.bow.full .tank .fg { stroke: #ffe46b; }
 #gunsight.bow.full em { background: linear-gradient(135deg, rgba(116, 245, 255, .95), rgba(255, 166, 232, .95)); color: #191c3a; border-color: #ffe46b; }
 #gunsight.on { display: block; }
 #gunsight.hot { --c: var(--sight-hot); }
@@ -408,10 +408,10 @@ html, body { overscroll-behavior: none; }
 #gunsight.chemgun { --c: var(--chem-col, #4cf4ff); --sight-hot: #ffe46b; --sight-hit: var(--chem-col, #4cf4ff); --sight-pack: #ff62d8; }
 #gunsight.chemgun i { border-radius: 99px; background: var(--chem-col, #4cf4ff); box-shadow: 0 0 8px var(--chem-col, #4cf4ff); }
 #gunsight.chemgun u { width: 7px; height: 7px; left: -3.5px; top: -3.5px; background: #fff; box-shadow: 0 0 9px var(--chem-col, #4cf4ff); }
-#gunsight.chemgun .tank .fg { stroke: var(--chem-col, #4cf4ff); filter: drop-shadow(0 0 5px var(--chem-col, #4cf4ff)); }
+#gunsight.chemgun .tank .fg { stroke: var(--chem-col, #4cf4ff); }
 #gunsight.chemgun em { left: -36px; width: 72px; background: rgba(16, 22, 48, .86); color: #fff; border-color: var(--chem-col, #4cf4ff); box-shadow: 0 2px 10px rgba(0, 0, 0, .28); }
 #gunsight.chemgun.og-ready em { background: linear-gradient(135deg, rgba(64, 232, 255, .92), rgba(255, 114, 218, .92)); color: #161834; border-color: #ffe46b; }
-#gunsight.hit-crit .hit .c { stroke: #ffe46b; stroke-width: 3.4; filter: drop-shadow(0 0 6px #ff8a3c); }
+#gunsight.hit-crit .hit .c { stroke: #ffe46b; stroke-width: 3.4; }
 #shootCombo {
   position: absolute; left: 50%; top: calc(50% - 62px); transform: translate(-50%, 6px) scale(.92);
   padding: 4px 12px; border-radius: 99px; font-size: 13px; font-weight: 800; letter-spacing: .04em;
@@ -428,9 +428,9 @@ html, body { overscroll-behavior: none; }
 }
 #chemBar {
   position: absolute; right: 76px; bottom: 72px; display: none; flex-direction: column; gap: 5px;
-  padding: 7px 9px; border-radius: 14px; background: rgba(16, 22, 50, .82);
-  border: 1.5px solid rgba(126, 232, 255, .45); box-shadow: 0 8px 24px rgba(10, 14, 38, .35);
-  z-index: 27; pointer-events: auto; backdrop-filter: blur(8px);
+  padding: 7px 9px; border-radius: 14px; background: rgba(16, 22, 50, .90);
+  border: 1.5px solid rgba(126, 232, 255, .48); box-shadow: 0 8px 24px rgba(10, 14, 38, .35);
+  z-index: 27; pointer-events: auto;
 }
 #chemBar.show { display: flex; }
 #chemBar .cb-hd { font-size: 11px; font-weight: 700; color: #bfefff; letter-spacing: .04em; display: flex; justify-content: space-between; gap: 8px; }

@@ -16,11 +16,17 @@ export function installShootingSystem(gun, tools, game, helpers) {
   // Global Shootable Target Registry (shared across SnowGun, Starlight Bow & 118 Og ChemGun!)
   if (!game.shootTargets) game.shootTargets = [];
 
-  // Smooth spring-damped Camera Recoil + Dynamic Colored Muzzle Flash Light + Floating Hit-Combo Badge!
+  // Smooth spring-damped Camera Recoil + Zero-Light-Count 3D Additive Muzzle Flash Halo + Floating Hit-Combo Badge!
+  // (NEVER add a dynamic PointLight here: toggling a 7th PointLight changes NUM_POINT_LIGHTS 6->7 and freezes WebGL for 13+ seconds recompiling shaders!)
   const recoil = { p: 0, vp: 0, y: 0, vy: 0, fov: 0 };
-  const muzzleLight = new T.PointLight(0x88f4ff, 0, 8.5, 1.8);
-  muzzleLight.visible = false;
-  game.scene.add(muzzleLight);
+  const muzzleFlashMat = new T.MeshBasicMaterial({
+    color: 0x88f4ff, transparent: true, opacity: 0, depthWrite: false, blending: T.AdditiveBlending, fog: false
+  });
+  const muzzleFlash = new T.Mesh(new T.SphereGeometry(0.26, 10, 8), muzzleFlashMat);
+  muzzleFlash.visible = false;
+  muzzleFlash.frustumCulled = false;
+  muzzleFlash.renderOrder = 8;
+  game.scene.add(muzzleFlash);
   let muzzleLightT = 0;
 
   // Floating Hit-Combo HUD Pill right above crosshair
@@ -40,11 +46,12 @@ export function installShootingSystem(gun, tools, game, helpers) {
     recoil.vy += (Math.random() - 0.5) * 2 * yawKick * 16;
     recoil.fov = Math.min(0.08, recoil.fov + fovKick);
     if (flashHex !== null && flashPos) {
-      muzzleLight.color.setHex(flashHex);
-      muzzleLight.position.copy(flashPos);
-      muzzleLight.intensity = 6.5;
-      muzzleLight.visible = true;
-      muzzleLightT = 0.075;
+      muzzleFlashMat.color.setHex(flashHex);
+      muzzleFlashMat.opacity = 0.85;
+      muzzleFlash.position.copy(flashPos);
+      muzzleFlash.scale.setScalar(1.0);
+      muzzleFlash.visible = true;
+      muzzleLightT = 0.08;
     }
   };
 
@@ -74,6 +81,7 @@ export function installShootingSystem(gun, tools, game, helpers) {
     game.scene.add(sp);
     popups.push({ on: false, sp, cv, tex, mat, t: 0, dur: 0.92, vy: 1.8 });
   }
+  gun._prewarmMeshes = [muzzleFlash, laserBeam, laserDot, popups[0].sp];
 
   gun.spawnPopup = function (worldPos, text, crit = false) {
     if (!worldPos || !text) return;
@@ -190,18 +198,40 @@ export function installShootingSystem(gun, tools, game, helpers) {
     return origProbe(pos);
   };
 
-  // Smart Magnetic Aim-Assist inside gun.sightLine() so moving targets, bottles & balloons snap crisply within a 3.6° cone!
-  const origSightLine = gun.sightLine.bind(gun);
+  // Smart Magnetic Aim-Assist + 3x Faster Adaptive Coarse-then-Refine Raymarch inside gun.sightLine()!
   const _magDir = new T.Vector3();
   const _magTo = new T.Vector3();
-  gun.sightLine = function () {
-    origSightLine();
+  const _slP = new T.Vector3();
+  gun.sightLine = function (maxRange = 75) {
     const pl = game.player;
-    if (!pl || !pl.cam || pl.frontLock) return;
-    if (this.aimOn === "shootTarget" || this.aimOn === "balloon" || this.aimOn === "thing") return;
-
+    if (!pl || !pl.cam) return;
     const camP = pl.cam.position;
     pl.cam.getWorldDirection(_magDir);
+    let a = pl.view === "tp" ? Math.max(1, pl.camDist + 0.4) : 0.6;
+    let prevA = a;
+    let hit = null;
+    for (; a < maxRange; a += a < 24 ? 0.65 : 1.15) {
+      hit = this.probe(_slP.copy(camP).addScaledVector(_magDir, a));
+      if (hit) break;
+      prevA = a;
+    }
+    if (!hit) {
+      this.aim.copy(camP).addScaledVector(_magDir, maxRange);
+      this.aimOn = null;
+    } else {
+      this.aimOn = hit.kind;
+      let lo = prevA, hi = a;
+      for (let u = 0; u < 5; u++) {
+        const mid = (lo + hi) * 0.5;
+        if (this.probe(_slP.copy(camP).addScaledVector(_magDir, mid))) hi = mid;
+        else lo = mid;
+      }
+      this.aim.copy(camP).addScaledVector(_magDir, hi);
+    }
+
+    if (pl.frontLock) return;
+    if (this.aimOn === "shootTarget" || this.aimOn === "balloon" || this.aimOn === "thing") return;
+
     const minCos = 0.9978; // ~3.8° forgiving smart magnetism cone
     let bestCos = minCos;
     let bestPos = null;
@@ -775,8 +805,10 @@ export function installShootingSystem(gun, tools, game, helpers) {
     if (recoil.fov > 0) recoil.fov = Math.max(0, recoil.fov - dt * 0.24);
     if (muzzleLightT > 0) {
       muzzleLightT -= dt;
-      muzzleLight.intensity = Math.max(0, 6.5 * (muzzleLightT / 0.075));
-      if (muzzleLightT <= 0) muzzleLight.visible = false;
+      const k = Math.max(0, muzzleLightT / 0.08);
+      muzzleFlashMat.opacity = 0.85 * k;
+      muzzleFlash.scale.setScalar(0.55 + 0.95 * (1 - k));
+      if (muzzleLightT <= 0) muzzleFlash.visible = false;
     }
     if (gun.overdriveT > 0) gun.overdriveT = Math.max(0, gun.overdriveT - dt);
     if (gun.comboT > 0) {
@@ -858,10 +890,16 @@ export function installShootingSystem(gun, tools, game, helpers) {
 
       if ((this.treeT -= dt) < 0) {
         this.treeT = 0.5;
-        const px = player.pos.x, pz = player.pos.z, rad = 82;
+        const px = player.pos.x, pz = player.pos.z, rad = 76;
         this.trees = game.forest.trees.filter((m) => m.near && Math.abs(m.x - px) < rad && Math.abs(m.z - pz) < rad);
       }
-      if (this.tick & 1) this.sightLine();
+      // Passive crosshair probe: every 4th frame when raised/ADS, every 8th frame (48m) when walking lowered!
+      // (Firing still runs a fresh exact 75m sightLine() synchronously right on shot!)
+      if (gunRaised || this.ads > 0.1) {
+        if ((this.tick & 3) === 0) this.sightLine(75);
+      } else if ((this.tick & 7) === 0) {
+        this.sightLine(48);
+      }
 
       // Continuous hold-to-fire support (J, ADS+LMB, or Pointer-Lock LMB — never misfires on unlocked camera drag!)
       const holdingFire = player.keys.has("KeyJ") || (this.btnL && (this.btnR || document.pointerLockElement === dom));
@@ -873,7 +911,10 @@ export function installShootingSystem(gun, tools, game, helpers) {
       this.updateDents(dt);
       updateChemSight();
       return;
-    } else if (this.ui && this.ui.el && this.ui.el.classList.contains("chemgun")) {
+    } else if (this.ui && this.ui.chemOn) {
+      this.ui.chemOn = false;
+      this.ui.chemCol = "";
+      this.ui.ogReady = false;
       this.ui.el.classList.remove("chemgun", "og-ready");
       this.ui.text = "";
       this.ui.frac = -1;
@@ -1017,12 +1058,23 @@ export function installShootingSystem(gun, tools, game, helpers) {
       ui.el.classList.add("on");
       document.body.classList.add("gunning");
     }
-    ui.el.classList.remove("bow", "full", "packing");
-    ui.el.classList.add("chemgun");
+    if (!ui.chemOn) {
+      ui.chemOn = true;
+      ui.el.classList.remove("bow", "full", "packing");
+      ui.el.classList.add("chemgun");
+    }
 
     const info = tools._getChemSightState ? tools._getChemSightState() : { css: "#4cf4ff", label: "1 H", chargeFrac: 0.2, ogReady: false };
-    ui.el.style.setProperty("--chem-col", info.css);
-    ui.el.classList.toggle("og-ready", !!info.ogReady);
+    // ONLY mutate CSS variable / classList when element actually changes — avoids per-frame Blink style recalc & SVG rasterization!
+    if (info.css !== ui.chemCol) {
+      ui.chemCol = info.css;
+      ui.el.style.setProperty("--chem-col", info.css);
+    }
+    const ogR = !!info.ogReady;
+    if (ogR !== ui.ogReady) {
+      ui.ogReady = ogR;
+      ui.el.classList.toggle("og-ready", ogR);
+    }
 
     const hot = !!({ friend: 1, folk: 1, pet: 1, thing: 1, balloon: 1, shootTarget: 1 }[gun.aimOn]);
     if (hot !== ui.hot) {
