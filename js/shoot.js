@@ -790,10 +790,11 @@ export function installShootingSystem(gun, tools, game, helpers) {
       p.mat.opacity = u < 0.2 ? u / 0.2 : Math.max(0, 1 - (u - 0.35) / 0.65);
     }
 
-    // Update 3D Holographic Laser Sight & Aim Dot (visible when ADS or hovering a live target!)
+    // Update 3D Holographic Laser Sight & Aim Dot (visible ONLY when gun is raised to aim / ADS!)
     const isGunLive = this.chemActive || (this.active && !this.isGemini);
     const isHot = !!({ friend: 1, folk: 1, pet: 1, thing: 1, balloon: 1, shootTarget: 1 }[this.aimOn]);
-    const showLaser = isGunLive && !game.player.frontLock && (this.ads > 0.14 || isHot);
+    const gunRaised = (tools.level || 0) > 0.48;
+    const showLaser = isGunLive && !game.player.frontLock && gunRaised && (this.ads > 0.14 || isHot);
     if (showLaser) {
       if (this.chemActive && tools.items.chemgun && tools.items.chemgun.muzzleSpin && tools.items.chemgun.root.visible) {
         tools.items.chemgun.muzzleSpin.getWorldPosition(_lzStart);
