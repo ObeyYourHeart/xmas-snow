@@ -1222,19 +1222,22 @@ export function installChemGun(tools, game, helpers, ymRef) {
     } else if (hitKind === "folk" && hitRef) {
       game.folk && game.folk.hit(hitRef, el.kind === "c_diamond" || el.kind === "og_nova" ? "kick" : "ball", s.dir.x, s.dir.z);
       hitLabel = `⚗️ ${el.short} 命中`;
-    } else if (hitKind === "pet") {
-      const wasPerched = !!(hitRef && (hitRef.mode === "perch" || hitRef.mode === "float"));
+    } else if (hitKind === "pet" && hitRef && !hitRef.tame) {
+      const wasPerched = hitRef.mode === "perch" || hitRef.mode === "float";
       if (game.pets && game.pets.ballHit) {
         // Pass the pet's exact center so internal pets.hitTest(<0.36m) ALWAYS confirms & knocks roof/balloon Clawd down!
-        const hitAt = hitRef && hitRef.root
+        const hitAt = hitRef.root
           ? _tmpP.set(hitRef.x, hitRef.root.position.y + 0.18, hitRef.z)
           : p;
         game.pets.ballHit(hitAt, _u.copy(s.dir).multiplyScalar(el.kind === "og_nova" ? 36 : 26));
       } else if (game.pets && game.pets.strike) {
         game.pets.strike(p.x, p.z, 1.0, "cane", s.dir.x, s.dir.z);
       }
-      hitLabel = wasPerched ? "🦞 打下小龙虾！" : "✨ 击晕小龙虾";
-      hitCrit = wasPerched;
+      // Only show the special knockdown badge when genuinely knocking down a perched roof / balloon Clawd!
+      if (wasPerched) {
+        hitLabel = hitRef.mode === "float" || (hitRef.sp && hitRef.sp.id === "balloon") ? "🎈 打落气球龙虾！" : "🦞 打下屋顶龙虾！";
+        hitCrit = true;
+      }
     } else if (hitKind === "friend" && hitRef) {
       game.friends && game.friends.hopNow(hitRef, 0.55, 0.6);
       if (hitRef.cool <= 0) {

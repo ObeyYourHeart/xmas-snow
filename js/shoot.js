@@ -195,10 +195,10 @@ export function installShootingSystem(gun, tools, game, helpers) {
         }
       }
     }
-    // 2b. Generous anti-tunnel hitbox for perched roof Clawds & floating balloon Clawds so ranged shots reliably knock them down!
+    // 2b. Generous anti-tunnel hitbox for wild perched roof Clawds & floating balloon Clawds so ranged shots reliably knock them down!
     if (game.pets && game.pets.all) {
       for (const pt of game.pets.all) {
-        if (!pt.root || !pt.root.visible || (pt.mode !== "perch" && pt.mode !== "float")) continue;
+        if (!pt.root || !pt.root.visible || pt.tame || (pt.mode !== "perch" && pt.mode !== "float")) continue;
         const dx = pos.x - pt.x;
         if (dx > 0.72 || dx < -0.72) continue;
         const dz = pos.z - pt.z;
@@ -212,7 +212,12 @@ export function installShootingSystem(gun, tools, game, helpers) {
         }
       }
     }
-    return origProbe(pos);
+    const res = origProbe(pos);
+    // Never friendly-fire your own tamed companion Clawds following right beside your gun barrel!
+    if (res && res.kind === "pet" && res.ref && (res.ref.tame || res.ref.mode === "air")) {
+      return null;
+    }
+    return res;
   };
 
   // Smart Magnetic Aim-Assist + 3x Faster Adaptive Coarse-then-Refine Raymarch inside gun.sightLine()!
@@ -275,10 +280,10 @@ export function installShootingSystem(gun, tools, game, helpers) {
         if (c > bestCos) { bestCos = c; bestPos = _lzMid.set(b.x, by, b.z); bestKind = "balloon"; }
       }
     }
-    // Smart magnetic aim-assist for perched roof Clawds & floating balloon Clawds!
+    // Smart magnetic aim-assist for wild perched roof Clawds & floating balloon Clawds!
     if (game.pets && game.pets.all) {
       for (const pt of game.pets.all) {
-        if (!pt.root || !pt.root.visible || (pt.mode !== "perch" && pt.mode !== "float")) continue;
+        if (!pt.root || !pt.root.visible || pt.tame || (pt.mode !== "perch" && pt.mode !== "float")) continue;
         const py = pt.root.position.y + (pt.mode === "float" && pt.balloon && !pt.popped ? 1.45 : 0.28);
         _magTo.set(pt.x - camP.x, py - camP.y, pt.z - camP.z);
         const d = _magTo.length();
