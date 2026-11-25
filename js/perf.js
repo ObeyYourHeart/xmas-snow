@@ -127,7 +127,7 @@ export class PerfOptimizer {
   _collectProtected(owner, skipRoots, outSet) {
     if (!owner || typeof owner !== "object") return;
     const seen = new Set();
-    const skipKeys = new Set(["game", "scene", "THREE", "world", "player", "camera", "renderer", "audio", "ui", "env", "forest", "mats", "wrapMat", "ext", "intGroup", "group", "root", "_sceneRoots", "staticPlats"]);
+    const skipKeys = new Set(["game", "scene", "THREE", "world", "player", "camera", "renderer", "audio", "ui", "env", "forest", "mats", "wrapMat", "ext", "intGroup", "interior", "group", "root", "_sceneRoots", "staticPlats"]);
 
     const walk = (val, depth) => {
       if (!val || typeof val !== "object" || depth > 5 || seen.has(val)) return;
@@ -509,6 +509,7 @@ export class PerfOptimizer {
       this._batchZone("castle_ext", g.castle, [g.castle.ext], { singleCell: true, skyline: true });
     }
     if (g.castle && g.castle.intGroup) {
+      g.castle.intGroup.visible = true;
       this._batchZone("castle_int", g.castle, [g.castle.intGroup], { singleCell: true, indoor: true, attachTo: g.castle.intGroup });
       g.castle.intGroup.visible = !!(g.cabin && g.cabin.inside);
     }

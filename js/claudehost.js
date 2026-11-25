@@ -31,8 +31,8 @@ export class ClaudeCastleHost {
     this.origHome = null;
     // Right beside the Claude Castle red-gold carpet front stairs, dead-center when arriving!
     this.castleSpot = { x: this.j.cabin.x + 0.5, z: this.j.cabin.z + 6.3, yaw: 0.10 };
-    // Bright open central salon floor beneath the chandelier, completely clear of armchairs & bed!
-    this.indoorPos = { x: this.roomPos.x + 0.65, z: this.roomPos.z + 0.35, yaw: -0.78 };
+    // Bright open central palace medallion between fireplace salon & grand entrance!
+    this.indoorPos = { x: this.roomPos.x - 0.95, z: this.roomPos.z + 0.65, yaw: -0.62 };
     this.wasInside = false;
     this.savedOutdoor = null;
     this.indoorTalkIdx = 0;
