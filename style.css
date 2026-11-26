@@ -413,29 +413,32 @@ html, body { overscroll-behavior: none; }
 }
 #shootCombo.show { opacity: 1; transform: translate(-50%, 0); }
 #shootCombo.crit { background: var(--accent); border-color: #7c1a14; color: #fff; }
-/* the element cannon's magazine: which element it fires (auto runs through all five) */
+/* the element cannon's magazine: which element it fires (auto runs through all five). A slim column of chips beside
+   the tool bar, never in the middle of the view (11-26: it was a wide card, and a narrow window put it over her) */
 #chemBar {
-  position: absolute; right: 94px; bottom: 72px; display: none; flex-direction: column; gap: 6px; padding: 8px 10px 9px;
-  border-radius: 14px; background: var(--glass); border: 1px solid rgba(255, 255, 255, .7);
+  position: absolute; right: 84px; top: 50%; transform: translateY(-50%); display: none; flex-direction: column; align-items: center; gap: 5px;
+  padding: 6px 5px 5px; border-radius: 22px; background: var(--glass); border: 1px solid rgba(255, 255, 255, .7);
   backdrop-filter: blur(10px) saturate(1.1); -webkit-backdrop-filter: blur(10px) saturate(1.1); z-index: 27; pointer-events: auto;
 }
 #chemBar.show { display: flex; }
-#chemBar .cb-hd { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 12.5px; font-weight: 700; color: var(--ink); }
-#chemBar .cb-hd span + span { font-weight: 400; color: var(--ink2); }
-#chemBar .cb-hd kbd { min-width: 0; padding: 0 5px; font-size: 11px; line-height: 16px; }
-#chemBar .cb-row { display: flex; gap: 5px; }
 #chemBar button {
-  display: flex; align-items: center; gap: 5px; padding: 4px 9px 4px 7px; border-radius: 9px; border: 1px solid var(--line);
-  background: rgba(255, 255, 255, .62); color: var(--ink); font-size: 12.5px; font-weight: 600; white-space: nowrap; outline: none;
+  display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border-radius: 50%;
+  border: 2px solid var(--bcol, #9aa6b2); background: rgba(255, 255, 255, .72); color: var(--ink); font-size: 12px; font-weight: 700;
+  outline: none; cursor: pointer; transition: transform .12s, background .12s;
 }
-#chemBar button::before { content: ''; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--bcol, #9aa6b2); box-shadow: inset 0 0 0 1px rgba(20, 40, 60, .25); }
-#chemBar button:hover { background: #fff; }
-#chemBar button.on { border-color: var(--accent); background: #fff; color: var(--accent); box-shadow: inset 0 0 0 1px rgba(179, 38, 30, .2); }
+#chemBar button[data-mode="-1"] { font-size: 10.5px; letter-spacing: -.04em; }
+#chemBar button:hover { background: #fff; transform: scale(1.06); }
+#chemBar button.on { background: var(--bcol, var(--accent)); border-color: var(--bcol, var(--accent)); color: #fff; }
+#chemBar button[data-mode="-1"].on { background: var(--accent); border-color: var(--accent); }
+#chemBar .cb-key kbd { min-width: 0; margin: 0; padding: 0 5px; font-size: 11px; line-height: 16px; }
 .gunning #reticle { opacity: 0 !important; }
 .scoping #gunsight, .scoping #chemBar, .scoping #shootCombo { display: none !important; }
-/* (a narrower window: the magazine sits in the middle over the action bar, clear of the tool bar on the right) */
-@media (max-width: 1180px) { #chemBar { right: auto; left: 50%; transform: translateX(-50%); bottom: 136px; } }
-@media (max-width: 720px) { #chemBar { bottom: 150px; padding: 6px 8px 7px; } #chemBar button { padding: 3px 7px 3px 5px; font-size: 11.5px; } }
+@media (max-height: 640px) { #chemBar { gap: 4px; } #chemBar button { width: 28px; height: 28px; font-size: 11px; } }
+/* (on a touch screen there is no tool bar: two rows of three at the right edge, above the buttons for the thumb) */
+.touch #chemBar { right: calc(env(safe-area-inset-right) + 10px); top: 37%; padding: 5px; border-radius: 18px; }
+.touch #chemBar.show { display: grid; grid-template-columns: repeat(2, 30px); gap: 5px; }
+.touch #chemBar button { width: 30px; height: 30px; }
+.touch #chemBar .cb-key { display: none; }
 
 /* the tool bar on a low window: five tools and the empty hand have to fit between the top bar and the bottom one */
 @media (max-height: 640px) { #toolbar { gap: 4px; padding: 6px 5px; } #toolbar button[data-tool] { width: 36px; height: 36px; border-radius: 8px; } }
@@ -463,36 +466,124 @@ body.sleeping #toolbar,
 body.sleeping #prompt { opacity: 0 !important; pointer-events: none !important; }
 body.sleeping #toast { top: auto; bottom: 80px; }
 
-/* (the den's dream caption and its buttons: the same glass card and buttons as the tool bar and the action bar) */
+/* (the cat house's den: Gemini's own pink-and-violet dream caption and buttons, 11-26 back from the unified glass card) */
 #dreamHud {
-  position: absolute; left: 50%; top: 14px; transform: translate(-50%, -6px); display: flex; align-items: center; gap: 11px;
-  max-width: min(470px, calc(100vw - 380px)); padding: 8px 15px 8px 9px; border-radius: 14px; background: var(--glass);
-  border: 1px solid rgba(255, 255, 255, .7); backdrop-filter: blur(10px) saturate(1.1); -webkit-backdrop-filter: blur(10px) saturate(1.1);
-  color: var(--ink); opacity: 0; pointer-events: none; z-index: 28; transition: opacity .35s, transform .35s;
+  position: absolute;
+  left: 50%;
+  top: 14px;
+  transform: translateX(-50%) translateY(-8px) scale(.96);
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  max-width: min(470px, calc(100vw - 380px));
+  padding: 8px 15px 8px 10px;
+  border-radius: 20px;
+  background: rgba(252, 248, 255, .92);
+  border: 1.5px solid rgba(255, 192, 232, .75);
+  box-shadow: 0 10px 28px rgba(42, 34, 86, .18), 0 0 22px rgba(154, 224, 255, .28);
+  color: #252042;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 28;
+  transition: opacity .35s ease, transform .35s cubic-bezier(.2, .9, .25, 1.1);
 }
-#dreamHud.show { opacity: 1; transform: translate(-50%, 0); }
-#dreamHud .d-thumb { flex: none; width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line); background: #eef2f6; }
+#dreamHud.show { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+#dreamHud .d-thumb {
+  flex: none;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px rgba(140, 214, 255, .75), 0 4px 12px rgba(64, 46, 118, .22);
+  background: #eae4f8;
+}
 #dreamHud .d-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-#dreamHud .d-title { font-size: 12px; font-weight: 700; letter-spacing: .06em; color: var(--ink2); }
-#dreamHud .d-text { font-size: 14px; line-height: 1.45; color: var(--ink); }
+#dreamHud .d-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: #6b4ea8;
+}
+#dreamHud .d-text {
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: #231e3c;
+  font-weight: 500;
+}
 
 #sleepBar {
-  position: absolute; left: 50%; bottom: 14px; transform: translate(-50%, 10px); display: flex; flex-wrap: nowrap; justify-content: center;
-  gap: 6px; padding: 6px; border-radius: 14px; background: var(--glass); border: 1px solid rgba(255, 255, 255, .7);
-  backdrop-filter: blur(10px) saturate(1.1); -webkit-backdrop-filter: blur(10px) saturate(1.1);
-  opacity: 0; pointer-events: none; z-index: 29; transition: opacity .3s, transform .3s; width: max-content; max-width: calc(100vw - 24px);
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%) translateY(14px);
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 7px;
+  padding: 7px 9px;
+  border-radius: 18px;
+  background: rgba(250, 248, 255, .88);
+  border: 1.5px solid rgba(255, 255, 255, .94);
+  box-shadow: 0 10px 28px rgba(32, 28, 72, .22);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 29;
+  transition: opacity .3s ease, transform .3s ease;
+  width: max-content;
+  max-width: calc(100vw - 24px);
 }
-#sleepBar.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+#sleepBar.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
 #sleepBar button {
-  display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px 5px 6px; border-radius: 9px; border: 1px solid var(--line);
-  background: rgba(255, 255, 255, .62); color: var(--ink); font-size: 13px; white-space: nowrap; outline: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 11px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(110, 102, 168, .22);
+  background: rgba(255, 255, 255, .88);
+  color: #262144;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform .14s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
 }
-#sleepBar button:hover { background: #fff; }
-#sleepBar button.on { border-color: var(--accent); background: #fff; color: var(--accent); box-shadow: inset 0 0 0 1px rgba(179, 38, 30, .2); }
-#sleepBar button.wake { border-color: #7c1a14; background: var(--accent); color: #fff; }
-#sleepBar button.wake:hover { background: #9c1f18; }
-#sleepBar kbd { min-width: 0; margin: 0; padding: 0 6px; font-size: 12px; line-height: 18px; }
-#sleepBar button.wake kbd { background: rgba(255, 255, 255, .18); border-color: rgba(255, 255, 255, .45); color: #fff; }
+#sleepBar button:hover {
+  background: #fff;
+  border-color: #ff86d2;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 128, 206, .24);
+}
+#sleepBar button.on {
+  background: linear-gradient(135deg, #fff0fa, #eef9ff);
+  border-color: #ff78cd;
+  color: #6b2478;
+  box-shadow: 0 3px 12px rgba(118, 208, 255, .32);
+}
+#sleepBar button.wake {
+  background: linear-gradient(135deg, #ff7eb8, #8c7bff);
+  border-color: transparent;
+  color: #fff;
+}
+#sleepBar button.wake:hover {
+  box-shadow: 0 4px 14px rgba(140, 123, 255, .38);
+}
+#sleepBar kbd {
+  min-width: 18px;
+  margin: 0;
+  padding: 0 5px;
+  font-size: 11px;
+  line-height: 17px;
+  border-radius: 5px;
+  background: rgba(96, 86, 152, .12);
+  color: inherit;
+  border: 1px solid rgba(96, 86, 152, .22);
+}
+#sleepBar button.wake kbd {
+  background: rgba(255, 255, 255, .24);
+  border-color: rgba(255, 255, 255, .4);
+}
 @media (max-width: 720px) {
   #dreamHud { top: 52px; max-width: calc(100vw - 24px); padding: 7px 11px 7px 8px; gap: 9px; }
   #dreamHud .d-thumb { width: 46px; height: 46px; }
