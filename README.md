@@ -2,7 +2,7 @@
 
 **在线玩：[https://obeyyourheart.github.io/xmas-snow/](https://obeyyourheart.github.io/xmas-snow/)**
 
-电脑和手机都能玩：电脑用键盘加鼠标，手机、平板横过来用触屏。第一次打开要下载大约 30 MB，请等到按钮变成「走进雪地」。
+电脑和手机都能玩：电脑用键盘加鼠标，手机、平板横过来用触屏。第一次打开要下载大约 65 MB，请等到按钮变成「走进雪地」。
 
 ![朋友们跟着走](screenshots/1.jpg)
 
