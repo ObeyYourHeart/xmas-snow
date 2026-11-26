@@ -403,6 +403,9 @@ html, body { overscroll-behavior: none; }
 #gunsight.chemgun .tank .fg { stroke: var(--chem-col, #fff); }
 #gunsight.chemgun em { left: -38px; width: 76px; border-left: 4px solid var(--chem-col, var(--line)); }
 #gunsight.chemgun.og-ready em { color: var(--accent); border-color: var(--accent); }
+#gunsight.snow .tank .fg { stroke: var(--snow-col, #fff); }
+#gunsight.snow em { left: -34px; width: 68px; border-left: 4px solid var(--snow-col, var(--line)); }
+#gunsight.snow.packing em { border-left-color: var(--sight-pack); }
 #gunsight.hit-crit .hit .c { stroke: #f4c24e; stroke-width: 3.4; }
 /* hits in a row, over the sight */
 #shootCombo {
@@ -415,30 +418,30 @@ html, body { overscroll-behavior: none; }
 #shootCombo.crit { background: var(--accent); border-color: #7c1a14; color: #fff; }
 /* the element cannon's magazine: which element it fires (auto runs through all five). A slim column of chips beside
    the tool bar, never in the middle of the view (11-26: it was a wide card, and a narrow window put it over her) */
-#chemBar {
+#chemBar, #snowBar {
   position: absolute; right: 84px; top: 50%; transform: translateY(-50%); display: none; flex-direction: column; align-items: center; gap: 5px;
   padding: 6px 5px 5px; border-radius: 22px; background: var(--glass); border: 1px solid rgba(255, 255, 255, .7);
   backdrop-filter: blur(10px) saturate(1.1); -webkit-backdrop-filter: blur(10px) saturate(1.1); z-index: 27; pointer-events: auto;
 }
-#chemBar.show { display: flex; }
-#chemBar button {
+#chemBar.show, #snowBar.show { display: flex; }
+#chemBar button, #snowBar button {
   display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border-radius: 50%;
   border: 2px solid var(--bcol, #9aa6b2); background: rgba(255, 255, 255, .72); color: var(--ink); font-size: 12px; font-weight: 700;
   outline: none; cursor: pointer; transition: transform .12s, background .12s;
 }
 #chemBar button[data-mode="-1"] { font-size: 10.5px; letter-spacing: -.04em; }
-#chemBar button:hover { background: #fff; transform: scale(1.06); }
-#chemBar button.on { background: var(--bcol, var(--accent)); border-color: var(--bcol, var(--accent)); color: #fff; }
+#chemBar button:hover, #snowBar button:hover { background: #fff; transform: scale(1.06); }
+#chemBar button.on, #snowBar button.on { background: var(--bcol, var(--accent)); border-color: var(--bcol, var(--accent)); color: #fff; }
 #chemBar button[data-mode="-1"].on { background: var(--accent); border-color: var(--accent); }
-#chemBar .cb-key kbd { min-width: 0; margin: 0; padding: 0 5px; font-size: 11px; line-height: 16px; }
+#chemBar .cb-key kbd, #snowBar .cb-key kbd { min-width: 0; margin: 0; padding: 0 5px; font-size: 11px; line-height: 16px; }
 .gunning #reticle { opacity: 0 !important; }
-.scoping #gunsight, .scoping #chemBar, .scoping #shootCombo { display: none !important; }
-@media (max-height: 640px) { #chemBar { gap: 4px; } #chemBar button { width: 28px; height: 28px; font-size: 11px; } }
+.scoping #gunsight, .scoping #chemBar, .scoping #snowBar, .scoping #shootCombo { display: none !important; }
+@media (max-height: 640px) { #chemBar, #snowBar { gap: 4px; } #chemBar button, #snowBar button { width: 28px; height: 28px; font-size: 11px; } }
 /* (on a touch screen there is no tool bar: two rows of three at the right edge, above the buttons for the thumb) */
-.touch #chemBar { right: calc(env(safe-area-inset-right) + 10px); top: 37%; padding: 5px; border-radius: 18px; }
-.touch #chemBar.show { display: grid; grid-template-columns: repeat(2, 30px); gap: 5px; }
-.touch #chemBar button { width: 30px; height: 30px; }
-.touch #chemBar .cb-key { display: none; }
+.touch #chemBar, .touch #snowBar { right: calc(env(safe-area-inset-right) + 10px); top: 37%; padding: 5px; border-radius: 18px; }
+.touch #snowBar.show, .touch #chemBar.show { display: grid; grid-template-columns: repeat(2, 30px); gap: 5px; }
+.touch #chemBar button, .touch #snowBar button { width: 30px; height: 30px; }
+.touch #chemBar .cb-key, .touch #snowBar .cb-key { display: none; }
 
 /* the tool bar on a low window: five tools and the empty hand have to fit between the top bar and the bottom one */
 @media (max-height: 640px) { #toolbar { gap: 4px; padding: 6px 5px; } #toolbar button[data-tool] { width: 36px; height: 36px; border-radius: 8px; } }
